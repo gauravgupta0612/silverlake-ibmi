@@ -113,12 +113,14 @@ export function registerBrowseCommands(
       { label: '$(library) Add library to list…', cmd: 'vanthrex.addLibrary' },
       { label: '$(folder-opened) Go to IFS directory…', cmd: 'vanthrex.ifsChangeRoot' },
       { label: '$(output) Show output log', cmd: 'vanthrex.showOutput' },
+      { label: '$(book) Open documentation', cmd: 'vanthrex.openDocs' },
       { label: '$(edit) Edit this connection…', cmd: 'vanthrex.editConnection' },
       { label: '$(debug-disconnect) Disconnect', cmd: 'vanthrex.disconnect' },
     ] : [
       { label: '$(plug) Connect…', cmd: 'vanthrex.connect' },
       { label: '$(add) Add connection…', cmd: 'vanthrex.addConnection' },
       { label: '$(book) Getting started', cmd: 'vanthrex.openWalkthrough' },
+      { label: '$(globe) Open documentation', cmd: 'vanthrex.openDocs' },
     ];
     const pick = await vscode.window.showQuickPick(items, {
       title: c ? `IBM i — ${c.profile.name} (${c.user})` : 'IBM i — not connected',
@@ -126,6 +128,7 @@ export function registerBrowseCommands(
     if (pick?.cmd) { await vscode.commands.executeCommand(pick.cmd); }
   });
   reg('vanthrex.showOutput', () => showLog());
+  reg('vanthrex.openDocs', () => vscode.env.openExternal(vscode.Uri.parse('https://gauravgupta0612.github.io/vanthrex-ibmi-docs/')));
 
   // ------------------------------------------------------------ libraries
   reg('vanthrex.refreshLibraries', () => libraries.refresh());

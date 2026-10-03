@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1
+
+- **Documentation site**: full user documentation is now online at https://gauravgupta0612.github.io/vanthrex-ibmi-docs/ (installation, IBM i setup, every feature, commands, settings, troubleshooting and FAQ).
+- New command **Vanthrex: Open Documentation**, also in the quick menu (Ctrl+Alt+I) and in the `…` menu of the *Connections* view.
+- The Marketplace page links to the documentation.
+- Release workflow fix: GitHub Packages publishing no longer runs the Marketplace publish script.
+
 ## 0.3.0
 
 - **New name: Vanthrex for IBM i** (formerly *Silverlake*), first release on the VS Code Marketplace. Settings now start with `vanthrex.`; connections are set up again after installing.

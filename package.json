@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code: connection wizard, library & IFS browser, edit and compile with inline errors, Db2 for i SQL with autocomplete, table data editor, system dashboard, jobs & messages, object and source search, RPG navigation and code checks, local history.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -135,6 +135,12 @@
       }
     ],
     "commands": [
+      {
+        "command": "vanthrex.openDocs",
+        "title": "Open Documentation",
+        "category": "Vanthrex",
+        "icon": "$(book)"
+      },
       {
         "command": "vanthrex.addConnection",
         "title": "Add IBM i Connection\u2026",
@@ -533,6 +539,11 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "vanthrex.openDocs",
+          "when": "view == vanthrex.connections",
+          "group": "9_help"
+        },
         {
           "command": "vanthrex.addConnection",
           "when": "view == vanthrex.connections",
