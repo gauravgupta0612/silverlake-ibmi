@@ -1,7 +1,7 @@
 name: Release
 
-# Push a tag like v0.3.0 to build the extension, publish it as a GitHub Release
-# and publish the package to GitHub Packages.
+# Push a tag like v0.3.0 to build the extension and publish it as a GitHub Release,
+# to the VS Code Marketplace (when the VSCE_PAT secret is set) and to GitHub Packages.
 on:
   push:
     tags: ['v*']
@@ -35,6 +35,11 @@ jobs:
         with:
           files: '*.vsix'
           generate_release_notes: true
+      - name: Publish to the VS Code Marketplace
+        if: env.VSCE_PAT != ''
+        run: npx vsce publish --no-dependencies --packagePath *.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
       - name: Publish to GitHub Packages
         run: bash .github/scripts/publish-package.sh
         env:

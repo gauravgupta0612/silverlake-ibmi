@@ -3,7 +3,7 @@
   "displayName": "Silverlake for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code: connection wizard, library & IFS browser, edit and compile with inline errors, Db2 for i SQL with autocomplete, table data editor, system dashboard, jobs & messages, object and source search, RPG navigation and code checks, local history.",
   "version": "0.3.0",
-  "publisher": "silverlake",
+  "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
   "engines": {
@@ -1432,7 +1432,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test test/*.test.js",
     "package": "npm run typecheck && npm run build -- --production && vsce package --no-dependencies",
-    "pretest": "tsc -p ."
+    "pretest": "tsc -p .",
+    "publish": "vsce publish --no-dependencies"
   },
   "dependencies": {
     "@ibm/mapepire-js": "^1.0.1",
@@ -1453,5 +1454,12 @@
   "bugs": {
     "url": "https://github.com/gauravgupta0612/silverlake-ibmi/issues"
   },
-  "homepage": "https://github.com/gauravgupta0612/silverlake-ibmi#readme"
+  "homepage": "https://github.com/gauravgupta0612/silverlake-ibmi#readme",
+  "preview": true,
+  "pricing": "Free",
+  "galleryBanner": {
+    "color": "#1F3A5F",
+    "theme": "dark"
+  },
+  "qna": "marketplace"
 }

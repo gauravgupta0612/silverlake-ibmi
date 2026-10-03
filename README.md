@@ -43,9 +43,10 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 
 ## Install
 
-1. Download the latest `.vsix` from [Releases](https://github.com/gauravgupta0612/silverlake-ibmi/releases).
-2. In VS Code, open **Extensions** → `…` → **Install from VSIX…** and pick the file.
-3. Click the Silverlake icon in the activity bar, then **Add IBM i Connection**.
+- **From the Marketplace:** in VS Code, open **Extensions** (Ctrl+Shift+X), search for **Silverlake for IBM i** and click **Install**.
+- **Offline:** download the `.vsix` from [Releases](https://github.com/gauravgupta0612/silverlake-ibmi/releases), then **Extensions** → `…` → **Install from VSIX…**.
+
+Then click the Silverlake icon in the activity bar, then **Add IBM i Connection**.
 
 ## Build from source
 

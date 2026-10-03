@@ -1,0 +1,28 @@
+name: Publish to Marketplace
+
+# Run manually (Actions → Publish to Marketplace → Run workflow) to publish the
+# current version to the VS Code Marketplace. Needs the VSCE_PAT repository secret.
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run package
+      - name: Publish
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::error::Add the VSCE_PAT secret first (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          npx vsce publish --no-dependencies --packagePath *.vsix
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

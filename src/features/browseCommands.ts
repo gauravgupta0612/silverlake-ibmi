@@ -95,7 +95,7 @@ export function registerBrowseCommands(
   });
   reg('silverlake.disconnect', () => manager.disconnect());
   reg('silverlake.openWalkthrough', () =>
-    vscode.commands.executeCommand('workbench.action.openWalkthrough', 'silverlake.silverlake-ibmi#silverlake.gettingStarted', false));
+    vscode.commands.executeCommand('workbench.action.openWalkthrough', `${context.extension.id}#silverlake.gettingStarted`, false));
 
   reg('silverlake.showMenu', async () => {
     const c = manager.connection;
