@@ -31,6 +31,10 @@ Open **File → Preferences → Settings** and search for *Vanthrex*, or edit `s
 | `vanthrex.conflictCheck` | boolean | `true` | Warn when a member is locked by another job, or changed on the IBM i after you opened it, before your save overwrites it. |
 | `vanthrex.members.sortBy` | string | `"name"` | Order of members in the Libraries view. Values: `name`, `date`. |
 | `vanthrex.sql.scriptStopOnError` | boolean | `true` | Run SQL Script: stop at the first statement that fails (off = run every statement and report failures). |
+| `vanthrex.debug.port` | number | `0` | IBM i Debug Service secured port. 0 = read it from the service configuration (usually 8005). |
+| `vanthrex.debug.ignoreCertificateErrors` | boolean | `false` | Connect to the Debug Service even when its certificate cannot be verified. Only for test systems. |
+| `vanthrex.debug.updateProductionFiles` | boolean | `false` | Allow the debugged program to update files in production libraries (UPDPROD). |
+| `vanthrex.debug.trace` | boolean | `false` | Write a trace of the debug protocol to the IBM i Debug output (for support). |
 
 ## RPG check rules
 

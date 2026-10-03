@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0
+
+**New: IBM i debugger**
+
+- **Debug Program** (Ctrl+Alt+G, the 🐞 button on a program, or the editor title of an RPG/CL source): runs the program in a batch job under the IBM i debugger and opens a full VS Code debug session — breakpoints, step over/into/out, variables, watch and call stack. Parameters for the CALL are remembered per program.
+- Uses IBM's free **IBM i Debug** extension as the debug client and the **IBM i Debug Service** on the server; Vanthrex installs the client on request, reads the service's port and certificate locations, downloads and trusts the certificate, and starts the session for you.
+- **Debugger Setup Check**: one page that checks the client, the Debug Service (installed, running, certificate) and this PC's certificate, with buttons to fix each item — including **Start Debug Service**.
+- Settings: `vanthrex.debug.port`, `vanthrex.debug.ignoreCertificateErrors`, `vanthrex.debug.updateProductionFiles`, `vanthrex.debug.trace`.
+
 ## 0.4.0
 
 **Fixes**

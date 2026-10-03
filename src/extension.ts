@@ -26,6 +26,7 @@ import { registerPrompters } from './features/prompter';
 import { registerObjectTools } from './features/objectTools';
 import { registerSqlTools } from './features/sqlTools';
 import { registerProcedureTools } from './rpg/procCommands';
+import { registerDebugger } from './features/debugger';
 
 let manager: ConnectionManager | undefined;
 
@@ -79,6 +80,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('object tools', () => registerObjectTools(context, m));
   step('sql tools', () => registerSqlTools(context, m));
   step('procedure tools', () => registerProcedureTools(context, m));
+  step('debugger', () => registerDebugger(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(`Vanthrex started with problems: ${failures.join(' | ')}`, 'Show Log')

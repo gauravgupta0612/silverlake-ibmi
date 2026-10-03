@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code: connection wizard, library & IFS browser, edit and compile with inline errors, Db2 for i SQL with autocomplete, table data editor, system dashboard, jobs & messages, object and source search, RPG navigation and code checks, local history.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -612,6 +612,18 @@
         "title": "Check /COPY Usage (Find Unused Copybooks)",
         "category": "Vanthrex",
         "icon": "$(references)"
+      },
+      {
+        "command": "vanthrex.debugProgram",
+        "title": "Debug Program",
+        "category": "Vanthrex",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "vanthrex.debugSetup",
+        "title": "Debugger Setup Check",
+        "category": "Vanthrex",
+        "icon": "$(checklist)"
       }
     ],
     "menus": {
@@ -700,6 +712,11 @@
           "command": "vanthrex.compareLibraries",
           "when": "view == vanthrex.libraries",
           "group": "9_tools"
+        },
+        {
+          "command": "vanthrex.debugSetup",
+          "when": "view == vanthrex.connections && vanthrex.connected",
+          "group": "9_help"
         }
       ],
       "view/item/context": [
@@ -922,6 +939,16 @@
           "command": "vanthrex.compareLibraries",
           "when": "view == vanthrex.libraries && viewItem == library",
           "group": "5_compare@1"
+        },
+        {
+          "command": "vanthrex.debugProgram",
+          "when": "view == vanthrex.libraries && viewItem == object.pgm",
+          "group": "inline"
+        },
+        {
+          "command": "vanthrex.debugProgram",
+          "when": "view == vanthrex.libraries && viewItem == object.pgm",
+          "group": "0_info@0"
         }
       ],
       "editor/title": [
@@ -948,6 +975,11 @@
         {
           "command": "vanthrex.toggleSourceDates",
           "when": "resourceScheme == vanthrex-member",
+          "group": "navigation@9"
+        },
+        {
+          "command": "vanthrex.debugProgram",
+          "when": "vanthrex.connected && editorLangId =~ /^(rpgle|cl)$/",
           "group": "navigation@9"
         }
       ],
@@ -1016,6 +1048,11 @@
           "command": "vanthrex.checkCopybooks",
           "when": "vanthrex.connected && editorLangId == rpgle",
           "group": "vanthrex@6"
+        },
+        {
+          "command": "vanthrex.debugProgram",
+          "when": "vanthrex.connected && editorLangId =~ /^(rpgle|cl)$/",
+          "group": "vanthrex@7"
         }
       ],
       "commandPalette": [
@@ -1173,6 +1210,12 @@
         "key": "ctrl+shift+enter",
         "mac": "cmd+shift+enter",
         "when": "editorTextFocus && vanthrex.connected && editorLangId == sql"
+      },
+      {
+        "command": "vanthrex.debugProgram",
+        "key": "ctrl+alt+g",
+        "mac": "cmd+alt+g",
+        "when": "vanthrex.connected && editorLangId =~ /^(rpgle|cl)$/"
       }
     ],
     "languages": [
@@ -1576,6 +1619,26 @@
           "type": "boolean",
           "default": true,
           "description": "Run SQL Script: stop at the first statement that fails (off = run every statement and report failures)."
+        },
+        "vanthrex.debug.port": {
+          "type": "number",
+          "default": 0,
+          "description": "IBM i Debug Service secured port. 0 = read it from the service configuration (usually 8005)."
+        },
+        "vanthrex.debug.ignoreCertificateErrors": {
+          "type": "boolean",
+          "default": false,
+          "description": "Connect to the Debug Service even when its certificate cannot be verified. Only for test systems."
+        },
+        "vanthrex.debug.updateProductionFiles": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow the debugged program to update files in production libraries (UPDPROD)."
+        },
+        "vanthrex.debug.trace": {
+          "type": "boolean",
+          "default": false,
+          "description": "Write a trace of the debug protocol to the IBM i Debug output (for support)."
         }
       }
     }

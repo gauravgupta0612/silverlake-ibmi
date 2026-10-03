@@ -23,5 +23,6 @@ Every feature, what it does, why it helps and how to use it.
 | [Object tools](features-object-tools.md) | Object information, who has an object locked, compare two libraries, and modules & exports. |
 | [SQL power tools](features-sql-tools.md) | Generate SQL (DDL), run whole scripts, SQL history and saved queries. |
 | [Procedure & copybook tools](features-procedure-tools.md) | Generate prototypes, extract code into procedures, and find unused /COPY members. |
+| [Debugging](debugging.md) | Breakpoints, stepping, variables and call stack for RPG, COBOL and CL (new in 0.5). |
 
 New to the extension? Start with [Installation](installation.md) and [Your first connection](first-connection.md).

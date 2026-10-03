@@ -7,7 +7,7 @@ parent: "Reference"
 
 # Commands
 
-All 84 commands contributed by Vanthrex for IBM i 0.4.0. Run any of them from the
+All 86 commands contributed by Vanthrex for IBM i 0.5.0. Run any of them from the
 Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-click menus and view toolbars.
 
 | Command | ID | Keys |
@@ -26,6 +26,8 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Compile With… | `vanthrex.compileWith` |  |
 | Connect | `vanthrex.connect` |  |
 | Convert Fixed-Format C-Specs to Free | `vanthrex.convertToFree` |  |
+| Debug Program | `vanthrex.debugProgram` | Ctrl+Alt+G |
+| Debugger Setup Check | `vanthrex.debugSetup` |  |
 | Delete | `vanthrex.ifsDelete` |  |
 | Delete Member | `vanthrex.deleteMember` |  |
 | Delete Object | `vanthrex.objectDelete` |  |

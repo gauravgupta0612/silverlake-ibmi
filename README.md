@@ -39,6 +39,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **Object tools** *(new in 0.4)* | Object information page (owner, dates, last used, size, source, journaling), who has an object locked, compare two libraries (DEV vs PROD) with side-by-side member diffs, modules & exports of service programs. |
 | **SQL power tools** *(new in 0.4)* | Generate SQL (DDL) for tables, views, indexes and routines; run a whole SQL script with per-statement results (`Ctrl+Shift+Enter`); SQL history and saved queries. |
 | **Procedure tools** *(new in 0.4)* | Generate a prototype from a procedure, extract lines to a new procedure safely, and find unused /COPY members. |
+| **Debugger** *(new in 0.5)* | Step-through debugging of RPG, COBOL and CL with breakpoints, variables and call stack (Ctrl+Alt+G), through IBM's IBM i Debug client and Debug Service, with a setup check that fixes the setup for you. |
 
 ## Requirements on the IBM i
 
@@ -102,8 +103,9 @@ Press `F5` to start an Extension Development Host (launch settings are in `.vsco
 | `F4` | Prompt the fixed-format spec (RPG, DDS) or CL command at the cursor |
 | `Ctrl+Alt+D` | Cycle source dates: date → sequence + date → hidden |
 | `Ctrl+Shift+Enter` | Run the whole SQL script (in .sql files) |
+| `Ctrl+Alt+G` | Debug the program of the current source |
 
-## Known limitations (v0.4)
+## Known limitations (v0.5)
 
 - **Where used** builds its cross-reference with DSPPGMREF in QTEMP, so it needs a Mapepire SQL engine (not db2util). Scanning large libraries takes a while.
 - The table data editor writes each change straight away (no commitment control). Rows are identified by relative record number, so don't reorganize a file while editing it.
@@ -112,6 +114,6 @@ Press `F5` to start an Extension Development Host (launch settings are in `.vsco
 
 - One active connection at a time.
 - Generate SQL (DDL) needs a Mapepire SQL engine. Extract to procedure works on free-form calculations and does not create parameters.
-- A step-through debugger is planned for a later release.
+- The debugger needs the IBM i Debug Service (PTF) and IBM's IBM i Debug extension; it debugs programs started in a batch job (service entry points are planned).
 - The fixed → free converter handles C-specs only (H/F/D specs are left as they are). Anything it can't convert safely is marked `// TODO`.
 - Interactive (5250) commands such as `WRKACTJOB` can't run from the CL runner; use their `OUTPUT(*PRINT)` form or the IBM i Services SQL snippets.

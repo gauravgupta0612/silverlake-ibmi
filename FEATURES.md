@@ -315,9 +315,20 @@ In the tree, right-click a member → **Select for Compare**, then right-click a
 - **Extract to procedure:** select whole lines of free-form calculations → right-click → **Extract to Procedure…** and name it. The lines move into a new procedure at the end of the source and are replaced by a call. Vanthrex refuses when that would change what the code does: lines using local variables of the enclosing procedure, RETURN/LEAVE/ITER, declarations, or a block that is opened but not closed (and the other way round). Programs with procedures need `CTL-OPT DFTACTGRP(*NO)`; you are reminded if it is missing.
 - **Check /COPY usage:** right-click in an RPG source → **Check /COPY Usage**. Each copybook is listed with the declarations your source uses from it, so unused copybooks stand out. In fully free sources the ☐ button comments the unused ones out.
 
-### Coming next: IBM i debugger
+### 27. IBM i debugger
 
-Step-through debugging (breakpoints, variables, call stack) is planned for a later release. It uses the IBM i Debug Service, which has to be set up with certificates on the server, so it will come with its own setup guide.
+**What:** Step-through debugging of RPG, COBOL and CL programs: breakpoints, step over / into / out, variables, watch expressions and the call stack, in VS Code's normal debug view.
+
+**Why it helps:** No more STRDBG in a 5250 session or DSPLY statements — set a breakpoint on the line in the editor and run.
+
+**How:**
+
+1. Once per PC: run **Vanthrex: Debugger Setup Check** (quick menu → *Debugger setup check*). Fix anything marked ✖ with the buttons on the page: install IBM's free *IBM i Debug* extension, start the Debug Service, download the certificate.
+2. Compile the program with `DBGVIEW(*SOURCE)` (all built-in compile actions do).
+3. Set breakpoints in the source, then **Ctrl+Alt+G** (or right-click the program → **Debug Program**, or the 🐞 button in the editor title).
+4. Confirm the command that starts the program, adding `PARM(...)` if it needs parameters. It runs in a batch job with your library list, and the debugger stops at your breakpoints.
+
+The server side (the IBM i Debug Service, its PTFs and its certificate) is set up once by an administrator — see the *Debugging* page of the documentation.
 
 ---
 
@@ -335,6 +346,7 @@ Step-through debugging (breakpoints, variables, call stack) is planned for a lat
 | F4 | Prompt the spec (RPG / DDS) or CL command at the cursor |
 | Ctrl+Alt+D | Cycle source dates display |
 | Ctrl+Shift+Enter | Run the whole SQL script |
+| Ctrl+Alt+G | Debug the program of the current source |
 
 On a Mac, use **Cmd** instead of **Ctrl**.
 

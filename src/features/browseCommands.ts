@@ -102,6 +102,8 @@ export function registerBrowseCommands(
     type Item = vscode.QuickPickItem & { cmd?: string };
     const items: Item[] = c ? [
       { label: '$(dashboard) System dashboard', cmd: 'vanthrex.openDashboard' },
+      { label: '$(debug-alt) Debug a program…', cmd: 'vanthrex.debugProgram' },
+      { label: '$(checklist) Debugger setup check', cmd: 'vanthrex.debugSetup' },
       { label: '$(terminal) Run CL command…', cmd: 'vanthrex.runCl' },
       { label: '$(list-selection) Prompt and run a CL command (F4)…', cmd: 'vanthrex.promptCl' },
       { label: '$(search) Search objects…', cmd: 'vanthrex.searchObjects' },
