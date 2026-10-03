@@ -31,9 +31,25 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run package
+      - name: Release notes from CHANGELOG.md
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          awk -v v="## $VERSION" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > release-notes.md
+          {
+            echo
+            echo "### Install"
+            echo
+            echo "- **VS Code Marketplace:** search for **Vanthrex for IBM i**, or open https://marketplace.visualstudio.com/items?itemName=gauravgupta0612.vanthrex-ibmi"
+            echo "- **Offline:** download the \`.vsix\` below, then Extensions → \`…\` → **Install from VSIX…**"
+            echo
+            echo "📖 Documentation: https://gauravgupta0612.github.io/vanthrex-ibmi-docs/"
+          } >> release-notes.md
+          cat release-notes.md
       - uses: softprops/action-gh-release@v2
         with:
+          name: Vanthrex for IBM i ${{ github.ref_name }}
           files: '*.vsix'
+          body_path: release-notes.md
           generate_release_notes: true
       - name: Publish to the VS Code Marketplace
         if: env.VSCE_PAT != ''
