@@ -1,5 +1,7 @@
 # Vanthrex for IBM i — Feature Guide
 
+> The full, searchable documentation is at **https://gauravgupta0612.github.io/vanthrex-ibmi-docs/**
+
 > **One sidebar for everything you do on IBM i:** connect, browse, edit, compile, query, monitor and fix — without leaving VS Code and without a green screen.
 
 ---
