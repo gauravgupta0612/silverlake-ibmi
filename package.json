@@ -1,0 +1,1303 @@
+{
+  "name": "silverlake-ibmi",
+  "displayName": "Silverlake for IBM i",
+  "description": "A friendly, all-in-one IBM i workbench for VS Code: connection wizard, library & IFS browser, edit and compile with inline errors, Db2 for i SQL with autocomplete, table data editor, system dashboard, jobs & messages, object and source search, RPG navigation and code checks, local history.",
+  "version": "0.2.0",
+  "publisher": "silverlake",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "keywords": [
+    "IBM i",
+    "AS400",
+    "iSeries",
+    "RPG",
+    "RPGLE",
+    "CL",
+    "Db2 for i",
+    "Mapepire"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onFileSystem:silverlake-member",
+    "onFileSystem:silverlake-ifs",
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "silverlake",
+          "title": "Silverlake for IBM i",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "silverlake": [
+        {
+          "id": "silverlake.connections",
+          "name": "Connections"
+        },
+        {
+          "id": "silverlake.libraries",
+          "name": "Libraries & Source",
+          "when": "silverlake.connected"
+        },
+        {
+          "id": "silverlake.ifs",
+          "name": "IFS Browser",
+          "when": "silverlake.connected"
+        },
+        {
+          "id": "silverlake.spool",
+          "name": "My Spooled Files",
+          "when": "silverlake.connected"
+        },
+        {
+          "id": "silverlake.jobs",
+          "name": "Active Jobs",
+          "when": "silverlake.connected",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "silverlake.messages",
+          "name": "Messages",
+          "when": "silverlake.connected",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "silverlake.connections",
+        "contents": "No IBM i systems yet. Add one in a few seconds with the guided form.\n[$(add) Add IBM i Connection](command:silverlake.addConnection)\n[Open the Getting Started guide](command:silverlake.openWalkthrough)"
+      },
+      {
+        "view": "silverlake.libraries",
+        "contents": "Your library list is empty.\n[$(add) Add Library](command:silverlake.addLibrary)"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "silverlake.gettingStarted",
+        "title": "Get started with Silverlake for IBM i",
+        "description": "Connect to your IBM i, browse source, compile and run SQL.",
+        "steps": [
+          {
+            "id": "connect",
+            "title": "Add your IBM i connection",
+            "description": "Use the guided form to enter host, user and library list. Passwords are stored in the VS Code secret store.\n[Add Connection](command:silverlake.addConnection)",
+            "media": {
+              "markdown": "media/walkthrough/connect.md"
+            }
+          },
+          {
+            "id": "browse",
+            "title": "Browse libraries and open members",
+            "description": "Open the Silverlake view, expand a library, then a source file, and click a member to edit it like a local file.",
+            "media": {
+              "markdown": "media/walkthrough/browse.md"
+            }
+          },
+          {
+            "id": "compile",
+            "title": "Compile with one key",
+            "description": "Press Ctrl+Alt+C (Cmd+Alt+C on Mac) in a member. Errors appear inline and in the Problems panel.",
+            "media": {
+              "markdown": "media/walkthrough/compile.md"
+            }
+          },
+          {
+            "id": "sql",
+            "title": "Run SQL",
+            "description": "Open an SQL scratchpad and press Ctrl+Enter to run the statement under the cursor. Results open in a filterable grid you can export to CSV.\n[Open SQL Scratchpad](command:silverlake.newSqlScratchpad)",
+            "media": {
+              "markdown": "media/walkthrough/sql.md"
+            }
+          },
+          {
+            "id": "more",
+            "title": "Monitor and explore your system",
+            "description": "Open the System Dashboard, check active jobs and answer QSYSOPR messages, search objects (Ctrl+Alt+O) or source code (Ctrl+Alt+F), and edit table data in a grid.\n[Open System Dashboard](command:silverlake.openDashboard)",
+            "media": {
+              "markdown": "media/walkthrough/more.md"
+            }
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "silverlake.addConnection",
+        "title": "Add IBM i Connection\u2026",
+        "category": "Silverlake",
+        "icon": "$(add)"
+      },
+      {
+        "command": "silverlake.editConnection",
+        "title": "Edit Connection\u2026",
+        "category": "Silverlake",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "silverlake.deleteConnection",
+        "title": "Remove Connection",
+        "category": "Silverlake",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "silverlake.connect",
+        "title": "Connect",
+        "category": "Silverlake",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "silverlake.disconnect",
+        "title": "Disconnect",
+        "category": "Silverlake",
+        "icon": "$(debug-disconnect)"
+      },
+      {
+        "command": "silverlake.showMenu",
+        "title": "Show IBM i Quick Menu",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.openWalkthrough",
+        "title": "Getting Started",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.refreshLibraries",
+        "title": "Refresh",
+        "category": "Silverlake",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "silverlake.addLibrary",
+        "title": "Add Library\u2026",
+        "category": "Silverlake",
+        "icon": "$(add)"
+      },
+      {
+        "command": "silverlake.removeLibrary",
+        "title": "Remove Library from List",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.setCurrentLibrary",
+        "title": "Set as Current Library",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.newSourceFile",
+        "title": "New Source File\u2026",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.newMember",
+        "title": "New Member\u2026",
+        "category": "Silverlake",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "silverlake.deleteMember",
+        "title": "Delete Member",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.findMember",
+        "title": "Find & Open Member\u2026",
+        "category": "Silverlake",
+        "icon": "$(search)"
+      },
+      {
+        "command": "silverlake.objectCall",
+        "title": "Call Program",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.objectQuery",
+        "title": "Preview Data (first rows)",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.objectDelete",
+        "title": "Delete Object",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.refreshIfs",
+        "title": "Refresh",
+        "category": "Silverlake",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "silverlake.ifsChangeRoot",
+        "title": "Go to IFS Directory\u2026",
+        "category": "Silverlake",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "silverlake.ifsNewFile",
+        "title": "New File\u2026",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.ifsNewFolder",
+        "title": "New Folder\u2026",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.ifsDelete",
+        "title": "Delete",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.compile",
+        "title": "Compile Current Source",
+        "category": "Silverlake",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "silverlake.compileWith",
+        "title": "Compile With\u2026",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.runSql",
+        "title": "Run SQL Statement",
+        "category": "Silverlake",
+        "icon": "$(play)"
+      },
+      {
+        "command": "silverlake.newSqlScratchpad",
+        "title": "New SQL Scratchpad",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.runCl",
+        "title": "Run CL Command\u2026",
+        "category": "Silverlake",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "silverlake.refreshSpool",
+        "title": "Refresh",
+        "category": "Silverlake",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "silverlake.spoolOpen",
+        "title": "Open Spooled File",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.spoolDownload",
+        "title": "Save Spooled File As\u2026",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.spoolDelete",
+        "title": "Delete Spooled File",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.convertToFree",
+        "title": "Convert Fixed-Format C-Specs to Free",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.showOutput",
+        "title": "Show Output Log",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.openDashboard",
+        "title": "Open System Dashboard",
+        "category": "Silverlake",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "silverlake.refreshJobs",
+        "title": "Refresh",
+        "category": "Silverlake",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "silverlake.filterJobs",
+        "title": "Choose Which Jobs to Show\u2026",
+        "category": "Silverlake",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "silverlake.jobLog",
+        "title": "Show Job Log",
+        "category": "Silverlake",
+        "icon": "$(output)"
+      },
+      {
+        "command": "silverlake.endJob",
+        "title": "End Job\u2026",
+        "category": "Silverlake",
+        "icon": "$(stop-circle)"
+      },
+      {
+        "command": "silverlake.holdJob",
+        "title": "Hold Job",
+        "category": "Silverlake",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "silverlake.releaseJob",
+        "title": "Release Job",
+        "category": "Silverlake",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "silverlake.refreshMessages",
+        "title": "Refresh",
+        "category": "Silverlake",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "silverlake.replyMessage",
+        "title": "Reply\u2026",
+        "category": "Silverlake",
+        "icon": "$(reply)"
+      },
+      {
+        "command": "silverlake.removeMessage",
+        "title": "Remove Message",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.sendMessage",
+        "title": "Send Message\u2026",
+        "category": "Silverlake",
+        "icon": "$(mail)"
+      },
+      {
+        "command": "silverlake.editData",
+        "title": "Edit Table Data\u2026",
+        "category": "Silverlake",
+        "icon": "$(table)"
+      },
+      {
+        "command": "silverlake.searchObjects",
+        "title": "Search Objects\u2026",
+        "category": "Silverlake",
+        "icon": "$(search)"
+      },
+      {
+        "command": "silverlake.searchSource",
+        "title": "Search Source Code\u2026",
+        "category": "Silverlake",
+        "icon": "$(search-fuzzy)"
+      },
+      {
+        "command": "silverlake.whereUsed",
+        "title": "Where Used\u2026",
+        "category": "Silverlake",
+        "icon": "$(references)"
+      },
+      {
+        "command": "silverlake.openProgramSource",
+        "title": "Open Program Source",
+        "category": "Silverlake",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "silverlake.showHistory",
+        "title": "Show Local History\u2026",
+        "category": "Silverlake",
+        "icon": "$(history)"
+      },
+      {
+        "command": "silverlake.compareWithServer",
+        "title": "Compare with Copy on IBM i",
+        "category": "Silverlake",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "silverlake.compareMembers",
+        "title": "Compare with Another Member\u2026",
+        "category": "Silverlake",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "silverlake.selectForCompare",
+        "title": "Select for Compare",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.compareWithSelected",
+        "title": "Compare with Selected",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.openHistoryFolder",
+        "title": "Open Local History Folder",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.refreshSqlCache",
+        "title": "Refresh SQL Table & Column Cache",
+        "category": "Silverlake",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "silverlake.lintCurrent",
+        "title": "Run RPG Code Checks",
+        "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.disableLintRule",
+        "title": "Turn Off a Code Check",
+        "category": "Silverlake"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "silverlake.addConnection",
+          "when": "view == silverlake.connections",
+          "group": "navigation"
+        },
+        {
+          "command": "silverlake.addLibrary",
+          "when": "view == silverlake.libraries",
+          "group": "navigation@1"
+        },
+        {
+          "command": "silverlake.findMember",
+          "when": "view == silverlake.libraries",
+          "group": "navigation@2"
+        },
+        {
+          "command": "silverlake.refreshLibraries",
+          "when": "view == silverlake.libraries",
+          "group": "navigation@3"
+        },
+        {
+          "command": "silverlake.ifsChangeRoot",
+          "when": "view == silverlake.ifs",
+          "group": "navigation@1"
+        },
+        {
+          "command": "silverlake.refreshIfs",
+          "when": "view == silverlake.ifs",
+          "group": "navigation@2"
+        },
+        {
+          "command": "silverlake.refreshSpool",
+          "when": "view == silverlake.spool",
+          "group": "navigation"
+        },
+        {
+          "command": "silverlake.openDashboard",
+          "when": "view == silverlake.connections && silverlake.connected",
+          "group": "navigation@1"
+        },
+        {
+          "command": "silverlake.searchObjects",
+          "when": "view == silverlake.libraries",
+          "group": "navigation@0"
+        },
+        {
+          "command": "silverlake.searchSource",
+          "when": "view == silverlake.libraries",
+          "group": "1_search@1"
+        },
+        {
+          "command": "silverlake.filterJobs",
+          "when": "view == silverlake.jobs",
+          "group": "navigation@1"
+        },
+        {
+          "command": "silverlake.refreshJobs",
+          "when": "view == silverlake.jobs",
+          "group": "navigation@2"
+        },
+        {
+          "command": "silverlake.sendMessage",
+          "when": "view == silverlake.messages",
+          "group": "navigation@1"
+        },
+        {
+          "command": "silverlake.refreshMessages",
+          "when": "view == silverlake.messages",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "silverlake.connect",
+          "when": "view == silverlake.connections && viewItem == connection",
+          "group": "inline"
+        },
+        {
+          "command": "silverlake.disconnect",
+          "when": "view == silverlake.connections && viewItem == connection.active",
+          "group": "inline"
+        },
+        {
+          "command": "silverlake.editConnection",
+          "when": "view == silverlake.connections && viewItem =~ /^connection/",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.deleteConnection",
+          "when": "view == silverlake.connections && viewItem =~ /^connection/",
+          "group": "1@2"
+        },
+        {
+          "command": "silverlake.newSourceFile",
+          "when": "view == silverlake.libraries && viewItem == library",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.setCurrentLibrary",
+          "when": "view == silverlake.libraries && viewItem == library",
+          "group": "1@2"
+        },
+        {
+          "command": "silverlake.removeLibrary",
+          "when": "view == silverlake.libraries && viewItem == library",
+          "group": "9@1"
+        },
+        {
+          "command": "silverlake.newMember",
+          "when": "view == silverlake.libraries && viewItem == srcfile",
+          "group": "inline"
+        },
+        {
+          "command": "silverlake.newMember",
+          "when": "view == silverlake.libraries && viewItem == srcfile",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.compile",
+          "when": "view == silverlake.libraries && viewItem == member",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.compileWith",
+          "when": "view == silverlake.libraries && viewItem == member",
+          "group": "1@2"
+        },
+        {
+          "command": "silverlake.deleteMember",
+          "when": "view == silverlake.libraries && viewItem == member",
+          "group": "9@1"
+        },
+        {
+          "command": "silverlake.objectCall",
+          "when": "view == silverlake.libraries && viewItem == object.pgm",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.objectQuery",
+          "when": "view == silverlake.libraries && viewItem == object.file",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.objectDelete",
+          "when": "view == silverlake.libraries && viewItem =~ /^object/",
+          "group": "9@1"
+        },
+        {
+          "command": "silverlake.ifsNewFile",
+          "when": "view == silverlake.ifs && viewItem == ifs.dir",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.ifsNewFolder",
+          "when": "view == silverlake.ifs && viewItem == ifs.dir",
+          "group": "1@2"
+        },
+        {
+          "command": "silverlake.compile",
+          "when": "view == silverlake.ifs && viewItem == ifs.file",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.ifsDelete",
+          "when": "view == silverlake.ifs && viewItem =~ /^ifs/",
+          "group": "9@1"
+        },
+        {
+          "command": "silverlake.spoolOpen",
+          "when": "view == silverlake.spool && viewItem == spool",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.spoolDownload",
+          "when": "view == silverlake.spool && viewItem == spool",
+          "group": "1@2"
+        },
+        {
+          "command": "silverlake.spoolDelete",
+          "when": "view == silverlake.spool && viewItem == spool",
+          "group": "9@1"
+        },
+        {
+          "command": "silverlake.jobLog",
+          "when": "view == silverlake.jobs && viewItem =~ /^job/",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.holdJob",
+          "when": "view == silverlake.jobs && viewItem == job",
+          "group": "2@1"
+        },
+        {
+          "command": "silverlake.releaseJob",
+          "when": "view == silverlake.jobs && viewItem == job.held",
+          "group": "2@1"
+        },
+        {
+          "command": "silverlake.endJob",
+          "when": "view == silverlake.jobs && viewItem =~ /^job/",
+          "group": "9@1"
+        },
+        {
+          "command": "silverlake.replyMessage",
+          "when": "view == silverlake.messages && viewItem == message.inquiry",
+          "group": "inline"
+        },
+        {
+          "command": "silverlake.replyMessage",
+          "when": "view == silverlake.messages && viewItem == message.inquiry",
+          "group": "1@1"
+        },
+        {
+          "command": "silverlake.removeMessage",
+          "when": "view == silverlake.messages && viewItem =~ /^message/",
+          "group": "9@1"
+        },
+        {
+          "command": "silverlake.editData",
+          "when": "view == silverlake.libraries && viewItem == object.file",
+          "group": "1@0"
+        },
+        {
+          "command": "silverlake.openProgramSource",
+          "when": "view == silverlake.libraries && viewItem == object.pgm",
+          "group": "1@0"
+        },
+        {
+          "command": "silverlake.whereUsed",
+          "when": "view == silverlake.libraries && viewItem =~ /^object/",
+          "group": "2@1"
+        },
+        {
+          "command": "silverlake.showHistory",
+          "when": "view == silverlake.libraries && viewItem == member",
+          "group": "3@1"
+        },
+        {
+          "command": "silverlake.selectForCompare",
+          "when": "view == silverlake.libraries && viewItem == member",
+          "group": "3@2"
+        },
+        {
+          "command": "silverlake.compareWithSelected",
+          "when": "view == silverlake.libraries && viewItem == member && silverlake.hasCompareSelection",
+          "group": "3@3"
+        },
+        {
+          "command": "silverlake.showHistory",
+          "when": "view == silverlake.ifs && viewItem == ifs.file",
+          "group": "3@1"
+        },
+        {
+          "command": "silverlake.selectForCompare",
+          "when": "view == silverlake.ifs && viewItem == ifs.file",
+          "group": "3@2"
+        },
+        {
+          "command": "silverlake.compareWithSelected",
+          "when": "view == silverlake.ifs && viewItem == ifs.file && silverlake.hasCompareSelection",
+          "group": "3@3"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "silverlake.compile",
+          "when": "silverlake.connected && resourceScheme =~ /^silverlake-/ && editorLangId != sql",
+          "group": "navigation"
+        },
+        {
+          "command": "silverlake.runSql",
+          "when": "silverlake.connected && editorLangId == sql",
+          "group": "navigation"
+        },
+        {
+          "command": "silverlake.compareWithServer",
+          "when": "silverlake.connected && resourceScheme =~ /^silverlake-(member|ifs)$/",
+          "group": "1_silverlake@1"
+        },
+        {
+          "command": "silverlake.showHistory",
+          "when": "resourceScheme =~ /^silverlake-(member|ifs)$/",
+          "group": "1_silverlake@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "silverlake.runSql",
+          "when": "silverlake.connected && editorLangId == sql",
+          "group": "silverlake@1"
+        },
+        {
+          "command": "silverlake.convertToFree",
+          "when": "editorLangId == rpgle && editorHasSelection",
+          "group": "silverlake@2"
+        },
+        {
+          "command": "silverlake.compareWithServer",
+          "when": "silverlake.connected && resourceScheme =~ /^silverlake-(member|ifs)$/",
+          "group": "silverlake@3"
+        },
+        {
+          "command": "silverlake.compareMembers",
+          "when": "silverlake.connected && resourceScheme =~ /^silverlake-(member|ifs)$/",
+          "group": "silverlake@4"
+        },
+        {
+          "command": "silverlake.showHistory",
+          "when": "resourceScheme =~ /^silverlake-(member|ifs)$/",
+          "group": "silverlake@5"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "silverlake.connect",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.removeLibrary",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.setCurrentLibrary",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.newSourceFile",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.newMember",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.deleteMember",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.objectCall",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.objectQuery",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.objectDelete",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.ifsNewFile",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.ifsNewFolder",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.ifsDelete",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.spoolOpen",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.spoolDownload",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.spoolDelete",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.endJob",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.holdJob",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.releaseJob",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.replyMessage",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.removeMessage",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.openProgramSource",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.selectForCompare",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.compareWithSelected",
+          "when": "false"
+        },
+        {
+          "command": "silverlake.disableLintRule",
+          "when": "false"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "silverlake.compile",
+        "key": "ctrl+alt+c",
+        "mac": "cmd+alt+c",
+        "when": "editorTextFocus && silverlake.connected && editorLangId != sql"
+      },
+      {
+        "command": "silverlake.runSql",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && silverlake.connected && editorLangId == sql"
+      },
+      {
+        "command": "silverlake.runCl",
+        "key": "ctrl+alt+l",
+        "mac": "cmd+alt+l",
+        "when": "silverlake.connected"
+      },
+      {
+        "command": "silverlake.showMenu",
+        "key": "ctrl+alt+i",
+        "mac": "cmd+alt+i"
+      },
+      {
+        "command": "silverlake.searchObjects",
+        "key": "ctrl+alt+o",
+        "mac": "cmd+alt+o",
+        "when": "silverlake.connected"
+      },
+      {
+        "command": "silverlake.searchSource",
+        "key": "ctrl+alt+f",
+        "mac": "cmd+alt+f",
+        "when": "silverlake.connected"
+      }
+    ],
+    "languages": [
+      {
+        "id": "rpgle",
+        "aliases": [
+          "RPGLE",
+          "ILE RPG",
+          "rpgle"
+        ],
+        "extensions": [
+          ".rpgle",
+          ".sqlrpgle",
+          ".rpgleinc",
+          ".rpginc",
+          ".rpg"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "cl",
+        "aliases": [
+          "CL",
+          "Control Language"
+        ],
+        "extensions": [
+          ".clle",
+          ".clp",
+          ".cl",
+          ".cmd"
+        ],
+        "configuration": "./language-configuration-cl.json"
+      },
+      {
+        "id": "dds",
+        "aliases": [
+          "DDS"
+        ],
+        "extensions": [
+          ".pf",
+          ".lf",
+          ".dspf",
+          ".prtf"
+        ],
+        "configuration": "./language-configuration-dds.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "rpgle",
+        "scopeName": "source.rpgle",
+        "path": "./syntaxes/rpgle.tmLanguage.json"
+      },
+      {
+        "language": "cl",
+        "scopeName": "source.cl",
+        "path": "./syntaxes/cl.tmLanguage.json"
+      },
+      {
+        "language": "dds",
+        "scopeName": "source.dds",
+        "path": "./syntaxes/dds.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "rpgle",
+        "path": "./snippets/rpgle.json"
+      },
+      {
+        "language": "cl",
+        "path": "./snippets/cl.json"
+      },
+      {
+        "language": "sql",
+        "path": "./snippets/sql.json"
+      }
+    ],
+    "configuration": {
+      "title": "Silverlake for IBM i",
+      "properties": {
+        "silverlake.compileActions": {
+          "type": "array",
+          "markdownDescription": "Compile actions. Variables: `&LIB` (source library), `&OBJLIB` (target library), `&SRCFILE`, `&NAME`, `&EXT`, `&FULLPATH` (IFS path), `&CURLIB`, `&USER`. Add `OPTION(*EVENTF)` to get inline errors.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "command",
+              "extensions"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              },
+              "extensions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "member",
+                  "ifs",
+                  "both"
+                ],
+                "default": "member"
+              }
+            }
+          },
+          "default": [
+            {
+              "name": "Create Bound RPG Program (CRTBNDRPG)",
+              "extensions": [
+                "rpgle"
+              ],
+              "source": "member",
+              "command": "CRTBNDRPG PGM(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OPTION(*EVENTF) DBGVIEW(*SOURCE) REPLACE(*YES)"
+            },
+            {
+              "name": "Create RPG Module (CRTRPGMOD)",
+              "extensions": [
+                "rpgle"
+              ],
+              "source": "member",
+              "command": "CRTRPGMOD MODULE(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OPTION(*EVENTF) DBGVIEW(*SOURCE) REPLACE(*YES)"
+            },
+            {
+              "name": "Create SQL RPG Program (CRTSQLRPGI)",
+              "extensions": [
+                "sqlrpgle"
+              ],
+              "source": "member",
+              "command": "CRTSQLRPGI OBJ(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OBJTYPE(*PGM) COMMIT(*NONE) OPTION(*EVENTF) DBGVIEW(*SOURCE) CLOSQLCSR(*ENDMOD) REPLACE(*YES)"
+            },
+            {
+              "name": "Create Bound CL Program (CRTBNDCL)",
+              "extensions": [
+                "clle"
+              ],
+              "source": "member",
+              "command": "CRTBNDCL PGM(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OPTION(*EVENTF) DBGVIEW(*SOURCE) REPLACE(*YES)"
+            },
+            {
+              "name": "Create CL Program (CRTCLPGM)",
+              "extensions": [
+                "clp"
+              ],
+              "source": "member",
+              "command": "CRTCLPGM PGM(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OPTION(*EVENTF) REPLACE(*YES)"
+            },
+            {
+              "name": "Create Command (CRTCMD)",
+              "extensions": [
+                "cmd"
+              ],
+              "source": "member",
+              "command": "CRTCMD CMD(&OBJLIB/&NAME) PGM(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OPTION(*EVENTF) REPLACE(*YES)"
+            },
+            {
+              "name": "Create Physical File (CRTPF)",
+              "extensions": [
+                "pf"
+              ],
+              "source": "member",
+              "command": "CRTPF FILE(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OPTION(*EVENTF)"
+            },
+            {
+              "name": "Create Logical File (CRTLF)",
+              "extensions": [
+                "lf"
+              ],
+              "source": "member",
+              "command": "CRTLF FILE(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OPTION(*EVENTF)"
+            },
+            {
+              "name": "Create Display File (CRTDSPF)",
+              "extensions": [
+                "dspf"
+              ],
+              "source": "member",
+              "command": "CRTDSPF FILE(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OPTION(*EVENTF) REPLACE(*YES)"
+            },
+            {
+              "name": "Create Printer File (CRTPRTF)",
+              "extensions": [
+                "prtf"
+              ],
+              "source": "member",
+              "command": "CRTPRTF FILE(&OBJLIB/&NAME) SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) OPTION(*EVENTF) REPLACE(*YES)"
+            },
+            {
+              "name": "Run SQL Script (RUNSQLSTM)",
+              "extensions": [
+                "sql"
+              ],
+              "source": "member",
+              "command": "RUNSQLSTM SRCFILE(&LIB/&SRCFILE) SRCMBR(&NAME) COMMIT(*NONE) NAMING(*SQL)"
+            },
+            {
+              "name": "Create Bound RPG Program from IFS (CRTBNDRPG)",
+              "extensions": [
+                "rpgle"
+              ],
+              "source": "ifs",
+              "command": "CRTBNDRPG PGM(&OBJLIB/&NAME) SRCSTMF('&FULLPATH') OPTION(*EVENTF) DBGVIEW(*SOURCE) REPLACE(*YES) TGTCCSID(*JOB)"
+            },
+            {
+              "name": "Create SQL RPG Program from IFS (CRTSQLRPGI)",
+              "extensions": [
+                "sqlrpgle"
+              ],
+              "source": "ifs",
+              "command": "CRTSQLRPGI OBJ(&OBJLIB/&NAME) SRCSTMF('&FULLPATH') OBJTYPE(*PGM) COMMIT(*NONE) OPTION(*EVENTF) DBGVIEW(*SOURCE) CVTCCSID(*JOB) REPLACE(*YES)"
+            },
+            {
+              "name": "Create Bound CL Program from IFS (CRTBNDCL)",
+              "extensions": [
+                "clle"
+              ],
+              "source": "ifs",
+              "command": "CRTBNDCL PGM(&OBJLIB/&NAME) SRCSTMF('&FULLPATH') OPTION(*EVENTF) DBGVIEW(*SOURCE) REPLACE(*YES)"
+            },
+            {
+              "name": "Run SQL Script from IFS (RUNSQLSTM)",
+              "extensions": [
+                "sql"
+              ],
+              "source": "ifs",
+              "command": "RUNSQLSTM SRCSTMF('&FULLPATH') COMMIT(*NONE) NAMING(*SQL)"
+            }
+          ]
+        },
+        "silverlake.sql.maxRows": {
+          "type": "number",
+          "default": 500,
+          "minimum": 1,
+          "description": "Maximum number of rows fetched into the SQL result grid."
+        },
+        "silverlake.sql.confirmDestructive": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask for confirmation before running DELETE, DROP, TRUNCATE or UPDATE without WHERE."
+        },
+        "silverlake.tempDirectory": {
+          "type": "string",
+          "default": "/tmp",
+          "description": "IFS directory used for temporary files during member transfer."
+        },
+        "silverlake.spool.maxEntries": {
+          "type": "number",
+          "default": 200,
+          "description": "Maximum number of spooled files listed."
+        },
+        "silverlake.autoConnectLast": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reconnect automatically to the last used system when VS Code starts."
+        },
+        "silverlake.objects.showAll": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show an 'Objects' folder (programs, files, service programs\u2026) under each library."
+        },
+        "silverlake.dashboard.refreshSeconds": {
+          "type": "number",
+          "default": 30,
+          "minimum": 0,
+          "description": "How often the System Dashboard refreshes (seconds). 0 = only when you click Refresh."
+        },
+        "silverlake.dataEditor.pageSize": {
+          "type": "number",
+          "default": 100,
+          "minimum": 10,
+          "maximum": 2000,
+          "description": "Rows per page in the table data editor."
+        },
+        "silverlake.history.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep a local copy of every member and IFS file you open or save, so you can compare and restore."
+        },
+        "silverlake.history.maxVersions": {
+          "type": "number",
+          "default": 50,
+          "minimum": 1,
+          "description": "Local history versions kept per member / file."
+        },
+        "silverlake.lint.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check RPG sources as you type."
+        },
+        "silverlake.lint.maxProcedureLines": {
+          "type": "number",
+          "default": 200,
+          "description": "Report procedures longer than this many lines."
+        },
+        "silverlake.lint.rules": {
+          "type": "object",
+          "markdownDescription": "Turn individual RPG checks on or off.",
+          "default": {},
+          "properties": {
+            "unused-definition": {
+              "type": "boolean",
+              "default": true,
+              "description": "Variables, constants and subroutines that are declared but never used"
+            },
+            "goto": {
+              "type": "boolean",
+              "default": true,
+              "description": "GOTO usage"
+            },
+            "tag": {
+              "type": "boolean",
+              "default": true,
+              "description": "TAG labels"
+            },
+            "program-end": {
+              "type": "boolean",
+              "default": true,
+              "description": "Main program without *INLR = *ON or RETURN"
+            },
+            "long-procedure": {
+              "type": "boolean",
+              "default": true,
+              "description": "Procedures longer than the configured number of lines"
+            },
+            "numbered-indicator": {
+              "type": "boolean",
+              "default": true,
+              "description": "Numbered indicators (*IN01-*IN99)"
+            },
+            "empty-on-error": {
+              "type": "boolean",
+              "default": true,
+              "description": "ON-ERROR blocks that silently swallow errors"
+            },
+            "select-star": {
+              "type": "boolean",
+              "default": true,
+              "description": "SELECT * in embedded SQL"
+            },
+            "mixed-format": {
+              "type": "boolean",
+              "default": true,
+              "description": "Fixed-format calculation specs in a free-format source"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.js",
+    "package": "npm run typecheck && npm run build -- --production && vsce package --no-dependencies",
+    "pretest": "tsc -p ."
+  },
+  "dependencies": {
+    "@ibm/mapepire-js": "^1.0.1",
+    "node-ssh": "^13.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/ssh2": "^1.15.6",
+    "@types/vscode": "1.85.0",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gauravgupta0612/silverlake-ibmi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gauravgupta0612/silverlake-ibmi/issues"
+  },
+  "homepage": "https://github.com/gauravgupta0612/silverlake-ibmi#readme"
+}

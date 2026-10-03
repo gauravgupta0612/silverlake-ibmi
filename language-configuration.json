@@ -1,0 +1,47 @@
+{
+  "comments": {
+    "lineComment": "//"
+  },
+  "brackets": [
+    [
+      "(",
+      ")"
+    ]
+  ],
+  "autoClosingPairs": [
+    {
+      "open": "(",
+      "close": ")"
+    },
+    {
+      "open": "'",
+      "close": "'",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    }
+  ],
+  "surroundingPairs": [
+    [
+      "(",
+      ")"
+    ],
+    [
+      "'",
+      "'"
+    ]
+  ],
+  "wordPattern": "(%?[A-Za-z$#@_][\\w$#@-]*)",
+  "indentationRules": {
+    "increaseIndentPattern": "(?i)^\\s*(if|elseif|else|dow|dou|for|for-each|select|when|when-is|when-in|other|monitor|on-error|on-exit|begsr|dcl-proc|dcl-ds(?!.*(likeds|likerec|extname|end-ds))|dcl-pr(?!.*end-pr)|dcl-pi(?!.*end-pi))\\b.*$",
+    "decreaseIndentPattern": "(?i)^\\s*(endif|elseif|else|enddo|endfor|endsl|when|when-is|when-in|other|endmon|on-error|on-exit|endsr|end-proc|end-ds|end-pr|end-pi)\\b.*$"
+  },
+  "rulers": [],
+  "folding": {
+    "markers": {
+      "start": "(?i)^\\s*(dcl-proc|begsr|//\\s*#region)\\b",
+      "end": "(?i)^\\s*(end-proc|endsr|//\\s*#endregion)\\b"
+    }
+  }
+}

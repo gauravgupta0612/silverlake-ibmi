@@ -1,0 +1,196 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "RPGLE",
+  "scopeName": "source.rpgle",
+  "patterns": [
+    {
+      "include": "#fixedComment"
+    },
+    {
+      "include": "#lineComment"
+    },
+    {
+      "include": "#directive"
+    },
+    {
+      "include": "#fixedSpec"
+    },
+    {
+      "include": "#sql"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#bifs"
+    },
+    {
+      "include": "#special"
+    },
+    {
+      "include": "#declarations"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#numbers"
+    }
+  ],
+  "repository": {
+    "fixedComment": {
+      "patterns": [
+        {
+          "name": "comment.line.fixed.rpgle",
+          "match": "^.{5}[HhFfDdIiCcOoPp]\\*.*$"
+        },
+        {
+          "name": "comment.line.fixed.rpgle",
+          "comment": "blank spec + '*' in column 7; '*' followed by a letter is treated as code (e.g. *inlr)",
+          "match": "^[ 0-9]{5} \\*(?![A-Za-z]).*$"
+        }
+      ]
+    },
+    "lineComment": {
+      "name": "comment.line.double-slash.rpgle",
+      "match": "//.*$"
+    },
+    "directive": {
+      "patterns": [
+        {
+          "name": "keyword.control.directive.rpgle",
+          "match": "(?i)^\\s*\\*\\*(free|ctdata|ftrans|alttseq).*$"
+        },
+        {
+          "name": "keyword.control.directive.rpgle",
+          "match": "(?i)^.{0,7}\\s*/(copy|include|if|elseif|else|endif|define|undefine|eof|free|end-free|set|restore|title|eject|space)\\b.*$"
+        }
+      ]
+    },
+    "fixedSpec": {
+      "patterns": [
+        {
+          "comment": "C-spec: highlight the opcode in columns 26-35",
+          "match": "(?i)^([ 0-9]{5})(c)(?![a-z]{2,}[ (;])(.{19})([A-Z][A-Z0-9-]*(?:\\([A-Z ]*\\))?)",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.sequence.rpgle"
+            },
+            "2": {
+              "name": "keyword.other.spec.rpgle"
+            },
+            "4": {
+              "name": "keyword.control.opcode.rpgle"
+            }
+          }
+        },
+        {
+          "comment": "D/P/F spec name in columns 7-21 (not free-form dcl-\u2026)",
+          "match": "(?i)^([ 0-9]{5})([dpf])(?!cl-|ree\\b)(\\s*)([a-z$#@_][\\w$#@]*)",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.sequence.rpgle"
+            },
+            "2": {
+              "name": "keyword.other.spec.rpgle"
+            },
+            "4": {
+              "name": "entity.name.variable.rpgle"
+            }
+          }
+        },
+        {
+          "match": "(?i)^([ 0-9]{5})([hio])(?=\\s|$)",
+          "captures": {
+            "1": {
+              "name": "constant.numeric.sequence.rpgle"
+            },
+            "2": {
+              "name": "keyword.other.spec.rpgle"
+            }
+          }
+        }
+      ]
+    },
+    "sql": {
+      "name": "meta.embedded.sql.rpgle",
+      "begin": "(?i)\\b(exec\\s+sql)\\b",
+      "end": ";|$",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.sql.rpgle"
+        }
+      },
+      "patterns": [
+        {
+          "name": "variable.other.host.rpgle",
+          "match": ":[A-Za-z_$#@][\\w$#@.]*"
+        },
+        {
+          "include": "#strings"
+        },
+        {
+          "name": "keyword.other.sql.rpgle",
+          "match": "(?i)\\b(select|from|where|into|insert|update|delete|set|values|join|left|right|inner|outer|on|group|by|order|having|fetch|first|rows|only|declare|cursor|for|open|close|with|as|and|or|not|in|is|null|like|between|exists|union|all|distinct|case|when|then|else|end|commit|rollback|prepare|execute|immediate|call|current|date|time|timestamp|count|sum|avg|min|max|coalesce)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.single.rpgle",
+      "begin": "'",
+      "end": "'",
+      "patterns": [
+        {
+          "name": "constant.character.escape.rpgle",
+          "match": "''"
+        }
+      ]
+    },
+    "bifs": {
+      "name": "support.function.builtin.rpgle",
+      "match": "(?i)%[a-z][a-z0-9]*\\b"
+    },
+    "special": {
+      "name": "constant.language.special.rpgle",
+      "match": "(?i)\\*(on|off|blanks?|zeros?|hival|loval|null|omit|nopass|varsize|string|trim|rightadj|nokey|all|inlr|in\\d\\d|in|start|end|entry|iso|eur|usa|jis|mdy|dmy|ymd|ymd0|cymd|days|months|years|hours|minutes|seconds|mseconds|caller|new|no|yes|srcstmt|nodebugio|input|output|update|delete|ext|pssr|inzsr|date|sys|job|user|proc|n|dft|data|max|keep|alloc|natural|strict|exact|chkobj|libl|curlib|ignore)\\b"
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "match": "(?i)\\b(dcl-(?:s|c|ds|pr|pi|proc|f|subf|parm|enum))\\s+([\\w$#@*]+)",
+          "captures": {
+            "1": {
+              "name": "storage.type.declaration.rpgle"
+            },
+            "2": {
+              "name": "entity.name.function.rpgle"
+            }
+          }
+        },
+        {
+          "name": "storage.type.declaration.rpgle",
+          "match": "(?i)\\b(end-(?:ds|pr|pi|proc|enum)|ctl-opt)\\b"
+        },
+        {
+          "name": "storage.type.datatype.rpgle",
+          "match": "(?i)\\b(char|varchar|graph|vargraph|ucs2|varucs2|packed|zoned|int|uns|bindec|float|date|time|timestamp|ind|pointer|object|like|likeds|likerec|likefile|dim|inz|qualified|template|based|const|value|options|extpgm|extproc|export|import|static|overlay|pos|extname|extfld|usage|keyed|disk|workstn|printer|sfile|infds|prefix|rename|ccsid|dtaara|nullind|rtnparm|opdesc|ext)\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "name": "keyword.control.rpgle",
+      "match": "(?i)\\b(if|elseif|else|endif|dow|dou|enddo|for|for-each|endfor|to|downto|by|in|select|when|when-is|when-in|other|endsl|monitor|on-error|on-exit|endmon|begsr|endsr|exsr|return|leave|leavesr|iter|chain|read|reade|readp|readpe|readc|setll|setgt|write|update|delete|exfmt|open|close|unlock|feod|commit|rolbk|clear|reset|eval|evalr|eval-corr|callp|dsply|sorta|data-into|data-gen|xml-into|xml-sax|snd-msg|dealloc|test|and|or|not)\\b"
+    },
+    "operators": {
+      "name": "keyword.operator.rpgle",
+      "match": "(\\+=|-=|\\*=|/=|\\*\\*=|<>|<=|>=|=|<|>|\\+|-|\\*\\*)"
+    },
+    "numbers": {
+      "name": "constant.numeric.rpgle",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
+    }
+  }
+}

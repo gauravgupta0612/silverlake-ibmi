@@ -1,0 +1,11 @@
+node_modules/
+dist/
+out/
+*.vsix
+
+# Local only
+dev-config/
+Claude outputs/
+*.log
+.DS_Store
+Thumbs.db

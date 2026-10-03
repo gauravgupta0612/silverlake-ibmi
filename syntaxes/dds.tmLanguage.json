@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "DDS",
+  "scopeName": "source.dds",
+  "patterns": [
+    {
+      "name": "comment.line.dds",
+      "match": "^.{5}A?\\*.*$|^.{6}\\*.*$"
+    },
+    {
+      "match": "^([ 0-9]{5})([Aa])(.{10})([ RKSJO])(?:(.)([A-Za-z$#@][\\w$#@]*))?",
+      "captures": {
+        "1": {
+          "name": "constant.numeric.sequence.dds"
+        },
+        "2": {
+          "name": "keyword.other.spec.dds"
+        },
+        "4": {
+          "name": "storage.type.record.dds"
+        },
+        "6": {
+          "name": "entity.name.variable.field.dds"
+        }
+      }
+    },
+    {
+      "name": "string.quoted.single.dds",
+      "begin": "'",
+      "end": "'"
+    },
+    {
+      "name": "support.function.keyword.dds",
+      "match": "(?i)\\b(TEXT|COLHDG|REF|REFFLD|UNIQUE|PFILE|JFILE|JOIN|JFLD|DSPSIZE|CA\\d\\d|CF\\d\\d|PRINT|INDARA|SFL|SFLCTL|SFLSIZ|SFLPAG|SFLDSP|SFLDSPCTL|SFLCLR|SFLEND|OVERLAY|DSPATR|COLOR|EDTCDE|EDTWRD|VALUES|RANGE|COMP|CHECK|DFT|ALIAS|CCSID|VARLEN|DATFMT|TIMFMT|SKIPB|SKIPA|SPACEB|SPACEA|PAGNBR|DATE|TIME|USER|SYSNAME|ERRMSG|MSGID|CHGINPDFT|WINDOW|RTNCSRLOC|CSRLOC|HELP|LIFO|FIFO|FCFO|SELECT|OMIT|DYNSLT|RENAME|CONCAT|SST|ALWNULL)\\b"
+    },
+    {
+      "name": "constant.numeric.dds",
+      "match": "\\b\\d+\\b"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "Object list": {
+    "prefix": "ibmi-objects",
+    "description": "Objects in a library",
+    "body": [
+      "SELECT OBJNAME, OBJTYPE, OBJATTRIBUTE, OBJTEXT, OBJSIZE, LAST_USED_TIMESTAMP",
+      "  FROM TABLE(QSYS2.OBJECT_STATISTICS('${1:MYLIB}', '${2:*ALL}'))",
+      "  ORDER BY OBJTYPE, OBJNAME;"
+    ]
+  },
+  "Active jobs": {
+    "prefix": "ibmi-jobs",
+    "body": [
+      "SELECT JOB_NAME, AUTHORIZATION_NAME, JOB_STATUS, ELAPSED_CPU_PERCENTAGE, FUNCTION",
+      "  FROM TABLE(QSYS2.ACTIVE_JOB_INFO(${1:SUBSYSTEM_LIST_FILTER => 'QBATCH'}))",
+      "  ORDER BY ELAPSED_CPU_PERCENTAGE DESC;"
+    ]
+  },
+  "Job log": {
+    "prefix": "ibmi-joblog",
+    "body": [
+      "SELECT MESSAGE_TIMESTAMP, MESSAGE_ID, MESSAGE_TYPE, MESSAGE_TEXT, MESSAGE_SECOND_LEVEL_TEXT",
+      "  FROM TABLE(QSYS2.JOBLOG_INFO('${1:*}'))",
+      "  ORDER BY ORDINAL_POSITION DESC;"
+    ]
+  },
+  "Message queue": {
+    "prefix": "ibmi-qsysopr",
+    "body": [
+      "SELECT MESSAGE_TIMESTAMP, MESSAGE_ID, MESSAGE_TEXT, FROM_USER",
+      "  FROM QSYS2.MESSAGE_QUEUE_INFO",
+      "  WHERE MESSAGE_QUEUE_NAME = '${1:QSYSOPR}'",
+      "  ORDER BY MESSAGE_TIMESTAMP DESC",
+      "  FETCH FIRST 100 ROWS ONLY;"
+    ]
+  },
+  "Who uses this object (locks)": {
+    "prefix": "ibmi-locks",
+    "body": [
+      "SELECT JOB_NAME, LOCK_STATE, LOCK_STATUS, LOCK_SCOPE",
+      "  FROM QSYS2.OBJECT_LOCK_INFO",
+      "  WHERE OBJECT_SCHEMA = '${1:MYLIB}' AND OBJECT_NAME = '${2:MYOBJ}';"
+    ]
+  },
+  "Run CL from SQL": {
+    "prefix": "ibmi-qcmdexc",
+    "body": [
+      "CALL QSYS2.QCMDEXC('${1:CHGJOB LOG(4 00 *SECLVL)}');"
+    ]
+  },
+  "Spooled file contents": {
+    "prefix": "ibmi-spool",
+    "body": [
+      "SELECT SPOOLED_DATA",
+      "  FROM TABLE(SYSTOOLS.SPOOLED_FILE_DATA(JOB_NAME => '${1:123456/USER/QPADEV0001}', SPOOLED_FILE_NAME => '${2:QSYSPRT}'));"
+    ]
+  },
+  "Source members changed recently": {
+    "prefix": "ibmi-recent-members",
+    "body": [
+      "SELECT SYSTEM_TABLE_SCHEMA, SYSTEM_TABLE_NAME, SYSTEM_TABLE_MEMBER, SOURCE_TYPE, LAST_SOURCE_UPDATE_TIMESTAMP",
+      "  FROM QSYS2.SYSPARTITIONSTAT",
+      "  WHERE SYSTEM_TABLE_SCHEMA = '${1:MYLIB}' AND SOURCE_TYPE IS NOT NULL",
+      "  ORDER BY LAST_SOURCE_UPDATE_TIMESTAMP DESC",
+      "  FETCH FIRST 50 ROWS ONLY;"
+    ]
+  },
+  "PTF group level": {
+    "prefix": "ibmi-ptf",
+    "body": [
+      "SELECT PTF_GROUP_NAME, PTF_GROUP_DESCRIPTION, PTF_GROUP_LEVEL, PTF_GROUP_STATUS",
+      "  FROM QSYS2.GROUP_PTF_INFO ORDER BY PTF_GROUP_NAME;"
+    ]
+  },
+  "System status": {
+    "prefix": "ibmi-system",
+    "body": [
+      "SELECT * FROM QSYS2.SYSTEM_STATUS_INFO;"
+    ]
+  }
+}

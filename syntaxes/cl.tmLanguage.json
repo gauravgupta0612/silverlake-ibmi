@@ -1,0 +1,63 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "CL",
+  "scopeName": "source.cl",
+  "patterns": [
+    {
+      "name": "comment.block.cl",
+      "begin": "/\\*",
+      "end": "\\*/"
+    },
+    {
+      "name": "string.quoted.single.cl",
+      "begin": "'",
+      "end": "'",
+      "patterns": [
+        {
+          "name": "constant.character.escape.cl",
+          "match": "''"
+        }
+      ]
+    },
+    {
+      "name": "variable.other.cl",
+      "match": "&[A-Za-z$#@][\\w$#@]*"
+    },
+    {
+      "name": "keyword.control.cl",
+      "match": "(?i)\\b(PGM|ENDPGM|IF|THEN|ELSE|DO|ENDDO|DOWHILE|DOUNTIL|DOFOR|SELECT|WHEN|OTHERWISE|ENDSELECT|LEAVE|ITERATE|GOTO|SUBR|ENDSUBR|CALLSUBR|RTNSUBR|MONMSG|RETURN|INCLUDE|DCL|DCLF|DCLPRCOPT|COPYRIGHT)\\b"
+    },
+    {
+      "name": "keyword.operator.cl",
+      "match": "(?i)\\*(EQ|NE|GT|LT|GE|LE|NG|NL|AND|OR|NOT|CAT|BCAT|TCAT)\\b|\\|\\||\\|>|\\|<"
+    },
+    {
+      "name": "support.function.builtin.cl",
+      "match": "(?i)%(SST|SUBSTRING|SWITCH|BIN|BINARY|ADDR|ADDRESS|OFS|OFFSET|CHAR|DEC|INT|UINT|TRIM|TRIML|TRIMR|CHECK|CHECKR|SCAN|LEN|SIZE|UPPER|LOWER|PARMS)\\b"
+    },
+    {
+      "name": "constant.language.special.cl",
+      "match": "(?i)\\*[A-Z][A-Z0-9]*\\b"
+    },
+    {
+      "match": "(?i)\\b([A-Z][A-Z0-9]*)(\\()",
+      "captures": {
+        "1": {
+          "name": "entity.other.attribute-name.parameter.cl"
+        }
+      }
+    },
+    {
+      "match": "(?i)^\\s*(?:[A-Z][A-Z0-9_]*:\\s*)?([A-Z][A-Z0-9]*(?:/[A-Z][A-Z0-9]*)?)\\b",
+      "captures": {
+        "1": {
+          "name": "entity.name.function.command.cl"
+        }
+      }
+    },
+    {
+      "name": "constant.numeric.cl",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
+    }
+  ]
+}

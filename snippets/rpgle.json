@@ -1,0 +1,204 @@
+{
+  "Free-format program": {
+    "prefix": [
+      "**free",
+      "program"
+    ],
+    "description": "Skeleton of a fully free-format RPG program",
+    "body": [
+      "**free",
+      "ctl-opt dftactgrp(*no) actgrp(*caller) option(*srcstmt: *nodebugio);",
+      "",
+      "dcl-pi *n;",
+      "  ${1:parm1} char(${2:10});",
+      "end-pi;",
+      "",
+      "$0",
+      "",
+      "*inlr = *on;",
+      "return;"
+    ]
+  },
+  "ctl-opt": {
+    "prefix": "ctl-opt",
+    "body": [
+      "ctl-opt dftactgrp(*no) actgrp(${1|*caller,*new,QILE|}) option(*srcstmt: *nodebugio)${2: bnddir('${3:MYBNDDIR}')};"
+    ]
+  },
+  "dcl-s": {
+    "prefix": "dcl-s",
+    "body": [
+      "dcl-s ${1:name} ${2|char,varchar,packed,zoned,int,uns,date,time,timestamp,ind,pointer|}(${3:10})${4: inz};"
+    ]
+  },
+  "dcl-c": {
+    "prefix": "dcl-c",
+    "body": [
+      "dcl-c ${1:NAME} ${2:'value'};"
+    ]
+  },
+  "dcl-ds": {
+    "prefix": "dcl-ds",
+    "body": [
+      "dcl-ds ${1:name} qualified${2: template};",
+      "  ${3:field} ${4:char(10)};",
+      "end-ds;"
+    ]
+  },
+  "dcl-ds likeds": {
+    "prefix": "dcl-ds-likeds",
+    "body": [
+      "dcl-ds ${1:name} likeds(${2:template})${3: inz(*likeds)};"
+    ]
+  },
+  "dcl-ds extname": {
+    "prefix": "dcl-ds-extname",
+    "body": [
+      "dcl-ds ${1:name} extname('${2:FILE}') qualified ${3|*input,*output,*all,*key|} end-ds;"
+    ]
+  },
+  "dcl-f": {
+    "prefix": "dcl-f",
+    "body": [
+      "dcl-f ${1:FILE} ${2|disk,workstn,printer|} usage(${3|*input,*update,*output,*update:*delete:*output|}) ${4:keyed};"
+    ]
+  },
+  "dcl-proc": {
+    "prefix": "dcl-proc",
+    "description": "Subprocedure with interface",
+    "body": [
+      "dcl-proc ${1:name}${2: export};",
+      "  dcl-pi *n ${3:ind};",
+      "    ${4:parm} ${5:char(10)} const;",
+      "  end-pi;",
+      "",
+      "  $0",
+      "",
+      "  return ${6:*on};",
+      "end-proc;"
+    ]
+  },
+  "dcl-pr extpgm": {
+    "prefix": "dcl-pr-extpgm",
+    "description": "Prototype for a program call",
+    "body": [
+      "dcl-pr ${1:name} extpgm('${2:PGMNAME}');",
+      "  ${3:parm} char(${4:10});",
+      "end-pr;"
+    ]
+  },
+  "if": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condition};",
+      "  $0",
+      "endif;"
+    ]
+  },
+  "if-else": {
+    "prefix": "ifelse",
+    "body": [
+      "if ${1:condition};",
+      "  $2",
+      "else;",
+      "  $0",
+      "endif;"
+    ]
+  },
+  "dow": {
+    "prefix": "dow",
+    "body": [
+      "dow ${1:condition};",
+      "  $0",
+      "enddo;"
+    ]
+  },
+  "for": {
+    "prefix": "for",
+    "body": [
+      "for ${1:i} = ${2:1} to ${3:%elem(array)};",
+      "  $0",
+      "endfor;"
+    ]
+  },
+  "for-each": {
+    "prefix": "for-each",
+    "body": [
+      "for-each ${1:item} in ${2:array};",
+      "  $0",
+      "endfor;"
+    ]
+  },
+  "select": {
+    "prefix": "select",
+    "body": [
+      "select;",
+      "  when ${1:condition};",
+      "    $2",
+      "  other;",
+      "    $0",
+      "endsl;"
+    ]
+  },
+  "monitor": {
+    "prefix": "monitor",
+    "body": [
+      "monitor;",
+      "  $1",
+      "on-error;",
+      "  $0",
+      "endmon;"
+    ]
+  },
+  "read loop": {
+    "prefix": "readloop",
+    "description": "SETLL + READE loop",
+    "body": [
+      "setll (${1:key}) ${2:FILE};",
+      "reade (${1:key}) ${2:FILE};",
+      "dow not %eof(${2:FILE});",
+      "  $0",
+      "  reade (${1:key}) ${2:FILE};",
+      "enddo;"
+    ]
+  },
+  "chain": {
+    "prefix": "chain",
+    "body": [
+      "chain (${1:key}) ${2:FILE};",
+      "if %found(${2:FILE});",
+      "  $0",
+      "endif;"
+    ]
+  },
+  "exec sql select into": {
+    "prefix": "sqlselect",
+    "body": [
+      "exec sql SELECT ${1:col} INTO :${2:var} FROM ${3:table} WHERE ${4:key} = :${5:value};",
+      "if sqlcode <> 0;",
+      "  $0",
+      "endif;"
+    ]
+  },
+  "exec sql cursor": {
+    "prefix": "sqlcursor",
+    "description": "Embedded SQL cursor loop",
+    "body": [
+      "exec sql DECLARE ${1:c1} CURSOR FOR",
+      "  SELECT ${2:col} FROM ${3:table};",
+      "exec sql OPEN ${1:c1};",
+      "exec sql FETCH NEXT FROM ${1:c1} INTO :${4:var};",
+      "dow sqlcode = 0;",
+      "  $0",
+      "  exec sql FETCH NEXT FROM ${1:c1} INTO :${4:var};",
+      "enddo;",
+      "exec sql CLOSE ${1:c1};"
+    ]
+  },
+  "snd-msg": {
+    "prefix": "snd-msg",
+    "body": [
+      "snd-msg ${1|*info,*escape,*diag,*notify,*comp|} ${2:'message'};"
+    ]
+  }
+}

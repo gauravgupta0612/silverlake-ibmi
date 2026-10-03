@@ -1,0 +1,59 @@
+{
+  "CL program": {
+    "prefix": [
+      "pgm",
+      "clpgm"
+    ],
+    "body": [
+      "             PGM        PARM(${1:&PARM})",
+      "             DCL        VAR(${1:&PARM}) TYPE(*CHAR) LEN(${2:10})",
+      "",
+      "             $0",
+      "",
+      "             ENDPGM"
+    ]
+  },
+  "DCL": {
+    "prefix": "dcl",
+    "body": [
+      "             DCL        VAR(&${1:VAR}) TYPE(${2|*CHAR,*DEC,*INT,*UINT,*LGL,*PTR|}) LEN(${3:10})"
+    ]
+  },
+  "MONMSG": {
+    "prefix": "monmsg",
+    "body": [
+      "             MONMSG     MSGID(${1:CPF0000}) EXEC(${2:DO})",
+      "             $0",
+      "             ENDDO"
+    ]
+  },
+  "IF": {
+    "prefix": "if",
+    "body": [
+      "             IF         COND(${1:&VAR *EQ 'X'}) THEN(DO)",
+      "             $0",
+      "             ENDDO"
+    ]
+  },
+  "SNDPGMMSG": {
+    "prefix": "sndpgmmsg",
+    "body": [
+      "             SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) MSGDTA(${1:'Message'}) MSGTYPE(${2|*INFO,*COMP,*DIAG,*ESCAPE|})"
+    ]
+  },
+  "Error handler": {
+    "prefix": "errorhandler",
+    "description": "Standard global MONMSG + resend escape",
+    "body": [
+      "             DCL        VAR(&MSGID) TYPE(*CHAR) LEN(7)",
+      "             DCL        VAR(&MSGDTA) TYPE(*CHAR) LEN(256)",
+      "             DCL        VAR(&MSGF) TYPE(*CHAR) LEN(10)",
+      "             DCL        VAR(&MSGFLIB) TYPE(*CHAR) LEN(10)",
+      "             MONMSG     MSGID(CPF0000) EXEC(GOTO CMDLBL(ERROR))",
+      "             $0",
+      "             RETURN",
+      "ERROR:       RCVMSG     MSGTYPE(*LAST) MSGDTA(&MSGDTA) MSGID(&MSGID) MSGF(&MSGF) SNDMSGFLIB(&MSGFLIB)",
+      "             SNDPGMMSG  MSGID(&MSGID) MSGF(&MSGFLIB/&MSGF) MSGDTA(&MSGDTA) MSGTYPE(*ESCAPE)"
+    ]
+  }
+}
