@@ -1,4 +1,4 @@
-# Silverlake for IBM i
+# Vanthrex for IBM i
 
 [![CI](https://github.com/gauravgupta0612/silverlake-ibmi/actions/workflows/ci.yml/badge.svg)](https://github.com/gauravgupta0612/silverlake-ibmi/actions/workflows/ci.yml)
 
@@ -6,7 +6,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 
 > 📘 New here? Read the **[Feature Guide](FEATURES.md)** for why and how to use every feature.
 
-> The name comes from *Silverlake*, the codename of the original AS/400 project.
+> **Vanthrex** = *vanguard* + *T-Rex*: a powerful, modern workbench for one of the most dependable platforms.
 
 ## Highlights
 
@@ -37,16 +37,16 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 
 - **SSH server** running: `STRTCPSVR SERVER(*SSHD)`. The user profile needs a home directory (e.g. `/home/MYUSER`).
 - **SQL**, one of these (the *Automatic* setting tries them in order):
-  1. **Mapepire over SSH**, which needs nothing installed beyond **Java** (5770-JV1). Silverlake uploads the Mapepire server JAR to `~/.mapepire` on first use and runs it over your SSH session.
+  1. **Mapepire over SSH**, which needs nothing installed beyond **Java** (5770-JV1). Vanthrex uploads the Mapepire server JAR to `~/.mapepire` on first use and runs it over your SSH session.
   2. **Mapepire daemon**, if you already run one (port 8076).
   3. **db2util** (`yum install db2util`).
 
 ## Install
 
-- **From the Marketplace:** in VS Code, open **Extensions** (Ctrl+Shift+X), search for **Silverlake for IBM i** and click **Install**.
+- **From the Marketplace:** in VS Code, open **Extensions** (Ctrl+Shift+X), search for **Vanthrex for IBM i** and click **Install**.
 - **Offline:** download the `.vsix` from [Releases](https://github.com/gauravgupta0612/silverlake-ibmi/releases), then **Extensions** → `…` → **Install from VSIX…**.
 
-Then click the Silverlake icon in the activity bar, then **Add IBM i Connection**.
+Then click the Vanthrex icon in the activity bar, then **Add IBM i Connection**.
 
 ## Build from source
 
@@ -54,7 +54,7 @@ Then click the Silverlake icon in the activity bar, then **Add IBM i Connection*
 npm install
 npm run typecheck
 npm test            # unit tests for the parsers and the RPG converter
-npm run package     # creates silverlake-ibmi-<version>.vsix
+npm run package     # creates vanthrex-ibmi-<version>.vsix
 ```
 
 Press `F5` to start an Extension Development Host (launch settings are in `.vscode/`).
@@ -63,17 +63,17 @@ Press `F5` to start an Extension Development Host (launch settings are in `.vsco
 
 | Setting | Default | Purpose |
 |---|---|---|
-| `silverlake.compileActions` | RPG/SQLRPG/CL/DDS/CMD/SQL, member and IFS | Compile commands. Variables: `&LIB &OBJLIB &SRCFILE &NAME &EXT &FULLPATH &CURLIB &USER`. |
-| `silverlake.sql.maxRows` | 500 | Rows fetched into the grid. |
-| `silverlake.sql.confirmDestructive` | true | Ask before DROP / TRUNCATE / DELETE or UPDATE without WHERE. |
-| `silverlake.tempDirectory` | `/tmp` | IFS folder for temporary transfer files. |
-| `silverlake.spool.maxEntries` | 200 | Spooled files listed. |
-| `silverlake.autoConnectLast` | false | Reconnect at start-up. |
-| `silverlake.objects.showAll` | true | Show the *Objects* folder under libraries. |
-| `silverlake.dashboard.refreshSeconds` | 30 | Dashboard refresh interval (0 = manual). |
-| `silverlake.dataEditor.pageSize` | 100 | Rows per page in the table data editor. |
-| `silverlake.history.enabled` / `maxVersions` | true / 50 | Local history of members and IFS files. |
-| `silverlake.lint.enabled` / `rules` / `maxProcedureLines` | true / all on / 200 | RPG code checks. |
+| `vanthrex.compileActions` | RPG/SQLRPG/CL/DDS/CMD/SQL, member and IFS | Compile commands. Variables: `&LIB &OBJLIB &SRCFILE &NAME &EXT &FULLPATH &CURLIB &USER`. |
+| `vanthrex.sql.maxRows` | 500 | Rows fetched into the grid. |
+| `vanthrex.sql.confirmDestructive` | true | Ask before DROP / TRUNCATE / DELETE or UPDATE without WHERE. |
+| `vanthrex.tempDirectory` | `/tmp` | IFS folder for temporary transfer files. |
+| `vanthrex.spool.maxEntries` | 200 | Spooled files listed. |
+| `vanthrex.autoConnectLast` | false | Reconnect at start-up. |
+| `vanthrex.objects.showAll` | true | Show the *Objects* folder under libraries. |
+| `vanthrex.dashboard.refreshSeconds` | 30 | Dashboard refresh interval (0 = manual). |
+| `vanthrex.dataEditor.pageSize` | 100 | Rows per page in the table data editor. |
+| `vanthrex.history.enabled` / `maxVersions` | true / 50 | Local history of members and IFS files. |
+| `vanthrex.lint.enabled` / `rules` / `maxProcedureLines` | true / all on / 200 | RPG code checks. |
 
 ## How it works
 

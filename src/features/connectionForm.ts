@@ -39,7 +39,7 @@ export class ConnectionForm {
     private readonly onSaved?: (p: ConnectionProfile) => void,
   ) {
     this.panel = vscode.window.createWebviewPanel(
-      'silverlake.connectionForm',
+      'vanthrex.connectionForm',
       existing ? `Edit ${existing.name}` : 'New IBM i Connection',
       vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true },
@@ -149,7 +149,7 @@ export class ConnectionForm {
         }
       }
       vscode.window.showInformationMessage(`Saved connection "${profile.name}".`, 'Connect now')
-        .then(c => { if (c) { vscode.commands.executeCommand('silverlake.connect', profile); } });
+        .then(c => { if (c) { vscode.commands.executeCommand('vanthrex.connect', profile); } });
       this.onSaved?.(profile);
       this.panel.dispose();
     }
@@ -191,7 +191,7 @@ export class ConnectionForm {
 </style></head>
 <body>
   <h1>${this.existing ? 'Edit connection' : 'Connect to an IBM i'}</h1>
-  <p class="sub">Silverlake connects over SSH (port 22). Start the SSH server on IBM i with <code>STRTCPSVR *SSHD</code> if needed.</p>
+  <p class="sub">Vanthrex connects over SSH (port 22). Start the SSH server on IBM i with <code>STRTCPSVR *SSHD</code> if needed.</p>
 
   <fieldset><legend>System</legend><div class="grid">
     <div><label for="name">Connection name</label><input id="name" value="${v(p.name)}" placeholder="e.g. DEV400"></div>

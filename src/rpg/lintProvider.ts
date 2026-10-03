@@ -9,10 +9,10 @@ const SEVERITY: Record<LintSeverity, vscode.DiagnosticSeverity> = {
 };
 
 export function registerRpgLint(context: vscode.ExtensionContext): void {
-  const collection = vscode.languages.createDiagnosticCollection('Silverlake checks');
+  const collection = vscode.languages.createDiagnosticCollection('Vanthrex checks');
   const timers = new Map<string, NodeJS.Timeout>();
 
-  const config = () => vscode.workspace.getConfiguration('silverlake');
+  const config = () => vscode.workspace.getConfiguration('vanthrex');
   // Only check sources shown in an editor (not /COPY members opened in the background for navigation).
   const visible = (doc: vscode.TextDocument) => vscode.window.visibleTextEditors.some(e => e.document === doc);
   const run = (doc: vscode.TextDocument) => {
@@ -26,7 +26,7 @@ export function registerRpgLint(context: vscode.ExtensionContext): void {
     collection.set(doc.uri, findings.map(f => {
       const line = Math.min(f.line, doc.lineCount - 1);
       const d = new vscode.Diagnostic(new vscode.Range(line, f.start, line, f.end), f.message, SEVERITY[f.severity]);
-      d.source = 'Silverlake';
+      d.source = 'Vanthrex';
       d.code = f.rule;
       if (f.rule === 'unused-definition') { d.tags = [vscode.DiagnosticTag.Unnecessary]; }
       return d;
@@ -44,16 +44,16 @@ export function registerRpgLint(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeTextDocument(e => schedule(e.document)),
     vscode.workspace.onDidCloseTextDocument(d => collection.delete(d.uri)),
     vscode.workspace.onDidChangeConfiguration(e => {
-      if (e.affectsConfiguration('silverlake.lint')) { vscode.window.visibleTextEditors.forEach(ed => run(ed.document)); }
+      if (e.affectsConfiguration('vanthrex.lint')) { vscode.window.visibleTextEditors.forEach(ed => run(ed.document)); }
     }),
-    vscode.commands.registerCommand('silverlake.lintCurrent', () => {
+    vscode.commands.registerCommand('vanthrex.lintCurrent', () => {
       const doc = vscode.window.activeTextEditor?.document;
       if (doc) { run(doc); vscode.commands.executeCommand('workbench.actions.view.problems'); }
     }),
     vscode.languages.registerCodeActionsProvider({ language: 'rpgle' }, {
       provideCodeActions(doc, _range, ctx) {
         const actions: vscode.CodeAction[] = [];
-        for (const d of ctx.diagnostics.filter(x => x.source === 'Silverlake')) {
+        for (const d of ctx.diagnostics.filter(x => x.source === 'Vanthrex')) {
           const rule = String(d.code) as LintRule;
           if (rule === 'unused-definition') {
             const line = doc.lineAt(d.range.start.line);
@@ -68,21 +68,21 @@ export function registerRpgLint(context: vscode.ExtensionContext): void {
           }
           if (rule === 'mixed-format') {
             const conv = new vscode.CodeAction('Convert fixed-format C-specs to free…', vscode.CodeActionKind.RefactorRewrite);
-            conv.command = { command: 'silverlake.convertToFree', title: 'Convert' };
+            conv.command = { command: 'vanthrex.convertToFree', title: 'Convert' };
             actions.push(conv);
           }
           const off = new vscode.CodeAction(`Turn off the "${rule}" check (${LINT_RULES[rule] ?? rule})`, vscode.CodeActionKind.QuickFix);
-          off.command = { command: 'silverlake.disableLintRule', title: 'Turn off', arguments: [rule] };
+          off.command = { command: 'vanthrex.disableLintRule', title: 'Turn off', arguments: [rule] };
           off.diagnostics = [d];
           actions.push(off);
         }
         return actions;
       },
     }, { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix, vscode.CodeActionKind.RefactorRewrite] }),
-    vscode.commands.registerCommand('silverlake.disableLintRule', async (rule: LintRule) => {
+    vscode.commands.registerCommand('vanthrex.disableLintRule', async (rule: LintRule) => {
       const rules = { ...config().get<Record<string, boolean>>('lint.rules', {}), [rule]: false };
       await config().update('lint.rules', rules, vscode.ConfigurationTarget.Global);
-      vscode.window.showInformationMessage(`The "${rule}" check is off. Turn it back on in Settings → Silverlake: Lint Rules.`);
+      vscode.window.showInformationMessage(`The "${rule}" check is off. Turn it back on in Settings → Vanthrex: Lint Rules.`);
     }),
   );
   vscode.window.visibleTextEditors.forEach(e => run(e.document));

@@ -57,7 +57,7 @@ export class JobsTreeProvider implements vscode.TreeDataProvider<JobNode | InfoN
       n.status === 'MSGW' ? 'warning' : n.status === 'HLD' ? 'debug-pause' : n.status === 'RUN' ? 'play-circle' : 'circle-outline',
       n.status === 'MSGW' ? new vscode.ThemeColor('editorWarning.foreground') : undefined);
     item.contextValue = n.status === 'HLD' ? 'job.held' : 'job';
-    item.command = { command: 'silverlake.jobLog', title: 'Job log', arguments: [n] };
+    item.command = { command: 'vanthrex.jobLog', title: 'Job log', arguments: [n] };
     return item;
   }
 
@@ -191,7 +191,7 @@ export class MessagesTreeProvider implements vscode.TreeDataProvider<QueueNode |
 
 // ------------------------------------------------------------------ Job log documents
 
-export const JOBLOG_SCHEME = 'silverlake-joblog';
+export const JOBLOG_SCHEME = 'vanthrex-joblog';
 
 class JobLogProvider implements vscode.TextDocumentContentProvider {
   constructor(private readonly manager: ConnectionManager) {}
@@ -222,8 +222,8 @@ class JobLogProvider implements vscode.TextDocumentContentProvider {
 export function registerJobs(context: vscode.ExtensionContext, manager: ConnectionManager): void {
   const jobs = new JobsTreeProvider(manager);
   const messages = new MessagesTreeProvider(manager);
-  jobs.view = vscode.window.createTreeView('silverlake.jobs', { treeDataProvider: jobs });
-  messages.view = vscode.window.createTreeView('silverlake.messages', { treeDataProvider: messages });
+  jobs.view = vscode.window.createTreeView('vanthrex.jobs', { treeDataProvider: jobs });
+  messages.view = vscode.window.createTreeView('vanthrex.messages', { treeDataProvider: messages });
 
   const guard = (fn: (...a: any[]) => Promise<unknown>) => async (...a: any[]) => {
     try { await fn(...a); } catch (e) { logError(e); vscode.window.showErrorMessage(errorMessage(e)); }
@@ -237,9 +237,9 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
   context.subscriptions.push(
     jobs.view, messages.view,
     vscode.workspace.registerTextDocumentContentProvider(JOBLOG_SCHEME, new JobLogProvider(manager)),
-    vscode.commands.registerCommand('silverlake.refreshJobs', () => jobs.refresh()),
-    vscode.commands.registerCommand('silverlake.refreshMessages', () => messages.refresh()),
-    vscode.commands.registerCommand('silverlake.filterJobs', guard(async () => {
+    vscode.commands.registerCommand('vanthrex.refreshJobs', () => jobs.refresh()),
+    vscode.commands.registerCommand('vanthrex.refreshMessages', () => messages.refresh()),
+    vscode.commands.registerCommand('vanthrex.filterJobs', guard(async () => {
       const pick = await vscode.window.showQuickPick([
         { label: '$(person) My jobs', mode: 'mine' as const },
         { label: '$(account) Jobs of a user…', mode: 'user' as const },
@@ -258,7 +258,7 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
       }
       jobs.refresh();
     })),
-    vscode.commands.registerCommand('silverlake.jobLog', guard(async (n?: JobNode) => {
+    vscode.commands.registerCommand('vanthrex.jobLog', guard(async (n?: JobNode) => {
       let job = n?.job;
       if (!job) {
         job = await vscode.window.showInputBox({ title: 'Job log', prompt: 'Qualified job name (number/user/name)', placeHolder: '123456/QUSER/QZDASOINIT' });
@@ -268,7 +268,7 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
       const doc = await vscode.workspace.openTextDocument(uri);
       await vscode.window.showTextDocument(doc, { preview: true });
     })),
-    vscode.commands.registerCommand('silverlake.endJob', guard(async (n: JobNode) => {
+    vscode.commands.registerCommand('vanthrex.endJob', guard(async (n: JobNode) => {
       const how = await vscode.window.showQuickPick([
         { label: 'Controlled (*CNTRLD)', detail: 'Let the job finish its cleanup (30 s delay)', opt: '*CNTRLD) DELAY(30' },
         { label: 'Immediately (*IMMED)', detail: 'End now — work in progress may be lost', opt: '*IMMED' },
@@ -279,13 +279,13 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
       await cl(`ENDJOB JOB(${n.job}) OPTION(${how.opt})`, `Ending ${n.job}`);
       setTimeout(() => jobs.refresh(), 1500);
     })),
-    vscode.commands.registerCommand('silverlake.holdJob', guard(async (n: JobNode) => {
+    vscode.commands.registerCommand('vanthrex.holdJob', guard(async (n: JobNode) => {
       await cl(`HLDJOB JOB(${n.job})`, `Held ${n.job}`); jobs.refresh();
     })),
-    vscode.commands.registerCommand('silverlake.releaseJob', guard(async (n: JobNode) => {
+    vscode.commands.registerCommand('vanthrex.releaseJob', guard(async (n: JobNode) => {
       await cl(`RLSJOB JOB(${n.job})`, `Released ${n.job}`); jobs.refresh();
     })),
-    vscode.commands.registerCommand('silverlake.replyMessage', guard(async (n: MessageNode) => {
+    vscode.commands.registerCommand('vanthrex.replyMessage', guard(async (n: MessageNode) => {
       const hints = (n.text.match(/\(([A-Z0-9 ]+(?:\s+[A-Z0-9]+)*)\)\s*$/)?.[1] ?? 'C D I R G').split(/\s+/).filter(Boolean);
       const qp = vscode.window.createQuickPick();
       qp.title = `Reply to ${n.id}: ${n.text}`;
@@ -300,10 +300,10 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
       await cl(`SNDRPY MSGKEY(X'${n.key}') MSGQ(${n.queueLib}/${n.queue}) RPY(${clString(reply)}) RMV(*NO)`, `Replied ${reply} to ${n.id}`);
       messages.refresh();
     })),
-    vscode.commands.registerCommand('silverlake.removeMessage', guard(async (n: MessageNode) => {
+    vscode.commands.registerCommand('vanthrex.removeMessage', guard(async (n: MessageNode) => {
       await cl(`RMVMSG MSGQ(${n.queueLib}/${n.queue}) MSGKEY(X'${n.key}')`, 'Message removed'); messages.refresh();
     })),
-    vscode.commands.registerCommand('silverlake.sendMessage', guard(async () => {
+    vscode.commands.registerCommand('vanthrex.sendMessage', guard(async () => {
       const user = await vscode.window.showInputBox({ title: 'Send message', prompt: 'To user profile (or *SYSOPR)', value: '*SYSOPR' });
       if (!user?.trim()) { return; }
       const text = await vscode.window.showInputBox({ title: `Message to ${user}` });

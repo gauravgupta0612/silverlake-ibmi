@@ -2,6 +2,7 @@
 
 ## 0.3.0
 
+- **New name: Vanthrex for IBM i** (formerly *Silverlake*), first release on the VS Code Marketplace. Settings now start with `vanthrex.`; connections are set up again after installing.
 - **SEU-style source dates**: every member line shows its change date (and optionally its sequence number). Saving keeps the dates of lines you did not touch; changed lines get today's date. Ctrl+Alt+D cycles the display.
 - **Highlight lines changed since…** a date (7 / 30 / 90 days or any date), with a list to jump between them.
 - **Lock information in the editor**: a banner shows who has the member open (name, user, job, lock state), with *Ask to release* (break message), *Notify me when free* and *End their job*.

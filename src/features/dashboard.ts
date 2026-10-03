@@ -36,7 +36,7 @@ export class Dashboard {
 
   private constructor(private readonly manager: ConnectionManager) {
     const conn = manager.require();
-    this.panel = vscode.window.createWebviewPanel('silverlake.dashboard', `IBM i Dashboard — ${conn.profile.name}`,
+    this.panel = vscode.window.createWebviewPanel('vanthrex.dashboard', `IBM i Dashboard — ${conn.profile.name}`,
       vscode.ViewColumn.Active, { enableScripts: true, retainContextWhenHidden: true });
     this.panel.webview.html = this.html();
     this.panel.onDidDispose(() => { this.disposed = true; this.stop(); Dashboard.current = undefined; });
@@ -51,7 +51,7 @@ export class Dashboard {
   }
 
   private interval(): number {
-    return Math.max(0, vscode.workspace.getConfiguration('silverlake').get<number>('dashboard.refreshSeconds', 30));
+    return Math.max(0, vscode.workspace.getConfiguration('vanthrex').get<number>('dashboard.refreshSeconds', 30));
   }
 
   private schedule(): void {
@@ -137,8 +137,8 @@ export class Dashboard {
 </header>
 <section class="tiles" id="tiles"></section>
 <section class="grid2">
-  <div class="card"><h2>Top jobs by CPU <button data-cmd="silverlake.jobs.focus">Open Jobs</button></h2><div id="topJobs"></div></div>
-  <div class="card"><h2>QSYSOPR messages <button data-cmd="silverlake.messages.focus">Open Messages</button></h2><div id="qsysopr"></div></div>
+  <div class="card"><h2>Top jobs by CPU <button data-cmd="vanthrex.jobs.focus">Open Jobs</button></h2><div id="topJobs"></div></div>
+  <div class="card"><h2>QSYSOPR messages <button data-cmd="vanthrex.messages.focus">Open Messages</button></h2><div id="qsysopr"></div></div>
   <div class="card"><h2>PTF groups</h2><div id="ptf"></div></div>
   <div class="card"><h2>System</h2><div id="system"></div></div>
 </section>
@@ -218,7 +218,7 @@ export class Dashboard {
 }
 
 export function registerDashboard(context: vscode.ExtensionContext, manager: ConnectionManager): void {
-  context.subscriptions.push(vscode.commands.registerCommand('silverlake.openDashboard', () => {
+  context.subscriptions.push(vscode.commands.registerCommand('vanthrex.openDashboard', () => {
     try { Dashboard.open(manager); } catch (e) { vscode.window.showErrorMessage(errorMessage(e)); }
   }));
 }

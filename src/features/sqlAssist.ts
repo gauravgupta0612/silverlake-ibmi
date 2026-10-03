@@ -113,7 +113,7 @@ export function registerSqlAssist(context: vscode.ExtensionContext, manager: Con
   };
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('silverlake.refreshSqlCache', () => {
+    vscode.commands.registerCommand('vanthrex.refreshSqlCache', () => {
       catalog.clear();
       vscode.window.setStatusBarMessage('$(check) SQL table and column cache cleared', 3000);
     }),

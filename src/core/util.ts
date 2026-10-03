@@ -47,7 +47,7 @@ export interface MemberParts {
   extension: string;
 }
 
-/** Parse "/LIB/FILE/MEMBER.EXT" (the path part of a silverlake-member URI). */
+/** Parse "/LIB/FILE/MEMBER.EXT" (the path part of a vanthrex-member URI). */
 export function parseMemberPath(path: string): MemberParts {
   const parts = path.replace(/^\/+/, '').split('/');
   if (parts.length !== 3) {

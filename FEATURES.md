@@ -1,4 +1,4 @@
-# Silverlake for IBM i — Feature Guide
+# Vanthrex for IBM i — Feature Guide
 
 > **One sidebar for everything you do on IBM i:** connect, browse, edit, compile, query, monitor and fix — without leaving VS Code and without a green screen.
 
@@ -8,7 +8,7 @@
 
 IBM i development usually means switching between several tools:
 
-| Task | Traditional way | With Silverlake |
+| Task | Traditional way | With Vanthrex |
 |---|---|---|
 | Edit source | SEU / PDM in a 5250 session | VS Code editor with colours, outline, F12 / F2 |
 | Compile | `WRKMBRPDM` option 14, then read the spool file for errors | **Ctrl+Alt+C** → errors underlined on the right line |
@@ -20,7 +20,7 @@ IBM i development usually means switching between several tools:
 | See what changed when | SEU date column | **Source dates** in front of every line, kept on save |
 | Someone else has the member | "Member in use" error, then WRKOBJLCK | **Lock banner** with the person's name and *Ask to release* |
 
-Silverlake puts all of this in one place. It is built for people who are **new to IBM i** (guided forms, templates, plain-language messages) as well as **experienced developers** who want speed and modern tooling.
+Vanthrex puts all of this in one place. It is built for people who are **new to IBM i** (guided forms, templates, plain-language messages) as well as **experienced developers** who want speed and modern tooling.
 
 ## Why it is powerful
 
@@ -39,7 +39,7 @@ Silverlake puts all of this in one place. It is built for people who are **new t
 ## Getting started (5 minutes)
 
 1. **Install:** Extensions view → `…` → **Install from VSIX…** → the `.vsix` from the GitHub **Releases** page.
-2. Click the **Silverlake** icon in the activity bar, then **Add IBM i Connection**.
+2. Click the **Vanthrex** icon in the activity bar, then **Add IBM i Connection**.
 3. Fill in the host, user and library list, click **Test connection**, then **Save**.
 4. Click the connection to connect. The status bar shows the system name. Click it, or press **Ctrl+Alt+I**, at any time for the quick menu.
 
@@ -90,7 +90,7 @@ Silverlake puts all of this in one place. It is built for people who are **new t
 
 - **Ctrl+Alt+C** (or the 🚀 icon in the editor title).
 - When several commands fit, choose once and it is remembered. **Compile With…** lets you choose again.
-- Add your own commands in *Settings → Silverlake: Compile Actions*, using variables such as `&LIB`, `&OBJLIB`, `&NAME` and `&SRCFILE`.
+- Add your own commands in *Settings → Vanthrex: Compile Actions*, using variables such as `&LIB`, `&OBJLIB`, `&NAME` and `&SRCFILE`.
 
 ### 5. SQL with results grid and autocomplete
 
@@ -134,7 +134,7 @@ Silverlake puts all of this in one place. It is built for people who are **new t
 
 **Why it helps:** It answers "is the system OK?" in one glance instead of three green-screen commands.
 
-**How:** Click the dashboard icon on the *Connections* view, or use the quick menu. It refreshes every 30 s; change this with `silverlake.dashboard.refreshSeconds`.
+**How:** Click the dashboard icon on the *Connections* view, or use the quick menu. It refreshes every 30 s; change this with `vanthrex.dashboard.refreshSeconds`.
 
 ### 8. Active jobs
 
@@ -198,7 +198,7 @@ Silverlake puts all of this in one place. It is built for people who are **new t
 
 - Look at the underlined code and the Problems panel.
 - The 💡 quick fix can remove an unused declaration, convert fixed-format code, or turn a check off.
-- Each check can be switched on or off under *Settings → Silverlake: Lint Rules*.
+- Each check can be switched on or off under *Settings → Vanthrex: Lint Rules*.
 
 ### 13. Fixed → free format conversion
 
@@ -229,14 +229,14 @@ In the tree, right-click a member → **Select for Compare**, then right-click a
 - **Ctrl+Alt+D** (or the 📅 icon in the editor title) cycles between *date*, *sequence number + date* and *hidden*.
 - Hover the start of a line for its sequence number and full date.
 - Right-click → **Highlight Lines Changed Since…** (7, 30 or 90 days, or any date) highlights the lines and lists them so you can jump between them.
-- Settings: `silverlake.sourceDates.format` chooses `yymmdd` (SEU) or `iso`.
+- Settings: `vanthrex.sourceDates.format` chooses `yymmdd` (SEU) or `iso`.
 
 ### 16. F4 prompters
 
 **What and how:**
 
 - **Fixed-format RPG and DDS:** put the cursor on a C, D, F, H or P spec (or a DDS line) and press **F4**. A form shows each column area with its name (Factor 1, Opcode, Result field, Length…) and allowed values. **Apply** writes it back in the right columns. **Apply & next line** keeps going, like SEU. On a blank line, F4 asks which spec to create.
-- **CL commands:** in a CL source, press **F4** on a command. Silverlake reads the command's real definition from the IBM i and shows every parameter with its prompt text, default and allowed values. The command is rewritten in proper CL source layout, with `+` continuations.
+- **CL commands:** in a CL source, press **F4** on a command. Vanthrex reads the command's real definition from the IBM i and shows every parameter with its prompt text, default and allowed values. The command is rewritten in proper CL source layout, with `+` continuations.
 - **Prompt and Run CL Command** (quick menu): type a command name, fill in the form, and it runs.
 
 ### 17. Who has my member? (locks)
@@ -251,9 +251,9 @@ In the tree, right-click a member → **Select for Compare**, then right-click a
 
 ### 18. Edit conflict protection
 
-**What:** Before saving, Silverlake checks whether the member changed on the IBM i after you opened it, or is locked by another job.
+**What:** Before saving, Vanthrex checks whether the member changed on the IBM i after you opened it, or is locked by another job.
 
-**How:** You get **Compare First** (opens a side-by-side diff with the IBM i copy) or **Overwrite**. Turn it off with `silverlake.conflictCheck`.
+**How:** You get **Compare First** (opens a side-by-side diff with the IBM i copy) or **Overwrite**. Turn it off with `vanthrex.conflictCheck`.
 
 ### 19. Member list with dates
 
@@ -287,5 +287,5 @@ On a Mac, use **Cmd** instead of **Ctrl**.
 ## Tips
 
 - **SQL engine:** keep it on *Automatic*. It uses Mapepire over SSH when Java is available, which is the fastest option and needed for *Where Used*.
-- **When something fails:** open **View → Output → "Silverlake for IBM i"** to see the exact commands and messages.
+- **When something fails:** open **View → Output → "Vanthrex for IBM i"** to see the exact commands and messages.
 - **Where to put objects:** set *Compile objects into* in the connection form to send objects to a development library automatically.

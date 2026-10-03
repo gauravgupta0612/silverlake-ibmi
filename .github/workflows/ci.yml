@@ -20,5 +20,5 @@ jobs:
       - run: npm run package
       - uses: actions/upload-artifact@v4
         with:
-          name: silverlake-ibmi-vsix
+          name: vanthrex-ibmi-vsix
           path: '*.vsix'

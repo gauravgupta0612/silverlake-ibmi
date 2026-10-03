@@ -95,7 +95,7 @@ export class LibraryTreeProvider implements vscode.TreeDataProvider<LibNode> {
         if (p.currentLibrary && !libs.includes(p.currentLibrary)) { libs.unshift(p.currentLibrary); }
         return libs.map(library => ({ kind: 'library', library, current: library === p.currentLibrary }));
       }
-      const showObjects = vscode.workspace.getConfiguration('silverlake').get<boolean>('objects.showAll', true);
+      const showObjects = vscode.workspace.getConfiguration('vanthrex').get<boolean>('objects.showAll', true);
       switch (n.kind) {
         case 'library':
           return showObjects
@@ -126,7 +126,7 @@ export class LibraryTreeProvider implements vscode.TreeDataProvider<LibNode> {
   readonly memberFilter = new Map<string, number>();
 
   private async members(library: string, file: string): Promise<LibNode[]> {
-    const byDate = vscode.workspace.getConfiguration('silverlake').get<string>('members.sortBy', 'name') === 'date';
+    const byDate = vscode.workspace.getConfiguration('vanthrex').get<string>('members.sortBy', 'name') === 'date';
     const days = this.memberFilter.get(`${library}/${file}`);
     const rows = await this.manager.require().rows<{ NAME: string; TYPE: string; TEXT: string; CHANGED: string; CREATED: string; N: number }>(
       `SELECT SYSTEM_TABLE_MEMBER AS NAME, COALESCE(SOURCE_TYPE, '') AS TYPE, COALESCE(PARTITION_TEXT, '') AS TEXT, ` +

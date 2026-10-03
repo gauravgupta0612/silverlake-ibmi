@@ -28,8 +28,8 @@ let manager: ConnectionManager | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(initLog());
-  log(`Silverlake ${context.extension?.packageJSON?.version ?? ""} starting (VS Code ${vscode.version}, ${process.platform})`);
-  vscode.commands.executeCommand('setContext', 'silverlake.connected', false);
+  log(`Vanthrex ${context.extension?.packageJSON?.version ?? ""} starting (VS Code ${vscode.version}, ${process.platform})`);
+  vscode.commands.executeCommand('setContext', 'vanthrex.connected', false);
 
   // Each feature starts on its own: if one fails, the others (and the error report) still work.
   const failures: string[] = [];
@@ -49,10 +49,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
   step('commands', () => registerBrowseCommands(context, m, libraries, ifs));
   step('views', () => context.subscriptions.push(
-    vscode.window.registerTreeDataProvider('silverlake.connections', new ConnectionTreeProvider(m)),
-    vscode.window.createTreeView('silverlake.libraries', { treeDataProvider: libraries, showCollapseAll: true }),
-    vscode.window.createTreeView('silverlake.ifs', { treeDataProvider: ifs, showCollapseAll: true }),
-    vscode.window.registerTreeDataProvider('silverlake.spool', spool),
+    vscode.window.registerTreeDataProvider('vanthrex.connections', new ConnectionTreeProvider(m)),
+    vscode.window.createTreeView('vanthrex.libraries', { treeDataProvider: libraries, showCollapseAll: true }),
+    vscode.window.createTreeView('vanthrex.ifs', { treeDataProvider: ifs, showCollapseAll: true }),
+    vscode.window.registerTreeDataProvider('vanthrex.spool', spool),
   ));
   step('file systems', () => context.subscriptions.push(
     vscode.workspace.registerFileSystemProvider(MEMBER_SCHEME, new MemberFileSystem(m), { isCaseSensitive: false }),
@@ -75,22 +75,22 @@ export function activate(context: vscode.ExtensionContext): void {
   step('prompters', () => registerPrompters(context, m));
 
   if (failures.length) {
-    vscode.window.showErrorMessage(`Silverlake started with problems: ${failures.join(' | ')}`, 'Show Log')
+    vscode.window.showErrorMessage(`Vanthrex started with problems: ${failures.join(' | ')}`, 'Show Log')
       .then(c => { if (c) { showLog(); } });
   } else {
-    log('Silverlake ready');
+    log('Vanthrex ready');
   }
 
   // First run: open the walkthrough so new users know where to start.
-  if (!context.globalState.get<boolean>('silverlake.welcomed')) {
-    context.globalState.update('silverlake.welcomed', true);
+  if (!context.globalState.get<boolean>('vanthrex.welcomed')) {
+    context.globalState.update('vanthrex.welcomed', true);
     if (!profiles.list().length) {
-      vscode.commands.executeCommand('silverlake.openWalkthrough');
+      vscode.commands.executeCommand('vanthrex.openWalkthrough');
     }
   }
 
   // Optional auto-reconnect to the last used system.
-  if (vscode.workspace.getConfiguration('silverlake').get<boolean>('autoConnectLast')) {
+  if (vscode.workspace.getConfiguration('vanthrex').get<boolean>('autoConnectLast')) {
     const last = profiles.lastUsed && profiles.get(profiles.lastUsed);
     if (last) { m.connect(last); }
   }

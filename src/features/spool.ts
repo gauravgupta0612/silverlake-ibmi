@@ -4,7 +4,7 @@ import { errorMessage } from '../core/log';
 import { sqlString } from '../core/util';
 import { SpoolNode, SpoolTreeProvider } from '../views/spoolTree';
 
-export const SPOOL_SCHEME = 'silverlake-spool';
+export const SPOOL_SCHEME = 'vanthrex-spool';
 
 function spoolUri(n: SpoolNode): vscode.Uri {
   const query = new URLSearchParams({ job: n.job, name: n.name, number: String(n.number) }).toString();
@@ -31,8 +31,8 @@ async function readSpool(manager: ConnectionManager, job: string, name: string, 
 export function registerSpool(context: vscode.ExtensionContext, manager: ConnectionManager, tree: SpoolTreeProvider): void {
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider(SPOOL_SCHEME, new SpoolContentProvider(manager)),
-    vscode.commands.registerCommand('silverlake.refreshSpool', () => tree.refresh()),
-    vscode.commands.registerCommand('silverlake.spoolOpen', async (n: SpoolNode) => {
+    vscode.commands.registerCommand('vanthrex.refreshSpool', () => tree.refresh()),
+    vscode.commands.registerCommand('vanthrex.spoolOpen', async (n: SpoolNode) => {
       try {
         const doc = await vscode.workspace.openTextDocument(spoolUri(n));
         await vscode.window.showTextDocument(doc, { preview: true });
@@ -40,7 +40,7 @@ export function registerSpool(context: vscode.ExtensionContext, manager: Connect
         vscode.window.showErrorMessage(`Could not open spooled file: ${errorMessage(e)}`);
       }
     }),
-    vscode.commands.registerCommand('silverlake.spoolDownload', async (n: SpoolNode) => {
+    vscode.commands.registerCommand('vanthrex.spoolDownload', async (n: SpoolNode) => {
       const target = await vscode.window.showSaveDialog({
         defaultUri: vscode.Uri.file(`${n.name}_${n.number}.txt`), filters: { Text: ['txt'] } });
       if (!target) { return; }
@@ -52,7 +52,7 @@ export function registerSpool(context: vscode.ExtensionContext, manager: Connect
         vscode.window.showErrorMessage(errorMessage(e));
       }
     }),
-    vscode.commands.registerCommand('silverlake.spoolDelete', async (n: SpoolNode) => {
+    vscode.commands.registerCommand('vanthrex.spoolDelete', async (n: SpoolNode) => {
       const ok = await vscode.window.showWarningMessage(`Delete spooled file ${n.name} (#${n.number}) of job ${n.job}?`,
         { modal: true }, 'Delete');
       if (ok !== 'Delete') { return; }

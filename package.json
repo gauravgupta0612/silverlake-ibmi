@@ -1,6 +1,6 @@
 {
-  "name": "silverlake-ibmi",
-  "displayName": "Silverlake for IBM i",
+  "name": "vanthrex-ibmi",
+  "displayName": "Vanthrex for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code: connection wizard, library & IFS browser, edit and compile with inline errors, Db2 for i SQL with autocomplete, table data editor, system dashboard, jobs & messages, object and source search, RPG navigation and code checks, local history.",
   "version": "0.3.0",
   "publisher": "gauravgupta0612",
@@ -26,75 +26,75 @@
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
-    "onFileSystem:silverlake-member",
-    "onFileSystem:silverlake-ifs",
+    "onFileSystem:vanthrex-member",
+    "onFileSystem:vanthrex-ifs",
     "onStartupFinished"
   ],
   "contributes": {
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "silverlake",
-          "title": "Silverlake for IBM i",
+          "id": "vanthrex",
+          "title": "Vanthrex for IBM i",
           "icon": "media/activity.svg"
         }
       ]
     },
     "views": {
-      "silverlake": [
+      "vanthrex": [
         {
-          "id": "silverlake.connections",
+          "id": "vanthrex.connections",
           "name": "Connections"
         },
         {
-          "id": "silverlake.libraries",
+          "id": "vanthrex.libraries",
           "name": "Libraries & Source",
-          "when": "silverlake.connected"
+          "when": "vanthrex.connected"
         },
         {
-          "id": "silverlake.ifs",
+          "id": "vanthrex.ifs",
           "name": "IFS Browser",
-          "when": "silverlake.connected"
+          "when": "vanthrex.connected"
         },
         {
-          "id": "silverlake.spool",
+          "id": "vanthrex.spool",
           "name": "My Spooled Files",
-          "when": "silverlake.connected"
+          "when": "vanthrex.connected"
         },
         {
-          "id": "silverlake.jobs",
+          "id": "vanthrex.jobs",
           "name": "Active Jobs",
-          "when": "silverlake.connected",
+          "when": "vanthrex.connected",
           "visibility": "collapsed"
         },
         {
-          "id": "silverlake.messages",
+          "id": "vanthrex.messages",
           "name": "Messages",
-          "when": "silverlake.connected",
+          "when": "vanthrex.connected",
           "visibility": "collapsed"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "silverlake.connections",
-        "contents": "No IBM i systems yet. Add one in a few seconds with the guided form.\n[$(add) Add IBM i Connection](command:silverlake.addConnection)\n[Open the Getting Started guide](command:silverlake.openWalkthrough)"
+        "view": "vanthrex.connections",
+        "contents": "No IBM i systems yet. Add one in a few seconds with the guided form.\n[$(add) Add IBM i Connection](command:vanthrex.addConnection)\n[Open the Getting Started guide](command:vanthrex.openWalkthrough)"
       },
       {
-        "view": "silverlake.libraries",
-        "contents": "Your library list is empty.\n[$(add) Add Library](command:silverlake.addLibrary)"
+        "view": "vanthrex.libraries",
+        "contents": "Your library list is empty.\n[$(add) Add Library](command:vanthrex.addLibrary)"
       }
     ],
     "walkthroughs": [
       {
-        "id": "silverlake.gettingStarted",
-        "title": "Get started with Silverlake for IBM i",
+        "id": "vanthrex.gettingStarted",
+        "title": "Get started with Vanthrex for IBM i",
         "description": "Connect to your IBM i, browse source, compile and run SQL.",
         "steps": [
           {
             "id": "connect",
             "title": "Add your IBM i connection",
-            "description": "Use the guided form to enter host, user and library list. Passwords are stored in the VS Code secret store.\n[Add Connection](command:silverlake.addConnection)",
+            "description": "Use the guided form to enter host, user and library list. Passwords are stored in the VS Code secret store.\n[Add Connection](command:vanthrex.addConnection)",
             "media": {
               "markdown": "media/walkthrough/connect.md"
             }
@@ -102,7 +102,7 @@
           {
             "id": "browse",
             "title": "Browse libraries and open members",
-            "description": "Open the Silverlake view, expand a library, then a source file, and click a member to edit it like a local file.",
+            "description": "Open the Vanthrex view, expand a library, then a source file, and click a member to edit it like a local file.",
             "media": {
               "markdown": "media/walkthrough/browse.md"
             }
@@ -118,7 +118,7 @@
           {
             "id": "sql",
             "title": "Run SQL",
-            "description": "Open an SQL scratchpad and press Ctrl+Enter to run the statement under the cursor. Results open in a filterable grid you can export to CSV.\n[Open SQL Scratchpad](command:silverlake.newSqlScratchpad)",
+            "description": "Open an SQL scratchpad and press Ctrl+Enter to run the statement under the cursor. Results open in a filterable grid you can export to CSV.\n[Open SQL Scratchpad](command:vanthrex.newSqlScratchpad)",
             "media": {
               "markdown": "media/walkthrough/sql.md"
             }
@@ -126,7 +126,7 @@
           {
             "id": "more",
             "title": "Monitor and explore your system",
-            "description": "Open the System Dashboard, check active jobs and answer QSYSOPR messages, search objects (Ctrl+Alt+O) or source code (Ctrl+Alt+F), and edit table data in a grid.\n[Open System Dashboard](command:silverlake.openDashboard)",
+            "description": "Open the System Dashboard, check active jobs and answer QSYSOPR messages, search objects (Ctrl+Alt+O) or source code (Ctrl+Alt+F), and edit table data in a grid.\n[Open System Dashboard](command:vanthrex.openDashboard)",
             "media": {
               "markdown": "media/walkthrough/more.md"
             }
@@ -136,894 +136,894 @@
     ],
     "commands": [
       {
-        "command": "silverlake.addConnection",
+        "command": "vanthrex.addConnection",
         "title": "Add IBM i Connection\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(add)"
       },
       {
-        "command": "silverlake.editConnection",
+        "command": "vanthrex.editConnection",
         "title": "Edit Connection\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(edit)"
       },
       {
-        "command": "silverlake.deleteConnection",
+        "command": "vanthrex.deleteConnection",
         "title": "Remove Connection",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(trash)"
       },
       {
-        "command": "silverlake.connect",
+        "command": "vanthrex.connect",
         "title": "Connect",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(plug)"
       },
       {
-        "command": "silverlake.disconnect",
+        "command": "vanthrex.disconnect",
         "title": "Disconnect",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(debug-disconnect)"
       },
       {
-        "command": "silverlake.showMenu",
+        "command": "vanthrex.showMenu",
         "title": "Show IBM i Quick Menu",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.openWalkthrough",
+        "command": "vanthrex.openWalkthrough",
         "title": "Getting Started",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.refreshLibraries",
+        "command": "vanthrex.refreshLibraries",
         "title": "Refresh",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
-        "command": "silverlake.addLibrary",
+        "command": "vanthrex.addLibrary",
         "title": "Add Library\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(add)"
       },
       {
-        "command": "silverlake.removeLibrary",
+        "command": "vanthrex.removeLibrary",
         "title": "Remove Library from List",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.setCurrentLibrary",
+        "command": "vanthrex.setCurrentLibrary",
         "title": "Set as Current Library",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.newSourceFile",
+        "command": "vanthrex.newSourceFile",
         "title": "New Source File\u2026",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.newMember",
+        "command": "vanthrex.newMember",
         "title": "New Member\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(new-file)"
       },
       {
-        "command": "silverlake.deleteMember",
+        "command": "vanthrex.deleteMember",
         "title": "Delete Member",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.findMember",
+        "command": "vanthrex.findMember",
         "title": "Find & Open Member\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(search)"
       },
       {
-        "command": "silverlake.objectCall",
+        "command": "vanthrex.objectCall",
         "title": "Call Program",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.objectQuery",
+        "command": "vanthrex.objectQuery",
         "title": "Preview Data (first rows)",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.objectDelete",
+        "command": "vanthrex.objectDelete",
         "title": "Delete Object",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.refreshIfs",
+        "command": "vanthrex.refreshIfs",
         "title": "Refresh",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
-        "command": "silverlake.ifsChangeRoot",
+        "command": "vanthrex.ifsChangeRoot",
         "title": "Go to IFS Directory\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(folder-opened)"
       },
       {
-        "command": "silverlake.ifsNewFile",
+        "command": "vanthrex.ifsNewFile",
         "title": "New File\u2026",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.ifsNewFolder",
+        "command": "vanthrex.ifsNewFolder",
         "title": "New Folder\u2026",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.ifsDelete",
+        "command": "vanthrex.ifsDelete",
         "title": "Delete",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.compile",
+        "command": "vanthrex.compile",
         "title": "Compile Current Source",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(rocket)"
       },
       {
-        "command": "silverlake.compileWith",
+        "command": "vanthrex.compileWith",
         "title": "Compile With\u2026",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.runSql",
+        "command": "vanthrex.runSql",
         "title": "Run SQL Statement",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(play)"
       },
       {
-        "command": "silverlake.newSqlScratchpad",
+        "command": "vanthrex.newSqlScratchpad",
         "title": "New SQL Scratchpad",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.runCl",
+        "command": "vanthrex.runCl",
         "title": "Run CL Command\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(terminal)"
       },
       {
-        "command": "silverlake.refreshSpool",
+        "command": "vanthrex.refreshSpool",
         "title": "Refresh",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
-        "command": "silverlake.spoolOpen",
+        "command": "vanthrex.spoolOpen",
         "title": "Open Spooled File",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.spoolDownload",
+        "command": "vanthrex.spoolDownload",
         "title": "Save Spooled File As\u2026",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.spoolDelete",
+        "command": "vanthrex.spoolDelete",
         "title": "Delete Spooled File",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.convertToFree",
+        "command": "vanthrex.convertToFree",
         "title": "Convert Fixed-Format C-Specs to Free",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.showOutput",
+        "command": "vanthrex.showOutput",
         "title": "Show Output Log",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.openDashboard",
+        "command": "vanthrex.openDashboard",
         "title": "Open System Dashboard",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(dashboard)"
       },
       {
-        "command": "silverlake.refreshJobs",
+        "command": "vanthrex.refreshJobs",
         "title": "Refresh",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
-        "command": "silverlake.filterJobs",
+        "command": "vanthrex.filterJobs",
         "title": "Choose Which Jobs to Show\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(filter)"
       },
       {
-        "command": "silverlake.jobLog",
+        "command": "vanthrex.jobLog",
         "title": "Show Job Log",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(output)"
       },
       {
-        "command": "silverlake.endJob",
+        "command": "vanthrex.endJob",
         "title": "End Job\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(stop-circle)"
       },
       {
-        "command": "silverlake.holdJob",
+        "command": "vanthrex.holdJob",
         "title": "Hold Job",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(debug-pause)"
       },
       {
-        "command": "silverlake.releaseJob",
+        "command": "vanthrex.releaseJob",
         "title": "Release Job",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(debug-continue)"
       },
       {
-        "command": "silverlake.refreshMessages",
+        "command": "vanthrex.refreshMessages",
         "title": "Refresh",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
-        "command": "silverlake.replyMessage",
+        "command": "vanthrex.replyMessage",
         "title": "Reply\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(reply)"
       },
       {
-        "command": "silverlake.removeMessage",
+        "command": "vanthrex.removeMessage",
         "title": "Remove Message",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.sendMessage",
+        "command": "vanthrex.sendMessage",
         "title": "Send Message\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(mail)"
       },
       {
-        "command": "silverlake.editData",
+        "command": "vanthrex.editData",
         "title": "Edit Table Data\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(table)"
       },
       {
-        "command": "silverlake.searchObjects",
+        "command": "vanthrex.searchObjects",
         "title": "Search Objects\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(search)"
       },
       {
-        "command": "silverlake.searchSource",
+        "command": "vanthrex.searchSource",
         "title": "Search Source Code\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(search-fuzzy)"
       },
       {
-        "command": "silverlake.whereUsed",
+        "command": "vanthrex.whereUsed",
         "title": "Where Used\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(references)"
       },
       {
-        "command": "silverlake.openProgramSource",
+        "command": "vanthrex.openProgramSource",
         "title": "Open Program Source",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(go-to-file)"
       },
       {
-        "command": "silverlake.showHistory",
+        "command": "vanthrex.showHistory",
         "title": "Show Local History\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(history)"
       },
       {
-        "command": "silverlake.compareWithServer",
+        "command": "vanthrex.compareWithServer",
         "title": "Compare with Copy on IBM i",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(diff)"
       },
       {
-        "command": "silverlake.compareMembers",
+        "command": "vanthrex.compareMembers",
         "title": "Compare with Another Member\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(diff)"
       },
       {
-        "command": "silverlake.selectForCompare",
+        "command": "vanthrex.selectForCompare",
         "title": "Select for Compare",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.compareWithSelected",
+        "command": "vanthrex.compareWithSelected",
         "title": "Compare with Selected",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.openHistoryFolder",
+        "command": "vanthrex.openHistoryFolder",
         "title": "Open Local History Folder",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.refreshSqlCache",
+        "command": "vanthrex.refreshSqlCache",
         "title": "Refresh SQL Table & Column Cache",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
-        "command": "silverlake.lintCurrent",
+        "command": "vanthrex.lintCurrent",
         "title": "Run RPG Code Checks",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.disableLintRule",
+        "command": "vanthrex.disableLintRule",
         "title": "Turn Off a Code Check",
-        "category": "Silverlake"
+        "category": "Vanthrex"
       },
       {
-        "command": "silverlake.toggleSourceDates",
+        "command": "vanthrex.toggleSourceDates",
         "title": "Toggle Source Dates (SEU)",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(calendar)"
       },
       {
-        "command": "silverlake.changedSince",
+        "command": "vanthrex.changedSince",
         "title": "Highlight Lines Changed Since\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(history)"
       },
       {
-        "command": "silverlake.prompt",
+        "command": "vanthrex.prompt",
         "title": "Prompt (F4)",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(list-selection)"
       },
       {
-        "command": "silverlake.promptCl",
+        "command": "vanthrex.promptCl",
         "title": "Prompt and Run CL Command (F4)\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(list-selection)"
       },
       {
-        "command": "silverlake.filterMembersByDate",
+        "command": "vanthrex.filterMembersByDate",
         "title": "Filter Members by Last Change\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(filter)"
       },
       {
-        "command": "silverlake.sortMembers",
+        "command": "vanthrex.sortMembers",
         "title": "Sort Members by Name / Date",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(list-ordered)"
       },
       {
-        "command": "silverlake.lockActions",
+        "command": "vanthrex.lockActions",
         "title": "Member Lock: Options\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(lock)"
       },
       {
-        "command": "silverlake.lockAskRelease",
+        "command": "vanthrex.lockAskRelease",
         "title": "Member Lock: Ask Holder to Release\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(mail)"
       },
       {
-        "command": "silverlake.lockWatch",
+        "command": "vanthrex.lockWatch",
         "title": "Member Lock: Notify Me When Free",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(bell)"
       },
       {
-        "command": "silverlake.lockRefresh",
+        "command": "vanthrex.lockRefresh",
         "title": "Member Lock: Check Again",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
-        "command": "silverlake.lockEndJob",
+        "command": "vanthrex.lockEndJob",
         "title": "Member Lock: End Holder's Job\u2026",
-        "category": "Silverlake",
+        "category": "Vanthrex",
         "icon": "$(stop-circle)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "silverlake.addConnection",
-          "when": "view == silverlake.connections",
+          "command": "vanthrex.addConnection",
+          "when": "view == vanthrex.connections",
           "group": "navigation"
         },
         {
-          "command": "silverlake.addLibrary",
-          "when": "view == silverlake.libraries",
+          "command": "vanthrex.addLibrary",
+          "when": "view == vanthrex.libraries",
           "group": "navigation@1"
         },
         {
-          "command": "silverlake.findMember",
-          "when": "view == silverlake.libraries",
+          "command": "vanthrex.findMember",
+          "when": "view == vanthrex.libraries",
           "group": "navigation@2"
         },
         {
-          "command": "silverlake.refreshLibraries",
-          "when": "view == silverlake.libraries",
+          "command": "vanthrex.refreshLibraries",
+          "when": "view == vanthrex.libraries",
           "group": "navigation@3"
         },
         {
-          "command": "silverlake.ifsChangeRoot",
-          "when": "view == silverlake.ifs",
+          "command": "vanthrex.ifsChangeRoot",
+          "when": "view == vanthrex.ifs",
           "group": "navigation@1"
         },
         {
-          "command": "silverlake.refreshIfs",
-          "when": "view == silverlake.ifs",
+          "command": "vanthrex.refreshIfs",
+          "when": "view == vanthrex.ifs",
           "group": "navigation@2"
         },
         {
-          "command": "silverlake.refreshSpool",
-          "when": "view == silverlake.spool",
+          "command": "vanthrex.refreshSpool",
+          "when": "view == vanthrex.spool",
           "group": "navigation"
         },
         {
-          "command": "silverlake.openDashboard",
-          "when": "view == silverlake.connections && silverlake.connected",
+          "command": "vanthrex.openDashboard",
+          "when": "view == vanthrex.connections && vanthrex.connected",
           "group": "navigation@1"
         },
         {
-          "command": "silverlake.searchObjects",
-          "when": "view == silverlake.libraries",
+          "command": "vanthrex.searchObjects",
+          "when": "view == vanthrex.libraries",
           "group": "navigation@0"
         },
         {
-          "command": "silverlake.searchSource",
-          "when": "view == silverlake.libraries",
+          "command": "vanthrex.searchSource",
+          "when": "view == vanthrex.libraries",
           "group": "1_search@1"
         },
         {
-          "command": "silverlake.filterJobs",
-          "when": "view == silverlake.jobs",
+          "command": "vanthrex.filterJobs",
+          "when": "view == vanthrex.jobs",
           "group": "navigation@1"
         },
         {
-          "command": "silverlake.refreshJobs",
-          "when": "view == silverlake.jobs",
+          "command": "vanthrex.refreshJobs",
+          "when": "view == vanthrex.jobs",
           "group": "navigation@2"
         },
         {
-          "command": "silverlake.sendMessage",
-          "when": "view == silverlake.messages",
+          "command": "vanthrex.sendMessage",
+          "when": "view == vanthrex.messages",
           "group": "navigation@1"
         },
         {
-          "command": "silverlake.refreshMessages",
-          "when": "view == silverlake.messages",
+          "command": "vanthrex.refreshMessages",
+          "when": "view == vanthrex.messages",
           "group": "navigation@2"
         },
         {
-          "command": "silverlake.sortMembers",
-          "when": "view == silverlake.libraries",
+          "command": "vanthrex.sortMembers",
+          "when": "view == vanthrex.libraries",
           "group": "1_search@3"
         }
       ],
       "view/item/context": [
         {
-          "command": "silverlake.connect",
-          "when": "view == silverlake.connections && viewItem == connection",
+          "command": "vanthrex.connect",
+          "when": "view == vanthrex.connections && viewItem == connection",
           "group": "inline"
         },
         {
-          "command": "silverlake.disconnect",
-          "when": "view == silverlake.connections && viewItem == connection.active",
+          "command": "vanthrex.disconnect",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "inline"
         },
         {
-          "command": "silverlake.editConnection",
-          "when": "view == silverlake.connections && viewItem =~ /^connection/",
+          "command": "vanthrex.editConnection",
+          "when": "view == vanthrex.connections && viewItem =~ /^connection/",
           "group": "1@1"
         },
         {
-          "command": "silverlake.deleteConnection",
-          "when": "view == silverlake.connections && viewItem =~ /^connection/",
+          "command": "vanthrex.deleteConnection",
+          "when": "view == vanthrex.connections && viewItem =~ /^connection/",
           "group": "1@2"
         },
         {
-          "command": "silverlake.newSourceFile",
-          "when": "view == silverlake.libraries && viewItem == library",
+          "command": "vanthrex.newSourceFile",
+          "when": "view == vanthrex.libraries && viewItem == library",
           "group": "1@1"
         },
         {
-          "command": "silverlake.setCurrentLibrary",
-          "when": "view == silverlake.libraries && viewItem == library",
+          "command": "vanthrex.setCurrentLibrary",
+          "when": "view == vanthrex.libraries && viewItem == library",
           "group": "1@2"
         },
         {
-          "command": "silverlake.removeLibrary",
-          "when": "view == silverlake.libraries && viewItem == library",
+          "command": "vanthrex.removeLibrary",
+          "when": "view == vanthrex.libraries && viewItem == library",
           "group": "9@1"
         },
         {
-          "command": "silverlake.newMember",
-          "when": "view == silverlake.libraries && viewItem == srcfile",
+          "command": "vanthrex.newMember",
+          "when": "view == vanthrex.libraries && viewItem == srcfile",
           "group": "inline"
         },
         {
-          "command": "silverlake.newMember",
-          "when": "view == silverlake.libraries && viewItem == srcfile",
+          "command": "vanthrex.newMember",
+          "when": "view == vanthrex.libraries && viewItem == srcfile",
           "group": "1@1"
         },
         {
-          "command": "silverlake.compile",
-          "when": "view == silverlake.libraries && viewItem == member",
+          "command": "vanthrex.compile",
+          "when": "view == vanthrex.libraries && viewItem == member",
           "group": "1@1"
         },
         {
-          "command": "silverlake.compileWith",
-          "when": "view == silverlake.libraries && viewItem == member",
+          "command": "vanthrex.compileWith",
+          "when": "view == vanthrex.libraries && viewItem == member",
           "group": "1@2"
         },
         {
-          "command": "silverlake.deleteMember",
-          "when": "view == silverlake.libraries && viewItem == member",
+          "command": "vanthrex.deleteMember",
+          "when": "view == vanthrex.libraries && viewItem == member",
           "group": "9@1"
         },
         {
-          "command": "silverlake.objectCall",
-          "when": "view == silverlake.libraries && viewItem == object.pgm",
+          "command": "vanthrex.objectCall",
+          "when": "view == vanthrex.libraries && viewItem == object.pgm",
           "group": "1@1"
         },
         {
-          "command": "silverlake.objectQuery",
-          "when": "view == silverlake.libraries && viewItem == object.file",
+          "command": "vanthrex.objectQuery",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
           "group": "1@1"
         },
         {
-          "command": "silverlake.objectDelete",
-          "when": "view == silverlake.libraries && viewItem =~ /^object/",
+          "command": "vanthrex.objectDelete",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object/",
           "group": "9@1"
         },
         {
-          "command": "silverlake.ifsNewFile",
-          "when": "view == silverlake.ifs && viewItem == ifs.dir",
+          "command": "vanthrex.ifsNewFile",
+          "when": "view == vanthrex.ifs && viewItem == ifs.dir",
           "group": "1@1"
         },
         {
-          "command": "silverlake.ifsNewFolder",
-          "when": "view == silverlake.ifs && viewItem == ifs.dir",
+          "command": "vanthrex.ifsNewFolder",
+          "when": "view == vanthrex.ifs && viewItem == ifs.dir",
           "group": "1@2"
         },
         {
-          "command": "silverlake.compile",
-          "when": "view == silverlake.ifs && viewItem == ifs.file",
+          "command": "vanthrex.compile",
+          "when": "view == vanthrex.ifs && viewItem == ifs.file",
           "group": "1@1"
         },
         {
-          "command": "silverlake.ifsDelete",
-          "when": "view == silverlake.ifs && viewItem =~ /^ifs/",
+          "command": "vanthrex.ifsDelete",
+          "when": "view == vanthrex.ifs && viewItem =~ /^ifs/",
           "group": "9@1"
         },
         {
-          "command": "silverlake.spoolOpen",
-          "when": "view == silverlake.spool && viewItem == spool",
+          "command": "vanthrex.spoolOpen",
+          "when": "view == vanthrex.spool && viewItem == spool",
           "group": "1@1"
         },
         {
-          "command": "silverlake.spoolDownload",
-          "when": "view == silverlake.spool && viewItem == spool",
+          "command": "vanthrex.spoolDownload",
+          "when": "view == vanthrex.spool && viewItem == spool",
           "group": "1@2"
         },
         {
-          "command": "silverlake.spoolDelete",
-          "when": "view == silverlake.spool && viewItem == spool",
+          "command": "vanthrex.spoolDelete",
+          "when": "view == vanthrex.spool && viewItem == spool",
           "group": "9@1"
         },
         {
-          "command": "silverlake.jobLog",
-          "when": "view == silverlake.jobs && viewItem =~ /^job/",
+          "command": "vanthrex.jobLog",
+          "when": "view == vanthrex.jobs && viewItem =~ /^job/",
           "group": "1@1"
         },
         {
-          "command": "silverlake.holdJob",
-          "when": "view == silverlake.jobs && viewItem == job",
+          "command": "vanthrex.holdJob",
+          "when": "view == vanthrex.jobs && viewItem == job",
           "group": "2@1"
         },
         {
-          "command": "silverlake.releaseJob",
-          "when": "view == silverlake.jobs && viewItem == job.held",
+          "command": "vanthrex.releaseJob",
+          "when": "view == vanthrex.jobs && viewItem == job.held",
           "group": "2@1"
         },
         {
-          "command": "silverlake.endJob",
-          "when": "view == silverlake.jobs && viewItem =~ /^job/",
+          "command": "vanthrex.endJob",
+          "when": "view == vanthrex.jobs && viewItem =~ /^job/",
           "group": "9@1"
         },
         {
-          "command": "silverlake.replyMessage",
-          "when": "view == silverlake.messages && viewItem == message.inquiry",
+          "command": "vanthrex.replyMessage",
+          "when": "view == vanthrex.messages && viewItem == message.inquiry",
           "group": "inline"
         },
         {
-          "command": "silverlake.replyMessage",
-          "when": "view == silverlake.messages && viewItem == message.inquiry",
+          "command": "vanthrex.replyMessage",
+          "when": "view == vanthrex.messages && viewItem == message.inquiry",
           "group": "1@1"
         },
         {
-          "command": "silverlake.removeMessage",
-          "when": "view == silverlake.messages && viewItem =~ /^message/",
+          "command": "vanthrex.removeMessage",
+          "when": "view == vanthrex.messages && viewItem =~ /^message/",
           "group": "9@1"
         },
         {
-          "command": "silverlake.editData",
-          "when": "view == silverlake.libraries && viewItem == object.file",
+          "command": "vanthrex.editData",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
           "group": "1@0"
         },
         {
-          "command": "silverlake.openProgramSource",
-          "when": "view == silverlake.libraries && viewItem == object.pgm",
+          "command": "vanthrex.openProgramSource",
+          "when": "view == vanthrex.libraries && viewItem == object.pgm",
           "group": "1@0"
         },
         {
-          "command": "silverlake.whereUsed",
-          "when": "view == silverlake.libraries && viewItem =~ /^object/",
+          "command": "vanthrex.whereUsed",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object/",
           "group": "2@1"
         },
         {
-          "command": "silverlake.showHistory",
-          "when": "view == silverlake.libraries && viewItem == member",
+          "command": "vanthrex.showHistory",
+          "when": "view == vanthrex.libraries && viewItem == member",
           "group": "3@1"
         },
         {
-          "command": "silverlake.selectForCompare",
-          "when": "view == silverlake.libraries && viewItem == member",
+          "command": "vanthrex.selectForCompare",
+          "when": "view == vanthrex.libraries && viewItem == member",
           "group": "3@2"
         },
         {
-          "command": "silverlake.compareWithSelected",
-          "when": "view == silverlake.libraries && viewItem == member && silverlake.hasCompareSelection",
+          "command": "vanthrex.compareWithSelected",
+          "when": "view == vanthrex.libraries && viewItem == member && vanthrex.hasCompareSelection",
           "group": "3@3"
         },
         {
-          "command": "silverlake.showHistory",
-          "when": "view == silverlake.ifs && viewItem == ifs.file",
+          "command": "vanthrex.showHistory",
+          "when": "view == vanthrex.ifs && viewItem == ifs.file",
           "group": "3@1"
         },
         {
-          "command": "silverlake.selectForCompare",
-          "when": "view == silverlake.ifs && viewItem == ifs.file",
+          "command": "vanthrex.selectForCompare",
+          "when": "view == vanthrex.ifs && viewItem == ifs.file",
           "group": "3@2"
         },
         {
-          "command": "silverlake.compareWithSelected",
-          "when": "view == silverlake.ifs && viewItem == ifs.file && silverlake.hasCompareSelection",
+          "command": "vanthrex.compareWithSelected",
+          "when": "view == vanthrex.ifs && viewItem == ifs.file && vanthrex.hasCompareSelection",
           "group": "3@3"
         },
         {
-          "command": "silverlake.filterMembersByDate",
-          "when": "view == silverlake.libraries && viewItem == srcfile",
+          "command": "vanthrex.filterMembersByDate",
+          "when": "view == vanthrex.libraries && viewItem == srcfile",
           "group": "1@2"
         }
       ],
       "editor/title": [
         {
-          "command": "silverlake.compile",
-          "when": "silverlake.connected && resourceScheme =~ /^silverlake-/ && editorLangId != sql",
+          "command": "vanthrex.compile",
+          "when": "vanthrex.connected && resourceScheme =~ /^vanthrex-/ && editorLangId != sql",
           "group": "navigation"
         },
         {
-          "command": "silverlake.runSql",
-          "when": "silverlake.connected && editorLangId == sql",
+          "command": "vanthrex.runSql",
+          "when": "vanthrex.connected && editorLangId == sql",
           "group": "navigation"
         },
         {
-          "command": "silverlake.compareWithServer",
-          "when": "silverlake.connected && resourceScheme =~ /^silverlake-(member|ifs)$/",
-          "group": "1_silverlake@1"
+          "command": "vanthrex.compareWithServer",
+          "when": "vanthrex.connected && resourceScheme =~ /^vanthrex-(member|ifs)$/",
+          "group": "1_vanthrex@1"
         },
         {
-          "command": "silverlake.showHistory",
-          "when": "resourceScheme =~ /^silverlake-(member|ifs)$/",
-          "group": "1_silverlake@2"
+          "command": "vanthrex.showHistory",
+          "when": "resourceScheme =~ /^vanthrex-(member|ifs)$/",
+          "group": "1_vanthrex@2"
         },
         {
-          "command": "silverlake.toggleSourceDates",
-          "when": "resourceScheme == silverlake-member",
+          "command": "vanthrex.toggleSourceDates",
+          "when": "resourceScheme == vanthrex-member",
           "group": "navigation@9"
         }
       ],
       "editor/context": [
         {
-          "command": "silverlake.runSql",
-          "when": "silverlake.connected && editorLangId == sql",
-          "group": "silverlake@1"
+          "command": "vanthrex.runSql",
+          "when": "vanthrex.connected && editorLangId == sql",
+          "group": "vanthrex@1"
         },
         {
-          "command": "silverlake.convertToFree",
+          "command": "vanthrex.convertToFree",
           "when": "editorLangId == rpgle && editorHasSelection",
-          "group": "silverlake@2"
+          "group": "vanthrex@2"
         },
         {
-          "command": "silverlake.compareWithServer",
-          "when": "silverlake.connected && resourceScheme =~ /^silverlake-(member|ifs)$/",
-          "group": "silverlake@3"
+          "command": "vanthrex.compareWithServer",
+          "when": "vanthrex.connected && resourceScheme =~ /^vanthrex-(member|ifs)$/",
+          "group": "vanthrex@3"
         },
         {
-          "command": "silverlake.compareMembers",
-          "when": "silverlake.connected && resourceScheme =~ /^silverlake-(member|ifs)$/",
-          "group": "silverlake@4"
+          "command": "vanthrex.compareMembers",
+          "when": "vanthrex.connected && resourceScheme =~ /^vanthrex-(member|ifs)$/",
+          "group": "vanthrex@4"
         },
         {
-          "command": "silverlake.showHistory",
-          "when": "resourceScheme =~ /^silverlake-(member|ifs)$/",
-          "group": "silverlake@5"
+          "command": "vanthrex.showHistory",
+          "when": "resourceScheme =~ /^vanthrex-(member|ifs)$/",
+          "group": "vanthrex@5"
         },
         {
-          "command": "silverlake.prompt",
+          "command": "vanthrex.prompt",
           "when": "editorLangId =~ /^(rpgle|dds|cl)$/",
-          "group": "silverlake@0"
+          "group": "vanthrex@0"
         },
         {
-          "command": "silverlake.changedSince",
-          "when": "resourceScheme == silverlake-member",
-          "group": "silverlake@6"
+          "command": "vanthrex.changedSince",
+          "when": "resourceScheme == vanthrex-member",
+          "group": "vanthrex@6"
         },
         {
-          "command": "silverlake.lockActions",
-          "when": "resourceScheme == silverlake-member",
-          "group": "silverlake@7"
+          "command": "vanthrex.lockActions",
+          "when": "resourceScheme == vanthrex-member",
+          "group": "vanthrex@7"
         }
       ],
       "commandPalette": [
         {
-          "command": "silverlake.connect",
+          "command": "vanthrex.connect",
           "when": "false"
         },
         {
-          "command": "silverlake.removeLibrary",
+          "command": "vanthrex.removeLibrary",
           "when": "false"
         },
         {
-          "command": "silverlake.setCurrentLibrary",
+          "command": "vanthrex.setCurrentLibrary",
           "when": "false"
         },
         {
-          "command": "silverlake.newSourceFile",
+          "command": "vanthrex.newSourceFile",
           "when": "false"
         },
         {
-          "command": "silverlake.newMember",
+          "command": "vanthrex.newMember",
           "when": "false"
         },
         {
-          "command": "silverlake.deleteMember",
+          "command": "vanthrex.deleteMember",
           "when": "false"
         },
         {
-          "command": "silverlake.objectCall",
+          "command": "vanthrex.objectCall",
           "when": "false"
         },
         {
-          "command": "silverlake.objectQuery",
+          "command": "vanthrex.objectQuery",
           "when": "false"
         },
         {
-          "command": "silverlake.objectDelete",
+          "command": "vanthrex.objectDelete",
           "when": "false"
         },
         {
-          "command": "silverlake.ifsNewFile",
+          "command": "vanthrex.ifsNewFile",
           "when": "false"
         },
         {
-          "command": "silverlake.ifsNewFolder",
+          "command": "vanthrex.ifsNewFolder",
           "when": "false"
         },
         {
-          "command": "silverlake.ifsDelete",
+          "command": "vanthrex.ifsDelete",
           "when": "false"
         },
         {
-          "command": "silverlake.spoolOpen",
+          "command": "vanthrex.spoolOpen",
           "when": "false"
         },
         {
-          "command": "silverlake.spoolDownload",
+          "command": "vanthrex.spoolDownload",
           "when": "false"
         },
         {
-          "command": "silverlake.spoolDelete",
+          "command": "vanthrex.spoolDelete",
           "when": "false"
         },
         {
-          "command": "silverlake.endJob",
+          "command": "vanthrex.endJob",
           "when": "false"
         },
         {
-          "command": "silverlake.holdJob",
+          "command": "vanthrex.holdJob",
           "when": "false"
         },
         {
-          "command": "silverlake.releaseJob",
+          "command": "vanthrex.releaseJob",
           "when": "false"
         },
         {
-          "command": "silverlake.replyMessage",
+          "command": "vanthrex.replyMessage",
           "when": "false"
         },
         {
-          "command": "silverlake.removeMessage",
+          "command": "vanthrex.removeMessage",
           "when": "false"
         },
         {
-          "command": "silverlake.openProgramSource",
+          "command": "vanthrex.openProgramSource",
           "when": "false"
         },
         {
-          "command": "silverlake.selectForCompare",
+          "command": "vanthrex.selectForCompare",
           "when": "false"
         },
         {
-          "command": "silverlake.compareWithSelected",
+          "command": "vanthrex.compareWithSelected",
           "when": "false"
         },
         {
-          "command": "silverlake.disableLintRule",
+          "command": "vanthrex.disableLintRule",
           "when": "false"
         },
         {
-          "command": "silverlake.filterMembersByDate",
+          "command": "vanthrex.filterMembersByDate",
           "when": "false"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "silverlake.compile",
+        "command": "vanthrex.compile",
         "key": "ctrl+alt+c",
         "mac": "cmd+alt+c",
-        "when": "editorTextFocus && silverlake.connected && editorLangId != sql"
+        "when": "editorTextFocus && vanthrex.connected && editorLangId != sql"
       },
       {
-        "command": "silverlake.runSql",
+        "command": "vanthrex.runSql",
         "key": "ctrl+enter",
         "mac": "cmd+enter",
-        "when": "editorTextFocus && silverlake.connected && editorLangId == sql"
+        "when": "editorTextFocus && vanthrex.connected && editorLangId == sql"
       },
       {
-        "command": "silverlake.runCl",
+        "command": "vanthrex.runCl",
         "key": "ctrl+alt+l",
         "mac": "cmd+alt+l",
-        "when": "silverlake.connected"
+        "when": "vanthrex.connected"
       },
       {
-        "command": "silverlake.showMenu",
+        "command": "vanthrex.showMenu",
         "key": "ctrl+alt+i",
         "mac": "cmd+alt+i"
       },
       {
-        "command": "silverlake.searchObjects",
+        "command": "vanthrex.searchObjects",
         "key": "ctrl+alt+o",
         "mac": "cmd+alt+o",
-        "when": "silverlake.connected"
+        "when": "vanthrex.connected"
       },
       {
-        "command": "silverlake.searchSource",
+        "command": "vanthrex.searchSource",
         "key": "ctrl+alt+f",
         "mac": "cmd+alt+f",
-        "when": "silverlake.connected"
+        "when": "vanthrex.connected"
       },
       {
-        "command": "silverlake.prompt",
+        "command": "vanthrex.prompt",
         "key": "f4",
         "when": "editorTextFocus && editorLangId =~ /^(rpgle|dds|cl)$/"
       },
       {
-        "command": "silverlake.toggleSourceDates",
+        "command": "vanthrex.toggleSourceDates",
         "key": "ctrl+alt+d",
         "mac": "cmd+alt+d",
-        "when": "resourceScheme == silverlake-member"
+        "when": "resourceScheme == vanthrex-member"
       }
     ],
     "languages": [
@@ -1103,9 +1103,9 @@
       }
     ],
     "configuration": {
-      "title": "Silverlake for IBM i",
+      "title": "Vanthrex for IBM i",
       "properties": {
-        "silverlake.compileActions": {
+        "vanthrex.compileActions": {
           "type": "array",
           "markdownDescription": "Compile actions. Variables: `&LIB` (source library), `&OBJLIB` (target library), `&SRCFILE`, `&NAME`, `&EXT`, `&FULLPATH` (IFS path), `&CURLIB`, `&USER`. Add `OPTION(*EVENTF)` to get inline errors.",
           "items": {
@@ -1262,72 +1262,72 @@
             }
           ]
         },
-        "silverlake.sql.maxRows": {
+        "vanthrex.sql.maxRows": {
           "type": "number",
           "default": 500,
           "minimum": 1,
           "description": "Maximum number of rows fetched into the SQL result grid."
         },
-        "silverlake.sql.confirmDestructive": {
+        "vanthrex.sql.confirmDestructive": {
           "type": "boolean",
           "default": true,
           "description": "Ask for confirmation before running DELETE, DROP, TRUNCATE or UPDATE without WHERE."
         },
-        "silverlake.tempDirectory": {
+        "vanthrex.tempDirectory": {
           "type": "string",
           "default": "/tmp",
           "description": "IFS directory used for temporary files during member transfer."
         },
-        "silverlake.spool.maxEntries": {
+        "vanthrex.spool.maxEntries": {
           "type": "number",
           "default": 200,
           "description": "Maximum number of spooled files listed."
         },
-        "silverlake.autoConnectLast": {
+        "vanthrex.autoConnectLast": {
           "type": "boolean",
           "default": false,
           "description": "Reconnect automatically to the last used system when VS Code starts."
         },
-        "silverlake.objects.showAll": {
+        "vanthrex.objects.showAll": {
           "type": "boolean",
           "default": true,
           "description": "Show an 'Objects' folder (programs, files, service programs\u2026) under each library."
         },
-        "silverlake.dashboard.refreshSeconds": {
+        "vanthrex.dashboard.refreshSeconds": {
           "type": "number",
           "default": 30,
           "minimum": 0,
           "description": "How often the System Dashboard refreshes (seconds). 0 = only when you click Refresh."
         },
-        "silverlake.dataEditor.pageSize": {
+        "vanthrex.dataEditor.pageSize": {
           "type": "number",
           "default": 100,
           "minimum": 10,
           "maximum": 2000,
           "description": "Rows per page in the table data editor."
         },
-        "silverlake.history.enabled": {
+        "vanthrex.history.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Keep a local copy of every member and IFS file you open or save, so you can compare and restore."
         },
-        "silverlake.history.maxVersions": {
+        "vanthrex.history.maxVersions": {
           "type": "number",
           "default": 50,
           "minimum": 1,
           "description": "Local history versions kept per member / file."
         },
-        "silverlake.lint.enabled": {
+        "vanthrex.lint.enabled": {
           "type": "boolean",
           "default": true,
           "description": "Check RPG sources as you type."
         },
-        "silverlake.lint.maxProcedureLines": {
+        "vanthrex.lint.maxProcedureLines": {
           "type": "number",
           "default": 200,
           "description": "Report procedures longer than this many lines."
         },
-        "silverlake.lint.rules": {
+        "vanthrex.lint.rules": {
           "type": "object",
           "markdownDescription": "Turn individual RPG checks on or off.",
           "default": {},
@@ -1380,12 +1380,12 @@
           },
           "additionalProperties": false
         },
-        "silverlake.sourceDates.enabled": {
+        "vanthrex.sourceDates.enabled": {
           "type": "boolean",
           "default": true,
           "markdownDescription": "Read and save members **with** their sequence numbers and change dates (SRCSEQ/SRCDAT), like SEU. Unchanged lines keep their date; changed lines get today's date. Needs a Mapepire SQL engine; otherwise members are copied as plain text."
         },
-        "silverlake.sourceDates.display": {
+        "vanthrex.sourceDates.display": {
           "type": "string",
           "enum": [
             "date",
@@ -1400,7 +1400,7 @@
           "default": "date",
           "description": "What to show in front of each member line (Ctrl+Alt+D cycles)."
         },
-        "silverlake.sourceDates.format": {
+        "vanthrex.sourceDates.format": {
           "type": "string",
           "enum": [
             "yymmdd",
@@ -1409,12 +1409,12 @@
           "default": "yymmdd",
           "description": "Date format: SEU-style YYMMDD or ISO YYYY-MM-DD."
         },
-        "silverlake.conflictCheck": {
+        "vanthrex.conflictCheck": {
           "type": "boolean",
           "default": true,
           "description": "Warn when a member is locked by another job, or changed on the IBM i after you opened it, before your save overwrites it."
         },
-        "silverlake.members.sortBy": {
+        "vanthrex.members.sortBy": {
           "type": "string",
           "enum": [
             "name",

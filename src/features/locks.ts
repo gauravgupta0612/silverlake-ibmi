@@ -109,9 +109,9 @@ export function registerLocks(context: vscode.ExtensionContext, manager: Connect
       const choice = await vscode.window.showWarningMessage(
         `🔒 ${memberLabel(uri)} is locked by ${who} (${locks[0].state}). You can read it, but saving may fail until they close it.`,
         'Ask to Release', 'Notify Me When Free', 'More…');
-      if (choice === 'Ask to Release') { vscode.commands.executeCommand('silverlake.lockAskRelease', uri, locks[0]); }
+      if (choice === 'Ask to Release') { vscode.commands.executeCommand('vanthrex.lockAskRelease', uri, locks[0]); }
       if (choice === 'Notify Me When Free') { waitForRelease(uri); }
-      if (choice === 'More…') { vscode.commands.executeCommand('silverlake.lockActions', uri); }
+      if (choice === 'More…') { vscode.commands.executeCommand('vanthrex.lockActions', uri); }
     }),
 
     // Banner on the first line of a locked member.
@@ -123,19 +123,19 @@ export function registerLocks(context: vscode.ExtensionContext, manager: Connect
         const top = new vscode.Range(0, 0, 0, 0);
         const lenses = locks.map(l => new vscode.CodeLens(top, {
           title: `🔒 Locked by ${l.userText ? `${l.userText} (${l.user})` : l.user} · job ${l.job} · ${l.state}`,
-          command: 'silverlake.lockActions', arguments: [doc.uri, l],
+          command: 'vanthrex.lockActions', arguments: [doc.uri, l],
           tooltip: 'Someone else has this member open. Click for options.',
         }));
         lenses.push(
-          new vscode.CodeLens(top, { title: '✉ Ask to release', command: 'silverlake.lockAskRelease', arguments: [doc.uri, locks[0]] }),
-          new vscode.CodeLens(top, { title: watching.has(doc.uri.toString()) ? '⏳ Watching…' : '🔔 Notify me when free', command: 'silverlake.lockWatch', arguments: [doc.uri] }),
-          new vscode.CodeLens(top, { title: '↻ Refresh', command: 'silverlake.lockRefresh', arguments: [doc.uri] }),
+          new vscode.CodeLens(top, { title: '✉ Ask to release', command: 'vanthrex.lockAskRelease', arguments: [doc.uri, locks[0]] }),
+          new vscode.CodeLens(top, { title: watching.has(doc.uri.toString()) ? '⏳ Watching…' : '🔔 Notify me when free', command: 'vanthrex.lockWatch', arguments: [doc.uri] }),
+          new vscode.CodeLens(top, { title: '↻ Refresh', command: 'vanthrex.lockRefresh', arguments: [doc.uri] }),
         );
         return lenses;
       },
     }),
 
-    vscode.commands.registerCommand('silverlake.lockActions', guard(async (uri?: vscode.Uri, lock?: MemberLock) => {
+    vscode.commands.registerCommand('vanthrex.lockActions', guard(async (uri?: vscode.Uri, lock?: MemberLock) => {
       const u = activeMember(uri);
       if (!u) { return; }
       const l = await pickLock(u, lock);
@@ -143,28 +143,28 @@ export function registerLocks(context: vscode.ExtensionContext, manager: Connect
       const pick = await vscode.window.showQuickPick([
         { label: '$(mail) Ask them to release it…', detail: 'Sends a message that pops up on their screen', run: () => askRelease(u, l) },
         { label: '$(bell) Notify me when it is free', detail: 'Checks every 15 seconds for up to 30 minutes', run: () => waitForRelease(u) },
-        { label: '$(output) Show their job log', run: () => vscode.commands.executeCommand('silverlake.jobLog', { job: l.job }) },
+        { label: '$(output) Show their job log', run: () => vscode.commands.executeCommand('vanthrex.jobLog', { job: l.job }) },
         { label: '$(refresh) Check again', run: () => refresh(u) },
         { label: '$(stop-circle) End their job…', detail: 'Releases the lock — they lose unsaved work. Needs *JOBCTL.', run: () => endTheirJob(u, l) },
       ], { title: `${memberLabel(u)} is locked by ${describeLock(l)} (${l.state})` });
       if (pick) { await pick.run(); }
     })),
-    vscode.commands.registerCommand('silverlake.lockAskRelease', guard(async (uri?: vscode.Uri, lock?: MemberLock) => {
+    vscode.commands.registerCommand('vanthrex.lockAskRelease', guard(async (uri?: vscode.Uri, lock?: MemberLock) => {
       const u = activeMember(uri);
       const l = u && await pickLock(u, lock);
       if (u && l) { await askRelease(u, l); }
     })),
-    vscode.commands.registerCommand('silverlake.lockWatch', guard((uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('vanthrex.lockWatch', guard((uri?: vscode.Uri) => {
       const u = activeMember(uri);
       if (u) { waitForRelease(u); lensChanged.fire(); }
     })),
-    vscode.commands.registerCommand('silverlake.lockRefresh', guard(async (uri?: vscode.Uri) => {
+    vscode.commands.registerCommand('vanthrex.lockRefresh', guard(async (uri?: vscode.Uri) => {
       const u = activeMember(uri);
       if (!u) { return; }
       const locks = await refresh(u);
       vscode.window.setStatusBarMessage(locks.length ? `🔒 Still locked by ${locks.map(describeLock).join(', ')}` : `🔓 ${memberLabel(u)} is free`, 5000);
     })),
-    vscode.commands.registerCommand('silverlake.lockEndJob', guard(async (uri?: vscode.Uri, lock?: MemberLock) => {
+    vscode.commands.registerCommand('vanthrex.lockEndJob', guard(async (uri?: vscode.Uri, lock?: MemberLock) => {
       const u = activeMember(uri);
       const l = u && await pickLock(u, lock);
       if (u && l) { await endTheirJob(u, l); }

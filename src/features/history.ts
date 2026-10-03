@@ -4,7 +4,7 @@ import { errorMessage, logError } from '../core/log';
 import { parseMemberPath } from '../core/util';
 import { FsTransfer, IFS_SCHEME, MEMBER_SCHEME, fsEvents, memberUri } from './fileSystems';
 
-const SERVER_SCHEME = 'silverlake-server';
+const SERVER_SCHEME = 'vanthrex-server';
 
 interface Version { uri: vscode.Uri; time: Date; kind: string; size: number; }
 
@@ -13,11 +13,11 @@ export class LocalHistory {
   constructor(private readonly root: vscode.Uri, private readonly manager: ConnectionManager) {}
 
   private maxVersions(): number {
-    return Math.max(1, vscode.workspace.getConfiguration('silverlake').get<number>('history.maxVersions', 50));
+    return Math.max(1, vscode.workspace.getConfiguration('vanthrex').get<number>('history.maxVersions', 50));
   }
 
   private enabled(): boolean {
-    return vscode.workspace.getConfiguration('silverlake').get<boolean>('history.enabled', true);
+    return vscode.workspace.getConfiguration('vanthrex').get<boolean>('history.enabled', true);
   }
 
   folderFor(uri: vscode.Uri): vscode.Uri | undefined {
@@ -70,7 +70,7 @@ export class LocalHistory {
   }
 }
 
-/** Read-only view of the copy currently on the IBM i: silverlake-server:/<scheme>/<path> */
+/** Read-only view of the copy currently on the IBM i: vanthrex-server:/<scheme>/<path> */
 class ServerCopyProvider implements vscode.TextDocumentContentProvider {
   constructor(private readonly manager: ConnectionManager) {}
   async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
@@ -117,9 +117,9 @@ export function registerHistory(context: vscode.ExtensionContext, manager: Conne
     fsEvents.event(t => { history.record(t).catch(logError); }),
     vscode.workspace.registerTextDocumentContentProvider(SERVER_SCHEME, new ServerCopyProvider(manager)),
 
-    vscode.commands.registerCommand('silverlake.showHistory', guard(async (arg?: TreeArg) => {
+    vscode.commands.registerCommand('vanthrex.showHistory', guard(async (arg?: TreeArg) => {
       const uri = activeRemoteUri(arg);
-      if (!uri) { vscode.window.showInformationMessage('Open a member or IFS file from Silverlake to see its local history.'); return; }
+      if (!uri) { vscode.window.showInformationMessage('Open a member or IFS file from Vanthrex to see its local history.'); return; }
       const versions = await history.versions(uri);
       if (!versions.length) { vscode.window.showInformationMessage(`No local history yet for ${label(uri)}.`); return; }
       const pick = await vscode.window.showQuickPick(versions.map((v, i) => ({
@@ -141,14 +141,14 @@ export function registerHistory(context: vscode.ExtensionContext, manager: Conne
       }
     })),
 
-    vscode.commands.registerCommand('silverlake.compareWithServer', guard(async (arg?: TreeArg) => {
+    vscode.commands.registerCommand('vanthrex.compareWithServer', guard(async (arg?: TreeArg) => {
       const uri = activeRemoteUri(arg);
-      if (!uri) { vscode.window.showInformationMessage('Open a member or IFS file from Silverlake first.'); return; }
+      if (!uri) { vscode.window.showInformationMessage('Open a member or IFS file from Vanthrex first.'); return; }
       const server = vscode.Uri.from({ scheme: SERVER_SCHEME, path: `/${uri.scheme}${uri.path}`, query: String(Date.now()) });
       await vscode.commands.executeCommand('vscode.diff', server, uri, `${label(uri)}: on IBM i ↔ your editor`);
     })),
 
-    vscode.commands.registerCommand('silverlake.compareMembers', guard(async (arg?: TreeArg) => {
+    vscode.commands.registerCommand('vanthrex.compareMembers', guard(async (arg?: TreeArg) => {
       const left = activeRemoteUri(arg);
       const input = await vscode.window.showInputBox({
         title: `Compare ${left ? label(left) : ''} with…`, prompt: 'Other member as LIBRARY/FILE(MEMBER), or an IFS path',
@@ -176,19 +176,19 @@ export function registerHistory(context: vscode.ExtensionContext, manager: Conne
       await vscode.commands.executeCommand('vscode.diff', right, left, `${v} ↔ ${label(left)}`);
     })),
 
-    vscode.commands.registerCommand('silverlake.selectForCompare', (n?: TreeArg) => {
+    vscode.commands.registerCommand('vanthrex.selectForCompare', (n?: TreeArg) => {
       selectedForCompare = activeRemoteUri(n);
       if (selectedForCompare) {
-        vscode.commands.executeCommand('setContext', 'silverlake.hasCompareSelection', true);
+        vscode.commands.executeCommand('setContext', 'vanthrex.hasCompareSelection', true);
         vscode.window.setStatusBarMessage(`$(diff) ${label(selectedForCompare)} selected — right-click another member → Compare with Selected`, 6000);
       }
     }),
-    vscode.commands.registerCommand('silverlake.compareWithSelected', guard(async (n?: TreeArg) => {
+    vscode.commands.registerCommand('vanthrex.compareWithSelected', guard(async (n?: TreeArg) => {
       const right = activeRemoteUri(n);
       if (!selectedForCompare || !right) { return; }
       await vscode.commands.executeCommand('vscode.diff', selectedForCompare, right, `${label(selectedForCompare)} ↔ ${label(right)}`);
     })),
-    vscode.commands.registerCommand('silverlake.openHistoryFolder', () =>
+    vscode.commands.registerCommand('vanthrex.openHistoryFolder', () =>
       vscode.commands.executeCommand('revealFileInOS', vscode.Uri.joinPath(context.globalStorageUri, 'history'))),
   );
 }

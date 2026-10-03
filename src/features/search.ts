@@ -66,9 +66,9 @@ async function objectActions(manager: ConnectionManager, state: vscode.Memento, 
   if (o.type === '*PGM' || o.type === '*SRVPGM' || o.type === '*MODULE') {
     actions.unshift({ label: '$(go-to-file) Open source', run: () => openProgramSource(conn, o.library, o.name) });
   }
-  if (o.type === '*PGM') { actions.push({ label: '$(play) Call program…', run: () => vscode.commands.executeCommand('silverlake.objectCall', o) }); }
+  if (o.type === '*PGM') { actions.push({ label: '$(play) Call program…', run: () => vscode.commands.executeCommand('vanthrex.objectCall', o) }); }
   if (o.type === '*FILE') {
-    actions.unshift({ label: '$(table) Edit data', run: () => vscode.commands.executeCommand('silverlake.editData', o) });
+    actions.unshift({ label: '$(table) Edit data', run: () => vscode.commands.executeCommand('vanthrex.editData', o) });
     actions.push({ label: '$(preview) Preview first rows', run: () => runSqlAndShow(manager, state, `SELECT * FROM ${o.library}/${o.name} FETCH FIRST 100 ROWS ONLY`) });
   }
   actions.push({ label: '$(clippy) Copy qualified name', run: () => vscode.env.clipboard.writeText(`${o.library}/${o.name}`) });
@@ -217,16 +217,16 @@ export function registerSearch(context: vscode.ExtensionContext, manager: Connec
     }
   };
   context.subscriptions.push(
-    vscode.commands.registerCommand('silverlake.searchObjects', guard(() => searchObjects(manager, context.globalState))),
-    vscode.commands.registerCommand('silverlake.searchSource', guard(() => searchSource(manager))),
-    vscode.commands.registerCommand('silverlake.whereUsed', guard(async (n?: { library: string; name: string; type: string }) => {
+    vscode.commands.registerCommand('vanthrex.searchObjects', guard(() => searchObjects(manager, context.globalState))),
+    vscode.commands.registerCommand('vanthrex.searchSource', guard(() => searchSource(manager))),
+    vscode.commands.registerCommand('vanthrex.whereUsed', guard(async (n?: { library: string; name: string; type: string }) => {
       if (n?.library && n.name) { return whereUsed(manager, n.library, n.name, n.type); }
       const v = await vscode.window.showInputBox({ title: 'Where used', prompt: 'LIBRARY/OBJECT', placeHolder: 'MYLIB/CUSTMAST' });
       if (!v?.includes('/')) { return; }
       const [library, name] = v.trim().toUpperCase().split('/');
       return whereUsed(manager, library, name, '*ALL');
     })),
-    vscode.commands.registerCommand('silverlake.openProgramSource', guard(async (n: { library: string; name: string }) =>
+    vscode.commands.registerCommand('vanthrex.openProgramSource', guard(async (n: { library: string; name: string }) =>
       openProgramSource(manager.require(), n.library, n.name))),
   );
 }

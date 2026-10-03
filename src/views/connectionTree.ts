@@ -23,7 +23,7 @@ export class ConnectionTreeProvider implements vscode.TreeDataProvider<Connectio
       (active ? '_Connected_' : '_Click to connect_'));
     item.contextValue = active ? 'connection.active' : 'connection';
     if (!active) {
-      item.command = { command: 'silverlake.connect', title: 'Connect', arguments: [p] };
+      item.command = { command: 'vanthrex.connect', title: 'Connect', arguments: [p] };
     }
     return item;
   }

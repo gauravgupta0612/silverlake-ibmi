@@ -21,8 +21,8 @@ export interface ConnectionProfile {
   ifsHome?: string;
 }
 
-const PROFILES_KEY = 'silverlake.profiles';
-const LAST_KEY = 'silverlake.lastProfile';
+const PROFILES_KEY = 'vanthrex.profiles';
+const LAST_KEY = 'vanthrex.lastProfile';
 
 export class ProfileStore {
   private readonly _onDidChange = new vscode.EventEmitter<void>();
@@ -73,7 +73,7 @@ export class ProfileStore {
   }
 
   private secretKey(id: string): string {
-    return `silverlake.password.${id}`;
+    return `vanthrex.password.${id}`;
   }
 }
 

@@ -12,7 +12,7 @@ export interface CompileAction {
   source?: 'member' | 'ifs' | 'both';
 }
 
-const LAST_ACTION_KEY = 'silverlake.lastCompileAction';
+const LAST_ACTION_KEY = 'vanthrex.lastCompileAction';
 
 export class Compiler {
   readonly diagnostics = vscode.languages.createDiagnosticCollection('IBM i');
@@ -26,7 +26,7 @@ export class Compiler {
       return;
     }
     if (uri.scheme !== MEMBER_SCHEME && uri.scheme !== IFS_SCHEME) {
-      vscode.window.showWarningMessage('Compile works on members and IFS files opened from the Silverlake views.');
+      vscode.window.showWarningMessage('Compile works on members and IFS files opened from the Vanthrex views.');
       return;
     }
     const conn = this.manager.require();
@@ -103,14 +103,14 @@ export class Compiler {
   }
 
   private async pickAction(ext: string, source: 'member' | 'ifs', alwaysAsk: boolean): Promise<CompileAction | undefined> {
-    const all = vscode.workspace.getConfiguration('silverlake').get<CompileAction[]>('compileActions', []);
+    const all = vscode.workspace.getConfiguration('vanthrex').get<CompileAction[]>('compileActions', []);
     const candidates = all.filter(a =>
       a.extensions.map(x => x.toLowerCase()).includes(ext) &&
       ((a.source ?? 'member') === source || a.source === 'both'));
     if (!candidates.length) {
       const choice = await vscode.window.showWarningMessage(
         `No compile action is defined for ".${ext}" ${source === 'ifs' ? 'IFS files' : 'members'}.`, 'Open Settings');
-      if (choice) { vscode.commands.executeCommand('workbench.action.openSettings', 'silverlake.compileActions'); }
+      if (choice) { vscode.commands.executeCommand('workbench.action.openSettings', 'vanthrex.compileActions'); }
       return undefined;
     }
     const lastMap = this.state.get<Record<string, string>>(LAST_ACTION_KEY, {});
@@ -181,8 +181,8 @@ export function registerCompile(context: vscode.ExtensionContext, manager: Conne
   };
   context.subscriptions.push(
     compiler,
-    vscode.commands.registerCommand('silverlake.compile', run(false)),
-    vscode.commands.registerCommand('silverlake.compileWith', run(true)),
+    vscode.commands.registerCommand('vanthrex.compile', run(false)),
+    vscode.commands.registerCommand('vanthrex.compileWith', run(true)),
   );
   return compiler;
 }

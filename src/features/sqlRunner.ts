@@ -5,8 +5,8 @@ import { errorMessage, logError, showLog } from '../core/log';
 import { isDestructiveSql, statementAtOffset, toCsv } from '../core/util';
 import { escapeHtml, nonce } from './webviewUtil';
 
-const HISTORY_KEY = 'silverlake.sqlHistory';
-const CL_HISTORY_KEY = 'silverlake.clHistory';
+const HISTORY_KEY = 'vanthrex.sqlHistory';
+const CL_HISTORY_KEY = 'vanthrex.clHistory';
 
 class ResultsPanel {
   private static panel?: vscode.WebviewPanel;
@@ -15,7 +15,7 @@ class ResultsPanel {
   static show(sql: string, result: SqlResult): void {
     ResultsPanel.last = result;
     if (!ResultsPanel.panel) {
-      ResultsPanel.panel = vscode.window.createWebviewPanel('silverlake.sqlResults', 'SQL Results',
+      ResultsPanel.panel = vscode.window.createWebviewPanel('vanthrex.sqlResults', 'SQL Results',
         { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
         { enableScripts: true, retainContextWhenHidden: true });
       ResultsPanel.panel.onDidDispose(() => { ResultsPanel.panel = undefined; });
@@ -47,7 +47,7 @@ class ResultsPanel {
     const payload = JSON.stringify({ columns: r.columns, rows: r.rows.map(row => r.columns.map(c => row[c] ?? null)) })
       .replace(/</g, '\\u003c');
     const info = r.columns.length
-      ? `${r.rows.length} row${r.rows.length === 1 ? '' : 's'}${r.truncated ? ' (limit reached — raise silverlake.sql.maxRows for more)' : ''}`
+      ? `${r.rows.length} row${r.rows.length === 1 ? '' : 's'}${r.truncated ? ' (limit reached — raise vanthrex.sql.maxRows for more)' : ''}`
       : (r.updateCount >= 0 ? `${r.updateCount} row(s) affected` : 'Statement completed');
     return /* html */ `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${n}';">
@@ -121,7 +121,7 @@ class ResultsPanel {
 
 export async function runSqlAndShow(manager: ConnectionManager, state: vscode.Memento, sql: string): Promise<void> {
   const conn = manager.require();
-  const cfg = vscode.workspace.getConfiguration('silverlake');
+  const cfg = vscode.workspace.getConfiguration('vanthrex');
   if (cfg.get<boolean>('sql.confirmDestructive', true) && isDestructiveSql(sql)) {
     const ok = await vscode.window.showWarningMessage(
       'This statement can change or remove a lot of data. Run it?', { modal: true }, 'Run');
@@ -145,7 +145,7 @@ export async function runSqlAndShow(manager: ConnectionManager, state: vscode.Me
 export function registerSql(context: vscode.ExtensionContext, manager: ConnectionManager): void {
   const state = context.globalState;
   context.subscriptions.push(
-    vscode.commands.registerCommand('silverlake.runSql', async () => {
+    vscode.commands.registerCommand('vanthrex.runSql', async () => {
       try {
         const editor = vscode.window.activeTextEditor;
         let sql: string | undefined;
@@ -169,12 +169,12 @@ export function registerSql(context: vscode.ExtensionContext, manager: Connectio
       }
     }),
 
-    vscode.commands.registerCommand('silverlake.newSqlScratchpad', async () => {
+    vscode.commands.registerCommand('vanthrex.newSqlScratchpad', async () => {
       const lib = manager.connection?.profile.currentLibrary || manager.connection?.profile.libraries[0] || 'QSYS2';
       const doc = await vscode.workspace.openTextDocument({
         language: 'sql',
         content:
-          `-- Silverlake SQL scratchpad. Put the cursor in a statement and press Ctrl+Enter.\n` +
+          `-- Vanthrex SQL scratchpad. Put the cursor in a statement and press Ctrl+Enter.\n` +
           `-- Statements are separated by semicolons. Results open in a grid you can filter and export.\n\n` +
           `SELECT * FROM TABLE(QSYS2.OBJECT_STATISTICS('${lib}', '*ALL')) ORDER BY OBJTYPE, OBJNAME;\n\n` +
           `SELECT JOB_NAME, JOB_STATUS, FUNCTION, ELAPSED_CPU_PERCENTAGE\n  FROM TABLE(QSYS2.ACTIVE_JOB_INFO(CURRENT_USER_LIST_FILTER => CURRENT USER));\n\n` +
@@ -183,7 +183,7 @@ export function registerSql(context: vscode.ExtensionContext, manager: Connectio
       await vscode.window.showTextDocument(doc);
     }),
 
-    vscode.commands.registerCommand('silverlake.runCl', async (preset?: string) => {
+    vscode.commands.registerCommand('vanthrex.runCl', async (preset?: string) => {
       try {
         const conn = manager.require();
         let cmd = typeof preset === 'string' ? preset : undefined;

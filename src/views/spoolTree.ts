@@ -38,14 +38,14 @@ export class SpoolTreeProvider implements vscode.TreeDataProvider<SpoolNode> {
       `Output queue: ${n.outq}  \nCreated: ${n.created}`);
     item.iconPath = new vscode.ThemeIcon(n.status === 'HELD' ? 'debug-pause' : 'file-text');
     item.contextValue = 'spool';
-    item.command = { command: 'silverlake.spoolOpen', title: 'Open', arguments: [n] };
+    item.command = { command: 'vanthrex.spoolOpen', title: 'Open', arguments: [n] };
     return item;
   }
 
   async getChildren(n?: SpoolNode): Promise<SpoolNode[]> {
     const conn = this.manager.connection;
     if (!conn || n) { return []; }
-    const max = vscode.workspace.getConfiguration('silverlake').get<number>('spool.maxEntries', 200);
+    const max = vscode.workspace.getConfiguration('vanthrex').get<number>('spool.maxEntries', 200);
     try {
       const rows = await conn.rows<Record<string, unknown>>(
         `SELECT SPOOLED_FILE_NAME, JOB_NAME, FILE_NUMBER, COALESCE(USER_DATA, '') AS USER_DATA, STATUS, ` +

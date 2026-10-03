@@ -5,8 +5,8 @@ import { parseMemberPath, clString, memberPath } from '../core/util';
 import { SourceRecord, mergeRecords, tooLongLines } from '../core/sourceDates';
 import type { MemberLock } from '../core/connection';
 
-export const MEMBER_SCHEME = 'silverlake-member';
-export const IFS_SCHEME = 'silverlake-ifs';
+export const MEMBER_SCHEME = 'vanthrex-member';
+export const IFS_SCHEME = 'vanthrex-ifs';
 
 /** Fired after a member / stream file is read from or written to the IBM i (used by local history). */
 export interface FsTransfer { uri: vscode.Uri; content: Uint8Array; kind: 'read' | 'write'; }
@@ -58,7 +58,7 @@ abstract class BaseFs implements vscode.FileSystemProvider {
   abstract rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean }): void | Thenable<void>;
 }
 
-/** Source members as editable documents: silverlake-member:/LIB/FILE/MEMBER.TYPE */
+/** Source members as editable documents: vanthrex-member:/LIB/FILE/MEMBER.TYPE */
 export class MemberFileSystem extends BaseFs {
   private readonly meta = new Map<string, { mtime: number; size: number }>();
 
@@ -78,7 +78,7 @@ export class MemberFileSystem extends BaseFs {
   async readFile(uri: vscode.Uri): Promise<Uint8Array> {
     const { library, file, member } = parseMemberPath(uri.path);
     const conn = this.conn();
-    const checking = vscode.workspace.getConfiguration('silverlake').get<boolean>('conflictCheck', true);
+    const checking = vscode.workspace.getConfiguration('vanthrex').get<boolean>('conflictCheck', true);
     try {
       // Take the change time *before* reading, so a change made while we read is still detected on save.
       const state = checking ? await conn.memberState(library, file, member).catch(() => undefined) : undefined;
@@ -110,7 +110,7 @@ export class MemberFileSystem extends BaseFs {
 
   /** Ask before overwriting a member that changed on the IBM i or is locked by another job. */
   private async checkBeforeSave(uri: vscode.Uri, library: string, file: string, member: string): Promise<void> {
-    if (!vscode.workspace.getConfiguration('silverlake').get<boolean>('conflictCheck', true)) { return; }
+    if (!vscode.workspace.getConfiguration('vanthrex').get<boolean>('conflictCheck', true)) { return; }
     const state = await this.conn().memberState(library, file, member);
     const opened = this.openedAt.get(uri.toString());
     if (opened && state.changed && state.changed !== opened) {
@@ -118,7 +118,7 @@ export class MemberFileSystem extends BaseFs {
         `${library}/${file}(${member}) was changed on the IBM i after you opened it (at ${state.changed.replace(/\.\d+$/, '')}).`,
         { modal: true, detail: 'Saving now would overwrite those changes.' }, 'Compare First', 'Overwrite');
       if (choice === 'Compare First') {
-        vscode.commands.executeCommand('silverlake.compareWithServer', uri);
+        vscode.commands.executeCommand('vanthrex.compareWithServer', uri);
         throw new SaveCancelled('Save cancelled — compare the versions, then save again.');
       }
       if (choice !== 'Overwrite') { throw new SaveCancelled('Save cancelled.'); }
@@ -131,7 +131,7 @@ export class MemberFileSystem extends BaseFs {
         { modal: true, detail: 'They may be editing it (for example in SEU). If you save now, the save can fail or one of you can lose changes.' },
         'Ask Them to Release It', 'Save Anyway');
       if (choice === 'Ask Them to Release It') {
-        vscode.commands.executeCommand('silverlake.lockAskRelease', uri, state.locks[0]);
+        vscode.commands.executeCommand('vanthrex.lockAskRelease', uri, state.locks[0]);
         throw new SaveCancelled('Save postponed — waiting for the lock to be released.');
       }
       if (choice !== 'Save Anyway') { throw new SaveCancelled('Save cancelled.'); }
@@ -200,7 +200,7 @@ export class MemberFileSystem extends BaseFs {
   }
 }
 
-/** IFS stream files: silverlake-ifs:/home/me/src/hello.rpgle */
+/** IFS stream files: vanthrex-ifs:/home/me/src/hello.rpgle */
 export class IfsFileSystem extends BaseFs {
   async stat(uri: vscode.Uri): Promise<vscode.FileStat> {
     try {

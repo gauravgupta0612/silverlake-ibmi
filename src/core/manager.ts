@@ -12,7 +12,7 @@ export class ConnectionManager implements vscode.Disposable {
 
   constructor(readonly profiles: ProfileStore) {
     this.statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    this.statusItem.command = 'silverlake.showMenu';
+    this.statusItem.command = 'vanthrex.showMenu';
     this.updateStatus();
     this.statusItem.show();
   }
@@ -25,7 +25,7 @@ export class ConnectionManager implements vscode.Disposable {
   require(): IbmiConnection {
     const c = this.connection;
     if (!c) {
-      throw new Error('Not connected to an IBM i. Open the Silverlake view and click a connection to connect.');
+      throw new Error('Not connected to an IBM i. Open the Vanthrex view and click a connection to connect.');
     }
     return c;
   }
@@ -60,7 +60,7 @@ export class ConnectionManager implements vscode.Disposable {
       const choice = await vscode.window.showErrorMessage(
         `Could not connect to ${profile.host}: ${msg}`,
         'Edit Connection', 'Forget Saved Password', 'Show Log');
-      if (choice === 'Edit Connection') { vscode.commands.executeCommand('silverlake.editConnection', profile); }
+      if (choice === 'Edit Connection') { vscode.commands.executeCommand('vanthrex.editConnection', profile); }
       if (choice === 'Forget Saved Password') { await this.profiles.setPassword(profile.id, undefined); }
       if (choice === 'Show Log') { showLog(); }
       conn.ssh.dispose();
@@ -99,7 +99,7 @@ export class ConnectionManager implements vscode.Disposable {
   }
 
   private fire(): void {
-    vscode.commands.executeCommand('setContext', 'silverlake.connected', !!this.connection);
+    vscode.commands.executeCommand('setContext', 'vanthrex.connected', !!this.connection);
     this.updateStatus();
     this._onDidChange.fire(this.connection);
   }

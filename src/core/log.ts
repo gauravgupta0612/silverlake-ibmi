@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 let channel: vscode.LogOutputChannel | undefined;
 
 export function initLog(): vscode.LogOutputChannel {
-  channel = vscode.window.createOutputChannel('Silverlake for IBM i', { log: true });
+  channel = vscode.window.createOutputChannel('Vanthrex for IBM i', { log: true });
   return channel;
 }
 

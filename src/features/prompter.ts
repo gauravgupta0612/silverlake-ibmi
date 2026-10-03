@@ -22,7 +22,7 @@ type FormResult = { values: Record<string, string>; next?: boolean } | undefined
 
 /** A small reusable form (webview) used by the F4 prompters. Resolves with the values, or undefined on cancel. */
 function showForm(title: string, subtitle: string, fields: FormField[], options: { nextButton?: boolean } = {}): Promise<FormResult> {
-  const panel = vscode.window.createWebviewPanel('silverlake.prompter', title,
+  const panel = vscode.window.createWebviewPanel('vanthrex.prompter', title,
     { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false }, { enableScripts: true });
   const n = nonce();
   const rows = fields.map((f, i) => `
@@ -203,7 +203,7 @@ async function promptAndRun(manager: ConnectionManager, preset?: string): Promis
   if (!result) { return; }
   const cmd = formatClCommand(parsed.command, def.parms.map(p => ({ kwd: p.kwd, value: result.values[p.kwd] ?? '' })), 'line');
   log(`Prompted command: ${cmd}`);
-  await vscode.commands.executeCommand('silverlake.runCl', cmd);
+  await vscode.commands.executeCommand('vanthrex.runCl', cmd);
 }
 
 export function registerPrompters(context: vscode.ExtensionContext, manager: ConnectionManager): void {
@@ -211,14 +211,14 @@ export function registerPrompters(context: vscode.ExtensionContext, manager: Con
     try { await fn(...a); } catch (e) { logError(e); vscode.window.showErrorMessage(errorMessage(e)); }
   };
   context.subscriptions.push(
-    vscode.commands.registerCommand('silverlake.prompt', guard(async () => {
+    vscode.commands.registerCommand('vanthrex.prompt', guard(async () => {
       const editor = vscode.window.activeTextEditor;
       if (!editor) { return; }
       if (editor.document.languageId === 'cl') { return promptClInEditor(manager, editor); }
       if (editor.document.languageId === 'rpgle' || editor.document.languageId === 'dds') { return promptSpec(editor); }
       vscode.window.showInformationMessage('F4 prompting works in RPG (fixed format), DDS and CL sources.');
     })),
-    vscode.commands.registerCommand('silverlake.promptCl', guard((preset?: string) => promptAndRun(manager, typeof preset === 'string' ? preset : undefined))),
+    vscode.commands.registerCommand('vanthrex.promptCl', guard((preset?: string) => promptAndRun(manager, typeof preset === 'string' ? preset : undefined))),
     manager.onDidChange(() => definitions.clear()),
   );
 }

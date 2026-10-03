@@ -39,9 +39,9 @@ const SOURCE_FILES = [
 ];
 
 const STARTERS: Record<string, string> = {
-  rpgle: `**free\nctl-opt dftactgrp(*no) actgrp(*caller) option(*srcstmt: *nodebugio);\n\ndcl-s message varchar(52);\n\nmessage = 'Hello from Silverlake';\ndsply message;\n\n*inlr = *on;\nreturn;\n`,
+  rpgle: `**free\nctl-opt dftactgrp(*no) actgrp(*caller) option(*srcstmt: *nodebugio);\n\ndcl-s message varchar(52);\n\nmessage = 'Hello from Vanthrex';\ndsply message;\n\n*inlr = *on;\nreturn;\n`,
   sqlrpgle: `**free\nctl-opt dftactgrp(*no) actgrp(*caller) option(*srcstmt: *nodebugio);\n\ndcl-s today date;\n\nexec sql SET :today = CURRENT DATE;\ndsply %char(today);\n\n*inlr = *on;\nreturn;\n`,
-  clle: `             PGM\n             DCL        VAR(&MSG) TYPE(*CHAR) LEN(52) VALUE('Hello from Silverlake')\n             SNDPGMMSG  MSG(&MSG)\n             ENDPGM\n`,
+  clle: `             PGM\n             DCL        VAR(&MSG) TYPE(*CHAR) LEN(52) VALUE('Hello from Vanthrex')\n             SNDPGMMSG  MSG(&MSG)\n             ENDPGM\n`,
 };
 
 async function guard(fn: () => Promise<unknown>): Promise<void> {
@@ -70,66 +70,66 @@ export function registerBrowseCommands(
     context.subscriptions.push(vscode.commands.registerCommand(id, (...args) => guard(async () => fn(...args))));
 
   // ------------------------------------------------------------ connections
-  reg('silverlake.addConnection', () => ConnectionForm.open(manager.profiles));
-  reg('silverlake.editConnection', (p?: ConnectionProfile) => {
+  reg('vanthrex.addConnection', () => ConnectionForm.open(manager.profiles));
+  reg('vanthrex.editConnection', (p?: ConnectionProfile) => {
     const profile = p ?? manager.connection?.profile;
     if (!profile) { return vscode.window.showInformationMessage('Right-click a connection to edit it.'); }
     ConnectionForm.open(manager.profiles, manager.profiles.get(profile.id) ?? profile);
   });
-  reg('silverlake.deleteConnection', async (p: ConnectionProfile) => {
+  reg('vanthrex.deleteConnection', async (p: ConnectionProfile) => {
     const ok = await vscode.window.showWarningMessage(`Remove connection "${p.name}" and its saved password?`, { modal: true }, 'Remove');
     if (ok !== 'Remove') { return; }
     if (manager.connection?.profile.id === p.id) { await manager.disconnect(); }
     await manager.profiles.remove(p.id);
   });
-  reg('silverlake.connect', async (p?: ConnectionProfile) => {
+  reg('vanthrex.connect', async (p?: ConnectionProfile) => {
     let profile = p;
     if (!profile) {
       const all = manager.profiles.list();
-      if (!all.length) { return vscode.commands.executeCommand('silverlake.addConnection'); }
+      if (!all.length) { return vscode.commands.executeCommand('vanthrex.addConnection'); }
       const pick = await vscode.window.showQuickPick(all.map(x => ({ label: x.name, description: `${x.user}@${x.host}`, x })),
         { title: 'Connect to IBM i' });
       profile = pick?.x;
     }
     if (profile) { await manager.connect(profile); }
   });
-  reg('silverlake.disconnect', () => manager.disconnect());
-  reg('silverlake.openWalkthrough', () =>
-    vscode.commands.executeCommand('workbench.action.openWalkthrough', `${context.extension.id}#silverlake.gettingStarted`, false));
+  reg('vanthrex.disconnect', () => manager.disconnect());
+  reg('vanthrex.openWalkthrough', () =>
+    vscode.commands.executeCommand('workbench.action.openWalkthrough', `${context.extension.id}#vanthrex.gettingStarted`, false));
 
-  reg('silverlake.showMenu', async () => {
+  reg('vanthrex.showMenu', async () => {
     const c = manager.connection;
     type Item = vscode.QuickPickItem & { cmd?: string };
     const items: Item[] = c ? [
-      { label: '$(dashboard) System dashboard', cmd: 'silverlake.openDashboard' },
-      { label: '$(terminal) Run CL command…', cmd: 'silverlake.runCl' },
-      { label: '$(list-selection) Prompt and run a CL command (F4)…', cmd: 'silverlake.promptCl' },
-      { label: '$(search) Search objects…', cmd: 'silverlake.searchObjects' },
-      { label: '$(search-fuzzy) Search source code…', cmd: 'silverlake.searchSource' },
-      { label: '$(table) Edit table data…', cmd: 'silverlake.editData' },
-      { label: '$(mail) Send a message…', cmd: 'silverlake.sendMessage' },
-      { label: '$(database) New SQL scratchpad', cmd: 'silverlake.newSqlScratchpad' },
-      { label: '$(search) Find & open member…', cmd: 'silverlake.findMember' },
-      { label: '$(library) Add library to list…', cmd: 'silverlake.addLibrary' },
-      { label: '$(folder-opened) Go to IFS directory…', cmd: 'silverlake.ifsChangeRoot' },
-      { label: '$(output) Show output log', cmd: 'silverlake.showOutput' },
-      { label: '$(edit) Edit this connection…', cmd: 'silverlake.editConnection' },
-      { label: '$(debug-disconnect) Disconnect', cmd: 'silverlake.disconnect' },
+      { label: '$(dashboard) System dashboard', cmd: 'vanthrex.openDashboard' },
+      { label: '$(terminal) Run CL command…', cmd: 'vanthrex.runCl' },
+      { label: '$(list-selection) Prompt and run a CL command (F4)…', cmd: 'vanthrex.promptCl' },
+      { label: '$(search) Search objects…', cmd: 'vanthrex.searchObjects' },
+      { label: '$(search-fuzzy) Search source code…', cmd: 'vanthrex.searchSource' },
+      { label: '$(table) Edit table data…', cmd: 'vanthrex.editData' },
+      { label: '$(mail) Send a message…', cmd: 'vanthrex.sendMessage' },
+      { label: '$(database) New SQL scratchpad', cmd: 'vanthrex.newSqlScratchpad' },
+      { label: '$(search) Find & open member…', cmd: 'vanthrex.findMember' },
+      { label: '$(library) Add library to list…', cmd: 'vanthrex.addLibrary' },
+      { label: '$(folder-opened) Go to IFS directory…', cmd: 'vanthrex.ifsChangeRoot' },
+      { label: '$(output) Show output log', cmd: 'vanthrex.showOutput' },
+      { label: '$(edit) Edit this connection…', cmd: 'vanthrex.editConnection' },
+      { label: '$(debug-disconnect) Disconnect', cmd: 'vanthrex.disconnect' },
     ] : [
-      { label: '$(plug) Connect…', cmd: 'silverlake.connect' },
-      { label: '$(add) Add connection…', cmd: 'silverlake.addConnection' },
-      { label: '$(book) Getting started', cmd: 'silverlake.openWalkthrough' },
+      { label: '$(plug) Connect…', cmd: 'vanthrex.connect' },
+      { label: '$(add) Add connection…', cmd: 'vanthrex.addConnection' },
+      { label: '$(book) Getting started', cmd: 'vanthrex.openWalkthrough' },
     ];
     const pick = await vscode.window.showQuickPick(items, {
       title: c ? `IBM i — ${c.profile.name} (${c.user})` : 'IBM i — not connected',
     });
     if (pick?.cmd) { await vscode.commands.executeCommand(pick.cmd); }
   });
-  reg('silverlake.showOutput', () => showLog());
+  reg('vanthrex.showOutput', () => showLog());
 
   // ------------------------------------------------------------ libraries
-  reg('silverlake.refreshLibraries', () => libraries.refresh());
-  reg('silverlake.addLibrary', async () => {
+  reg('vanthrex.refreshLibraries', () => libraries.refresh());
+  reg('vanthrex.addLibrary', async () => {
     const conn = manager.require();
     const lib = await askName('Add library', 'Library to add to the top of your list');
     if (!lib) { return; }
@@ -141,15 +141,15 @@ export function registerBrowseCommands(
     }
     await manager.updateActiveProfile(p => { p.libraries = [lib, ...p.libraries.filter(l => l !== lib)]; });
   });
-  reg('silverlake.removeLibrary', (n: Library) =>
+  reg('vanthrex.removeLibrary', (n: Library) =>
     manager.updateActiveProfile(p => {
       p.libraries = p.libraries.filter(l => l !== n.library);
       if (p.currentLibrary === n.library) { p.currentLibrary = undefined; }
     }));
-  reg('silverlake.setCurrentLibrary', (n: Library) =>
+  reg('vanthrex.setCurrentLibrary', (n: Library) =>
     manager.updateActiveProfile(p => { p.currentLibrary = n.library; }));
 
-  reg('silverlake.newSourceFile', async (n: Library) => {
+  reg('vanthrex.newSourceFile', async (n: Library) => {
     const conn = manager.require();
     const pick = await vscode.window.showQuickPick(
       [...SOURCE_FILES, { label: '$(edit) Other name…', description: '', rcdlen: 112 }],
@@ -163,7 +163,7 @@ export function registerBrowseCommands(
     vscode.window.showInformationMessage(`Created source file ${n.library}/${name}.`);
   });
 
-  reg('silverlake.newMember', async (n: SrcFile) => {
+  reg('vanthrex.newMember', async (n: SrcFile) => {
     const conn = manager.require();
     const guess = n.file.includes('CL') ? 'CLLE' : n.file.includes('DDS') ? 'PF' : n.file.includes('SQL') ? 'SQL' : 'RPGLE';
     const typePick = await vscode.window.showQuickPick(
@@ -185,7 +185,7 @@ export function registerBrowseCommands(
     }
   });
 
-  reg('silverlake.filterMembersByDate', async (n: SrcFile) => {
+  reg('vanthrex.filterMembersByDate', async (n: SrcFile) => {
     const key = `${n.library}/${n.file}`;
     const pick = await vscode.window.showQuickPick([
       { label: 'Changed today', days: 1 }, { label: 'Changed in the last 7 days', days: 7 },
@@ -202,15 +202,15 @@ export function registerBrowseCommands(
     if (days) { libraries.memberFilter.set(key, days); } else { libraries.memberFilter.delete(key); }
     libraries.refresh();
   });
-  reg('silverlake.sortMembers', async () => {
-    const cfg = vscode.workspace.getConfiguration('silverlake');
+  reg('vanthrex.sortMembers', async () => {
+    const cfg = vscode.workspace.getConfiguration('vanthrex');
     const next = cfg.get<string>('members.sortBy', 'name') === 'name' ? 'date' : 'name';
     await cfg.update('members.sortBy', next, vscode.ConfigurationTarget.Global);
     libraries.refresh();
     vscode.window.setStatusBarMessage(`Members sorted by ${next === 'date' ? 'last change (newest first)' : 'name'}`, 3000);
   });
 
-  reg('silverlake.deleteMember', async (n: Member) => {
+  reg('vanthrex.deleteMember', async (n: Member) => {
     const ok = await vscode.window.showWarningMessage(`Delete member ${n.library}/${n.file}(${n.member})? This cannot be undone.`,
       { modal: true }, 'Delete');
     if (ok !== 'Delete') { return; }
@@ -219,7 +219,7 @@ export function registerBrowseCommands(
     libraries.refresh();
   });
 
-  reg('silverlake.findMember', async () => {
+  reg('vanthrex.findMember', async () => {
     const conn = manager.require();
     const pattern = await vscode.window.showInputBox({
       title: 'Find member', prompt: 'Member name or pattern (use * as a wildcard), searched across your library list',
@@ -248,16 +248,16 @@ export function registerBrowseCommands(
   });
 
   // ------------------------------------------------------------ objects
-  reg('silverlake.objectCall', async (n: ObjectNode) => {
+  reg('vanthrex.objectCall', async (n: ObjectNode) => {
     const parms = await vscode.window.showInputBox({
       title: `Call ${n.library}/${n.name}`, prompt: "Parameters (optional), e.g. 'ABC' 'X'", ignoreFocusOut: true });
     if (parms === undefined) { return; }
-    await vscode.commands.executeCommand('silverlake.runCl',
+    await vscode.commands.executeCommand('vanthrex.runCl',
       `CALL PGM(${n.library}/${n.name})${parms.trim() ? ` PARM(${parms.trim()})` : ''}`);
   });
-  reg('silverlake.objectQuery', (n: ObjectNode) =>
+  reg('vanthrex.objectQuery', (n: ObjectNode) =>
     runSqlAndShow(manager, context.globalState, `SELECT * FROM ${n.library}/${n.name} FETCH FIRST 100 ROWS ONLY`));
-  reg('silverlake.objectDelete', async (n: ObjectNode) => {
+  reg('vanthrex.objectDelete', async (n: ObjectNode) => {
     const ok = await vscode.window.showWarningMessage(`Delete ${n.type} ${n.library}/${n.name}? This cannot be undone.`,
       { modal: true }, 'Delete');
     if (ok !== 'Delete') { return; }
@@ -275,13 +275,13 @@ export function registerBrowseCommands(
   });
 
   // ------------------------------------------------------------ IFS
-  reg('silverlake.refreshIfs', () => ifs.refresh());
-  reg('silverlake.ifsChangeRoot', async () => {
+  reg('vanthrex.refreshIfs', () => ifs.refresh());
+  reg('vanthrex.ifsChangeRoot', async () => {
     manager.require();
     const path = await vscode.window.showInputBox({ title: 'Go to IFS directory', value: ifs.rootPath ?? '/home', ignoreFocusOut: true });
     if (path?.trim()) { ifs.setRoot(path.trim()); }
   });
-  reg('silverlake.ifsNewFile', async (n: IfsNode) => {
+  reg('vanthrex.ifsNewFile', async (n: IfsNode) => {
     const name = await vscode.window.showInputBox({ title: `New file in ${n.path}`, placeHolder: 'hello.rpgle', ignoreFocusOut: true });
     if (!name?.trim()) { return; }
     const uri = ifsUri(`${n.path.replace(/\/$/, '')}/${name.trim()}`);
@@ -289,13 +289,13 @@ export function registerBrowseCommands(
     ifs.refresh(n);
     await vscode.window.showTextDocument(uri);
   });
-  reg('silverlake.ifsNewFolder', async (n: IfsNode) => {
+  reg('vanthrex.ifsNewFolder', async (n: IfsNode) => {
     const name = await vscode.window.showInputBox({ title: `New folder in ${n.path}`, ignoreFocusOut: true });
     if (!name?.trim()) { return; }
     await manager.require().mkdir(`${n.path.replace(/\/$/, '')}/${name.trim()}`);
     ifs.refresh(n);
   });
-  reg('silverlake.ifsDelete', async (n: IfsNode) => {
+  reg('vanthrex.ifsDelete', async (n: IfsNode) => {
     const ok = await vscode.window.showWarningMessage(
       `Delete ${n.isDirectory ? 'folder (and everything in it)' : 'file'} ${n.path}?`, { modal: true }, 'Delete');
     if (ok !== 'Delete') { return; }

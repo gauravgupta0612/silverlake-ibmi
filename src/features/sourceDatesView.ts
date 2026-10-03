@@ -9,7 +9,7 @@ type Display = 'date' | 'seq-date' | 'off';
  * marks lines you changed (not yet saved) and lets you highlight lines changed since a date.
  */
 export function registerSourceDates(context: vscode.ExtensionContext): void {
-  const cfg = () => vscode.workspace.getConfiguration('silverlake');
+  const cfg = () => vscode.workspace.getConfiguration('vanthrex');
   const display = (): Display => cfg().get<Display>('sourceDates.display', 'date');
   const style = (): 'seu' | 'iso' => cfg().get<string>('sourceDates.format', 'yymmdd') === 'iso' ? 'iso' : 'seu';
 
@@ -84,7 +84,7 @@ export function registerSourceDates(context: vscode.ExtensionContext): void {
     vscode.window.onDidChangeVisibleTextEditors(renderAll),
     vscode.workspace.onDidChangeTextDocument(e => { if (e.document.uri.scheme === MEMBER_SCHEME) { schedule(e.document); } }),
     sourceRecordsChanged.event(uri => vscode.window.visibleTextEditors.filter(e => e.document.uri.toString() === uri.toString()).forEach(render)),
-    vscode.workspace.onDidChangeConfiguration(e => { if (e.affectsConfiguration('silverlake.sourceDates')) { renderAll(); } }),
+    vscode.workspace.onDidChangeConfiguration(e => { if (e.affectsConfiguration('vanthrex.sourceDates')) { renderAll(); } }),
 
     vscode.languages.registerHoverProvider({ scheme: MEMBER_SCHEME }, {
       provideHover(doc, pos) {
@@ -99,14 +99,14 @@ export function registerSourceDates(context: vscode.ExtensionContext): void {
       },
     }),
 
-    vscode.commands.registerCommand('silverlake.toggleSourceDates', async () => {
+    vscode.commands.registerCommand('vanthrex.toggleSourceDates', async () => {
       const next: Record<Display, Display> = { date: 'seq-date', 'seq-date': 'off', off: 'date' };
       const value = next[display()];
       await cfg().update('sourceDates.display', value, vscode.ConfigurationTarget.Global);
       vscode.window.setStatusBarMessage(`Source dates: ${value === 'off' ? 'hidden' : value === 'date' ? 'dates' : 'sequence numbers and dates'}`, 3000);
     }),
 
-    vscode.commands.registerCommand('silverlake.changedSince', async () => {
+    vscode.commands.registerCommand('vanthrex.changedSince', async () => {
       const editor = vscode.window.activeTextEditor;
       if (!editor || editor.document.uri.scheme !== MEMBER_SCHEME || !sourceRecords.has(editor.document.uri.toString())) {
         vscode.window.showInformationMessage('Open a source member (with source dates available) first.');

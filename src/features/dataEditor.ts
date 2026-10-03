@@ -30,7 +30,7 @@ export class DataEditor {
   }
 
   private constructor(private readonly manager: ConnectionManager, private readonly library: string, private readonly file: string) {
-    this.panel = vscode.window.createWebviewPanel('silverlake.dataEditor', `${library}/${file} (data)`, vscode.ViewColumn.Active,
+    this.panel = vscode.window.createWebviewPanel('vanthrex.dataEditor', `${library}/${file} (data)`, vscode.ViewColumn.Active,
       { enableScripts: true, retainContextWhenHidden: true });
     this.panel.onDidDispose(() => DataEditor.open.delete(`${library}/${file}`));
     this.panel.webview.onDidReceiveMessage(m => this.onMessage(m).catch(e => {
@@ -41,7 +41,7 @@ export class DataEditor {
   }
 
   private get pageSize(): number {
-    return Math.max(10, vscode.workspace.getConfiguration('silverlake').get<number>('dataEditor.pageSize', 100));
+    return Math.max(10, vscode.workspace.getConfiguration('vanthrex').get<number>('dataEditor.pageSize', 100));
   }
 
   private post(m: object): void { this.panel.webview.postMessage(m); }
@@ -318,7 +318,7 @@ export class DataEditor {
 }
 
 export function registerDataEditor(context: vscode.ExtensionContext, manager: ConnectionManager): void {
-  context.subscriptions.push(vscode.commands.registerCommand('silverlake.editData', async (n?: { library: string; name: string }) => {
+  context.subscriptions.push(vscode.commands.registerCommand('vanthrex.editData', async (n?: { library: string; name: string }) => {
     try {
       let library = n?.library;
       let file = n?.name;

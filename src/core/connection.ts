@@ -221,7 +221,7 @@ export class IbmiConnection implements vscode.Disposable {
   // ---------------------------------------------------------------- Source members
 
   tempPath(suffix = ''): string {
-    const dir = vscode.workspace.getConfiguration('silverlake').get<string>('tempDirectory', '/tmp').replace(/\/$/, '');
+    const dir = vscode.workspace.getConfiguration('vanthrex').get<string>('tempDirectory', '/tmp').replace(/\/$/, '');
     return `${dir}/slk_${this.user}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}${suffix}`;
   }
 
@@ -259,7 +259,7 @@ export class IbmiConnection implements vscode.Disposable {
 
   /** True when members can be read and written with their sequence numbers and dates. */
   async canKeepSourceDates(): Promise<boolean> {
-    if (!vscode.workspace.getConfiguration('silverlake').get<boolean>('sourceDates.enabled', true)) { return false; }
+    if (!vscode.workspace.getConfiguration('vanthrex').get<boolean>('sourceDates.enabled', true)) { return false; }
     try { await this.sql('VALUES 1', 1); } catch { return false; }
     return this.sqlKeepsJob;
   }

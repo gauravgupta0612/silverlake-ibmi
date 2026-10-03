@@ -13,10 +13,10 @@ labels: bug
 2.
 
 **Log**
-Paste the relevant part of *View → Output → "Silverlake for IBM i"*.
+Paste the relevant part of *View → Output → "Vanthrex for IBM i"*.
 ⚠️ Remove host names, user names, passwords and any company data before posting.
 
 **Versions**
-- Silverlake:
+- Vanthrex:
 - VS Code:
 - IBM i release (e.g. 7.5):

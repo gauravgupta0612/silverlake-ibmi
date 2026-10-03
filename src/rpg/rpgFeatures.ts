@@ -115,7 +115,7 @@ export function registerRpgFeatures(context: vscode.ExtensionContext): void {
     vscode.languages.registerHoverProvider(RPG, new RpgHoverProvider()),
     vscode.languages.registerCompletionItemProvider(RPG, new RpgCompletionProvider(), '%'),
     vscode.languages.registerDocumentSymbolProvider(RPG, new RpgSymbolProvider()),
-    vscode.commands.registerTextEditorCommand('silverlake.convertToFree', async editor => {
+    vscode.commands.registerTextEditorCommand('vanthrex.convertToFree', async editor => {
       const doc = editor.document;
       const sel = editor.selection.isEmpty
         ? new vscode.Range(0, 0, doc.lineCount - 1, doc.lineAt(doc.lineCount - 1).text.length)
