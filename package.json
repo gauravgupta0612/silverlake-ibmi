@@ -1433,7 +1433,7 @@
     "test": "node --test test/*.test.js",
     "package": "npm run typecheck && npm run build -- --production && vsce package --no-dependencies",
     "pretest": "tsc -p .",
-    "publish": "vsce publish --no-dependencies"
+    "marketplace:publish": "vsce publish --no-dependencies"
   },
   "dependencies": {
     "@ibm/mapepire-js": "^1.0.1",

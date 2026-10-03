@@ -23,6 +23,6 @@ jobs:
             echo "::error::Add the VSCE_PAT secret first (Settings → Secrets and variables → Actions)."
             exit 1
           fi
-          npx vsce publish --no-dependencies --packagePath *.vsix
+          npx vsce publish --no-dependencies --skip-duplicate --packagePath *.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}

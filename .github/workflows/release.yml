@@ -37,7 +37,7 @@ jobs:
           generate_release_notes: true
       - name: Publish to the VS Code Marketplace
         if: env.VSCE_PAT != ''
-        run: npx vsce publish --no-dependencies --packagePath *.vsix
+        run: npx vsce publish --no-dependencies --skip-duplicate --packagePath *.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
       - name: Publish to GitHub Packages
