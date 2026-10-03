@@ -28,6 +28,9 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **RPG navigation** *(new)* | Go to definition (F12, also into /COPY members), find all references, rename (F2, scoped to the procedure), highlight occurrences, Ctrl+click on /COPY and /INCLUDE, and hover a name to see its declaration. |
 | **SQL autocomplete** *(new)* | Table and view names after FROM/JOIN/INTO/UPDATE, columns after `alias.`, columns of the tables in your statement, and hover for column types and descriptions. |
 | **Local history & compare** *(new)* | Every member and IFS file you open or save is kept locally. Compare any version, restore it, compare your editor with the copy on the IBM i, or compare two members side by side. |
+| **SEU-style source dates** *(new in 0.3)* | Each line shows its last-changed date (and sequence number), dates of untouched lines are kept on save, and you can highlight lines changed since any date. |
+| **F4 prompters** *(new in 0.3)* | F4 on a fixed-format RPG or DDS line opens a labelled form for its columns. F4 on a CL command builds a form from the command's real definition. |
+| **Locks & conflicts** *(new in 0.3)* | Shows who has a member open (name, job, lock) right in the editor, lets you ask them to release it or get notified when it's free, and warns before you overwrite changes made by someone else. |
 | **RPG code checks** *(new)* | As you type: unused variables, GOTO, missing *INLR/RETURN, empty ON-ERROR, SELECT *, numbered indicators, overly long procedures and fixed/free mixing. Each check can be turned off, with quick fixes where possible. |
 
 ## Requirements on the IBM i
@@ -73,7 +76,7 @@ Press `F5` to start an Extension Development Host (launch settings are in `.vsco
 
 ## How it works
 
-- Members are transferred with `CPYTOSTMF` / `CPYFRMSTMF` in CCSID 1208, so national characters survive the round trip. Lines longer than the source file's record length are truncated by the system. Saving a member resets its source dates (SRCDAT).
+- Members are transferred with `CPYTOSTMF` / `CPYFRMSTMF` in CCSID 1208, so national characters survive the round trip. Lines longer than the source file's record length are truncated by the system. With a Mapepire SQL engine, members are read and saved through SQL with their sequence numbers and dates (SRCSEQ / SRCDAT) instead, like SEU.
 - CL commands run in a QSH job whose library list comes from the connection (`liblist`), then `system`.
 - Compile errors are read from `&OBJLIB/EVFEVENT(&NAME)`. For SQLRPGLE, errors that RPG reports on the precompiled source are shown on line 1 with the generated line number.
 
@@ -88,11 +91,14 @@ Press `F5` to start an Extension Development Host (launch settings are in `.vsco
 | `Ctrl+Alt+O` | Search objects |
 | `Ctrl+Alt+F` | Search source code |
 | `F12` / `Shift+F12` / `F2` | RPG: go to definition / references / rename |
+| `F4` | Prompt the fixed-format spec (RPG, DDS) or CL command at the cursor |
+| `Ctrl+Alt+D` | Cycle source dates: date → sequence + date → hidden |
 
-## Known limitations (v0.2)
+## Known limitations (v0.3)
 
 - **Where used** builds its cross-reference with DSPPGMREF in QTEMP, so it needs a Mapepire SQL engine (not db2util). Scanning large libraries takes a while.
 - The table data editor writes each change straight away (no commitment control). Rows are identified by relative record number, so don't reorganize a file while editing it.
+- Source dates and the conflict checks need a Mapepire SQL engine. With db2util, members are copied as plain text (dates are reset on save, as before).
 - Rename only works inside one source and refuses length changes in fixed-format sources, because they would shift columns.
 
 - One active connection at a time.

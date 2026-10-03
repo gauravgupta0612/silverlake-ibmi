@@ -4,8 +4,20 @@ import { NodeSSH } from 'node-ssh';
 import type { SFTPWrapper, FileEntry, Stats } from 'ssh2';
 import { ConnectionProfile } from './profiles';
 import { Db2utilEngine, MapepireEngine, SqlEngine, SqlResult } from './sql';
-import { clString, memberPath, shDoubleQuote, shSingleQuote } from './util';
+import { clString, memberPath, shDoubleQuote, shSingleQuote, sqlString } from './util';
+import { SourceRecord } from './sourceDates';
 import { log, logError } from './log';
+
+export interface MemberLock {
+  /** Qualified job name: number/user/name (for interactive jobs, name = the workstation). */
+  job: string;
+  user: string;
+  jobName: string;
+  /** Lock state, e.g. *SHRRD, *SHRUPD, *EXCLRD. */
+  state: string;
+  /** User profile description — usually the person's name. */
+  userText: string;
+}
 
 export interface CommandResult {
   code: number;
@@ -239,6 +251,149 @@ export class IbmiConnection implements vscode.Disposable {
     } finally {
       this.exec(`rm -f ${shSingleQuote(tmp)}`).catch(() => undefined);
     }
+  }
+
+  // ---------------------------------------------------------------- Members with SEU dates
+
+  private aliasCounter = 0;
+
+  /** True when members can be read and written with their sequence numbers and dates. */
+  async canKeepSourceDates(): Promise<boolean> {
+    if (!vscode.workspace.getConfiguration('silverlake').get<boolean>('sourceDates.enabled', true)) { return false; }
+    try { await this.sql('VALUES 1', 1); } catch { return false; }
+    return this.sqlKeepsJob;
+  }
+
+  /** Length of the SRCDTA field of a source file. */
+  async sourceLineLength(lib: string, file: string): Promise<number> {
+    const r = await this.rows<{ L: number }>(
+      `SELECT LENGTH AS L FROM QSYS2.SYSCOLUMNS WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} ` +
+      `AND SYSTEM_TABLE_NAME = ${sqlString(file)} AND SYSTEM_COLUMN_NAME = 'SRCDTA'`, 1);
+    return Number(r[0]?.L ?? 80);
+  }
+
+  private async withAlias<T>(lib: string, file: string, member: string, fn: (alias: string, id: string) => Promise<T>): Promise<T> {
+    // The id is taken synchronously, so concurrent operations never share QTEMP object names.
+    const id = (++this.aliasCounter % 100000).toString().padStart(5, '0');
+    const alias = `QTEMP/SLKA${id}`;
+    await this.sql(`CREATE OR REPLACE ALIAS ${alias} FOR ${lib}/${file}(${member})`, 1);
+    try { return await fn(alias, id); }
+    finally { await this.sql(`DROP ALIAS ${alias}`, 1).catch(() => undefined); }
+  }
+
+  /** Run a CL command inside the SQL job (so it sees the same QTEMP). */
+  private async sqlCl(command: string): Promise<void> {
+    await this.sql(`CALL QSYS2.QCMDEXC(${sqlString(command)})`, 1);
+  }
+
+  /** Read a member with its SRCSEQ / SRCDAT values (needs a Mapepire SQL engine). */
+  async readMemberRecords(lib: string, file: string, member: string): Promise<SourceRecord[]> {
+    return this.withAlias(lib, file, member, async alias => {
+      const rows = await this.rows<{ SRCSEQ: number; SRCDAT: number; SRCDTA: string }>(
+        `SELECT SRCSEQ, SRCDAT, RTRIM(SRCDTA) AS SRCDTA FROM ${alias} A ORDER BY RRN(A)`, 2_000_000);
+      return rows.map(r => ({ seq: Number(r.SRCSEQ), date: Number(r.SRCDAT), text: String(r.SRCDTA ?? '') }));
+    });
+  }
+
+  private saveChain: Promise<unknown> = Promise.resolve();
+
+  /**
+   * Replace a member's records, keeping the given sequence numbers and dates.
+   * - The lines are first loaded into a QTEMP work file (a broken transfer never touches the member).
+   * - The member is backed up into QTEMP, then replaced in one CPYF MBROPT(*REPLACE), which keeps
+   *   the records in order. If that fails, the backup is copied back.
+   * - Saves run one at a time on a connection.
+   */
+  writeMemberRecords(lib: string, file: string, member: string, records: SourceRecord[]): Promise<void> {
+    const run = this.saveChain.then(() => this.doWriteMemberRecords(lib, file, member, records));
+    this.saveChain = run.catch(() => undefined);
+    return run;
+  }
+
+  private async doWriteMemberRecords(lib: string, file: string, member: string, records: SourceRecord[]): Promise<void> {
+    await this.withAlias(lib, file, member, async (alias, id) => {
+      const work = `QTEMP/SLKW${id}`;
+      const backup = `QTEMP/SLKB${id}`;
+      await this.sql(`DROP TABLE ${work}`, 1).catch(() => undefined);
+      await this.sql(`CREATE TABLE ${work} AS (SELECT SRCSEQ, SRCDAT, SRCDTA FROM ${alias}) WITH NO DATA`, 1);
+      let backedUp = false;
+      try {
+        const chunk = 200;
+        try {
+          for (let i = 0; i < records.length; i += chunk) {
+            const values = records.slice(i, i + chunk)
+              .map(r => `(${r.seq.toFixed(2)}, ${Math.floor(r.date)}, ${sqlString(r.text)})`).join(', ');
+            await this.sql(`INSERT INTO ${work} (SRCSEQ, SRCDAT, SRCDTA) VALUES ${values}`, 1);
+          }
+        } catch (e) {
+          throw new Error('Some lines could not be stored (a line may be too long for the source file, or contain characters ' +
+            `its CCSID cannot hold). The member was not changed. Details: ${e instanceof Error ? e.message : e}`);
+        }
+        const count = (await this.rows<{ N: number }>(`SELECT COUNT(*) AS N FROM ${work}`, 1))[0];
+        if (Number(count?.N) !== records.length) {
+          throw new Error(`Only ${count?.N} of ${records.length} lines reached the IBM i; the member was not changed.`);
+        }
+        const existing = Number((await this.rows<{ N: number }>(`SELECT COUNT(*) AS N FROM ${alias}`, 1))[0]?.N ?? 0);
+        if (existing > 0) {
+          await this.sqlCl(`CPYF FROMFILE(${lib}/${file}) FROMMBR(${member}) TOFILE(${backup}) MBROPT(*REPLACE) CRTFILE(*YES)`);
+          backedUp = true;
+        }
+        try {
+          if (records.length) {
+            await this.sqlCl(`CPYF FROMFILE(${work}) TOFILE(${lib}/${file}) TOMBR(${member}) MBROPT(*REPLACE) FMTOPT(*MAP)`);
+          } else {
+            await this.sqlCl(`CLRPFM FILE(${lib}/${file}) MBR(${member})`);
+          }
+        } catch (e) {
+          if (backedUp) {
+            try {
+              await this.sqlCl(`CPYF FROMFILE(${backup}) TOFILE(${lib}/${file}) TOMBR(${member}) MBROPT(*REPLACE) FMTOPT(*MAP)`);
+              log(`Restored ${lib}/${file}(${member}) from the backup after a failed save`);
+            } catch (r) { logError(r); }
+          }
+          throw new Error(`Saving ${lib}/${file}(${member}) failed${backedUp ? ' — the previous version was put back' : ''}: ${e instanceof Error ? e.message : e}`);
+        }
+      } finally {
+        await this.sql(`DROP TABLE ${work}`, 1).catch(() => undefined);
+        if (backedUp) { await this.sql(`DROP TABLE ${backup}`, 1).catch(() => undefined); }
+      }
+    });
+    log(`Saved ${lib}/${file}(${member}) with source dates (${records.length} lines)`);
+  }
+
+  /** Last change time of a member, and jobs (other than ours) holding a lock on it. */
+  async memberState(lib: string, file: string, member: string): Promise<{ changed?: string; locks: MemberLock[] }> {
+    let changed: string | undefined;
+    let locks: MemberLock[] = [];
+    try {
+      const r = await this.rows<{ T: string }>(
+        `SELECT VARCHAR(LAST_SOURCE_UPDATE_TIMESTAMP) AS T FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} ` +
+        `AND SYSTEM_TABLE_NAME = ${sqlString(file)} AND SYSTEM_TABLE_MEMBER = ${sqlString(member)}`, 1);
+      changed = r[0]?.T ? String(r[0].T) : undefined;
+    } catch (e) { log(`Member change time: ${e}`); }
+    try {
+      const r = await this.rows<{ JOB: string; ST: string }>(
+        `SELECT JOB_NAME AS JOB, MAX(LOCK_STATE) AS ST FROM QSYS2.OBJECT_LOCK_INFO WHERE OBJECT_SCHEMA = ${sqlString(lib)} ` +
+        `AND OBJECT_NAME = ${sqlString(file)} AND MEMBER_NAME = ${sqlString(member)} AND LOCK_SCOPE <> 'LOCK SPACE' GROUP BY JOB_NAME`, 50);
+      locks = r.map(x => {
+        const job = String(x.JOB).trim();
+        const [, user = '', name = ''] = job.split('/');
+        return { job, user, jobName: name, state: String(x.ST).trim(), userText: '' };
+      })
+        // Ignore this extension's own background jobs (SSH/PASE and SQL server jobs of the same user).
+        .filter(x => !(x.user === this.user && /^(QP0ZSPW[PT]|QSQSRVR|QZDASOINIT|QZSHSH)$/.test(x.jobName)));
+      // Who is it? Add the user profile's description (usually the person's name).
+      const users = [...new Set(locks.map(l => l.user))].filter(Boolean);
+      if (users.length) {
+        try {
+          const u = await this.rows<{ U: string; T: string }>(
+            `SELECT AUTHORIZATION_NAME AS U, COALESCE(TEXT_DESCRIPTION, '') AS T FROM QSYS2.USER_INFO ` +
+            `WHERE AUTHORIZATION_NAME IN (${users.map(sqlString).join(', ')})`, 50);
+          for (const l of locks) { l.userText = String(u.find(x => String(x.U).trim() === l.user)?.T ?? '').trim(); }
+        } catch (e) { log(`User names: ${e}`); }
+      }
+    } catch (e) { log(`Member locks: ${e}`); }
+    return { changed, locks };
   }
 
   async downloadToLocal(remotePath: string, localPath: string): Promise<void> {

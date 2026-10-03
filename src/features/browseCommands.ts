@@ -103,6 +103,7 @@ export function registerBrowseCommands(
     const items: Item[] = c ? [
       { label: '$(dashboard) System dashboard', cmd: 'silverlake.openDashboard' },
       { label: '$(terminal) Run CL command…', cmd: 'silverlake.runCl' },
+      { label: '$(list-selection) Prompt and run a CL command (F4)…', cmd: 'silverlake.promptCl' },
       { label: '$(search) Search objects…', cmd: 'silverlake.searchObjects' },
       { label: '$(search-fuzzy) Search source code…', cmd: 'silverlake.searchSource' },
       { label: '$(table) Edit table data…', cmd: 'silverlake.editData' },
@@ -182,6 +183,31 @@ export function registerBrowseCommands(
     if (starter && editor.document.getText().trim() === '') {
       await editor.edit(e => e.insert(new vscode.Position(0, 0), starter));
     }
+  });
+
+  reg('silverlake.filterMembersByDate', async (n: SrcFile) => {
+    const key = `${n.library}/${n.file}`;
+    const pick = await vscode.window.showQuickPick([
+      { label: 'Changed today', days: 1 }, { label: 'Changed in the last 7 days', days: 7 },
+      { label: 'Changed in the last 30 days', days: 30 }, { label: 'Changed in the last 90 days', days: 90 },
+      { label: 'Other number of days…', days: -1 }, { label: '$(clear-all) Show all members', days: 0 },
+    ], { title: `Filter ${key} by last change` });
+    if (!pick) { return; }
+    let days = pick.days;
+    if (days < 0) {
+      const v = await vscode.window.showInputBox({ title: 'Days', validateInput: x => /^\d+$/.test(x.trim()) && Number(x) > 0 ? undefined : 'Enter a number of days' });
+      if (!v) { return; }
+      days = Number(v);
+    }
+    if (days) { libraries.memberFilter.set(key, days); } else { libraries.memberFilter.delete(key); }
+    libraries.refresh();
+  });
+  reg('silverlake.sortMembers', async () => {
+    const cfg = vscode.workspace.getConfiguration('silverlake');
+    const next = cfg.get<string>('members.sortBy', 'name') === 'name' ? 'date' : 'name';
+    await cfg.update('members.sortBy', next, vscode.ConfigurationTarget.Global);
+    libraries.refresh();
+    vscode.window.setStatusBarMessage(`Members sorted by ${next === 'date' ? 'last change (newest first)' : 'name'}`, 3000);
   });
 
   reg('silverlake.deleteMember', async (n: Member) => {

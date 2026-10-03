@@ -1,12 +1,14 @@
 name: Release
 
-# Push a tag like v0.2.0 to build the extension and publish it as a GitHub Release.
+# Push a tag like v0.3.0 to build the extension, publish it as a GitHub Release
+# and publish the package to GitHub Packages.
 on:
   push:
     tags: ['v*']
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   release:
@@ -17,6 +19,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: '@gauravgupta0612'
+      - name: Check the tag matches package.json
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "${GITHUB_REF_NAME#v}" != "$VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $VERSION"
+            exit 1
+          fi
       - run: npm ci
       - run: npm test
       - run: npm run package
@@ -24,3 +35,7 @@ jobs:
         with:
           files: '*.vsix'
           generate_release_notes: true
+      - name: Publish to GitHub Packages
+        run: bash .github/scripts/publish-package.sh
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

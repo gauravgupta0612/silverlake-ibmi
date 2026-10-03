@@ -8,7 +8,7 @@ export type LibNode =
   | { kind: 'library'; library: string; current: boolean }
   | { kind: 'folder'; library: string; folder: 'source' | 'objects' }
   | { kind: 'srcfile'; library: string; file: string; text: string }
-  | { kind: 'member'; library: string; file: string; member: string; type: string; text: string; changed?: string }
+  | { kind: 'member'; library: string; file: string; member: string; type: string; text: string; changed?: string; created?: string; lines?: number }
   | { kind: 'object'; library: string; name: string; type: string; attribute: string; text: string }
   | { kind: 'message'; text: string; error?: boolean };
 
@@ -47,7 +47,8 @@ export class LibraryTreeProvider implements vscode.TreeDataProvider<LibNode> {
       case 'srcfile': {
         const item = new vscode.TreeItem(n.file, C.Collapsed);
         item.iconPath = new vscode.ThemeIcon('file-submodule');
-        item.description = n.text;
+        const days = this.memberFilter.get(`${n.library}/${n.file}`);
+        item.description = (days ? `changed ≤ ${days}d · ` : '') + n.text;
         item.tooltip = `${n.library}/${n.file}${n.text ? ` — ${n.text}` : ''}`;
         item.contextValue = 'srcfile';
         return item;
@@ -56,11 +57,14 @@ export class LibraryTreeProvider implements vscode.TreeDataProvider<LibNode> {
         const label = n.type ? `${n.member}.${n.type.toLowerCase()}` : n.member;
         const item = new vscode.TreeItem(label, C.None);
         item.iconPath = new vscode.ThemeIcon('file-code');
-        item.description = n.text;
+        const changed = n.changed ? n.changed.slice(0, 10) : '';
+        item.description = [changed, n.text].filter(Boolean).join(' · ');
         item.resourceUri = memberUri(n.library, n.file, n.member, n.type);
         item.tooltip = new vscode.MarkdownString(
           `**${n.library}/${n.file}(${n.member})**  \nType: ${n.type || '—'}  \n${n.text || ''}` +
-          (n.changed ? `  \nChanged: ${n.changed}` : ''));
+          (n.changed ? `  \nLast changed: ${n.changed.replace(/\.\d+$/, '')}` : '') +
+          (n.created ? `  \nCreated: ${n.created.replace(/\.\d+$/, '')}` : '') +
+          (n.lines !== undefined ? `  \nLines: ${n.lines}` : ''));
         item.command = { command: 'vscode.open', title: 'Open', arguments: [item.resourceUri] };
         item.contextValue = 'member';
         return item;
@@ -118,16 +122,28 @@ export class LibraryTreeProvider implements vscode.TreeDataProvider<LibNode> {
     return rows.map(r => ({ kind: 'srcfile', library, file: String(r.NAME).trim(), text: String(r.TEXT ?? '').trim() }));
   }
 
+  /** Per source file ("LIB/FILE"): only show members changed in the last N days. */
+  readonly memberFilter = new Map<string, number>();
+
   private async members(library: string, file: string): Promise<LibNode[]> {
-    const rows = await this.manager.require().rows<{ NAME: string; TYPE: string; TEXT: string; CHANGED: string }>(
+    const byDate = vscode.workspace.getConfiguration('silverlake').get<string>('members.sortBy', 'name') === 'date';
+    const days = this.memberFilter.get(`${library}/${file}`);
+    const rows = await this.manager.require().rows<{ NAME: string; TYPE: string; TEXT: string; CHANGED: string; CREATED: string; N: number }>(
       `SELECT SYSTEM_TABLE_MEMBER AS NAME, COALESCE(SOURCE_TYPE, '') AS TYPE, COALESCE(PARTITION_TEXT, '') AS TEXT, ` +
-      `VARCHAR(LAST_SOURCE_UPDATE_TIMESTAMP) AS CHANGED FROM QSYS2.SYSPARTITIONSTAT ` +
-      `WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(library)} AND SYSTEM_TABLE_NAME = ${sqlString(file)} ORDER BY 1`, 20000);
-    if (!rows.length) { return [{ kind: 'message', text: 'Empty source file (click + to add a member)' }]; }
+      `VARCHAR(LAST_SOURCE_UPDATE_TIMESTAMP) AS CHANGED, VARCHAR(CREATE_TIMESTAMP) AS CREATED, NUMBER_ROWS AS N ` +
+      `FROM QSYS2.SYSPARTITIONSTAT ` +
+      `WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(library)} AND SYSTEM_TABLE_NAME = ${sqlString(file)} ` +
+      (days ? `AND LAST_SOURCE_UPDATE_TIMESTAMP >= CURRENT TIMESTAMP - ${Math.floor(days)} DAYS ` : '') +
+      `ORDER BY ${byDate ? 'LAST_SOURCE_UPDATE_TIMESTAMP DESC, ' : ''}1`, 20000);
+    if (!rows.length) {
+      return [{ kind: 'message', text: days ? `No members changed in the last ${days} days` : 'Empty source file (click + to add a member)' }];
+    }
     return rows.map(r => ({
       kind: 'member', library, file,
       member: String(r.NAME).trim(), type: String(r.TYPE ?? '').trim(), text: String(r.TEXT ?? '').trim(),
       changed: r.CHANGED ? String(r.CHANGED) : undefined,
+      created: r.CREATED ? String(r.CREATED) : undefined,
+      lines: r.N === null || r.N === undefined ? undefined : Number(r.N),
     }));
   }
 

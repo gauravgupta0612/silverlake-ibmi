@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0
+
+- **SEU-style source dates**: every member line shows its change date (and optionally its sequence number). Saving keeps the dates of lines you did not touch; changed lines get today's date. Ctrl+Alt+D cycles the display.
+- **Highlight lines changed since…** a date (7 / 30 / 90 days or any date), with a list to jump between them.
+- **Lock information in the editor**: a banner shows who has the member open (name, user, job, lock state), with *Ask to release* (break message), *Notify me when free* and *End their job*.
+- **Edit conflict protection**: warns before saving over a member that someone changed after you opened it (with *Compare first*), or that is locked by another job.
+- **F4 prompter** for fixed-format RPG (H, F, D, P, C specs) and DDS: edit the columns in a labelled form.
+- **CL command prompter**: F4 on a CL command (or *Prompt and Run CL Command*) builds a form from the command's real definition on the IBM i.
+- **Member list**: last change date in the tree, sort by name or date, filter by "changed in the last N days".
+- Safer member saves: lines are staged in QTEMP and the member is replaced in one step, with automatic restore if the replace fails.
+- Releases are also published to **GitHub Packages**.
+
 ## 0.2.0
 
 - **System dashboard**: CPU, ASP, jobs, memory, top jobs, QSYSOPR messages and PTF groups, refreshing automatically.

@@ -17,6 +17,8 @@ IBM i development usually means switching between several tools:
 | Check the system | WRKACTJOB, WRKSYSSTS, DSPMSG QSYSOPR | **System Dashboard**, *Active Jobs* and *Messages* views |
 | Find code | `FNDSTRPDM`, DSPPGMREF printouts | **Ctrl+Alt+F**, **Ctrl+Alt+O**, **Where Used** |
 | Undo a mistake | Hope someone kept a backup | **Local History** on every open and save |
+| See what changed when | SEU date column | **Source dates** in front of every line, kept on save |
+| Someone else has the member | "Member in use" error, then WRKOBJLCK | **Lock banner** with the person's name and *Ask to release* |
 
 Silverlake puts all of this in one place. It is built for people who are **new to IBM i** (guided forms, templates, plain-language messages) as well as **experienced developers** who want speed and modern tooling.
 
@@ -36,7 +38,7 @@ Silverlake puts all of this in one place. It is built for people who are **new t
 
 ## Getting started (5 minutes)
 
-1. **Install:** Extensions view → `…` → **Install from VSIX…** → `silverlake-ibmi-0.2.0.vsix`.
+1. **Install:** Extensions view → `…` → **Install from VSIX…** → the `.vsix` from the GitHub **Releases** page.
 2. Click the **Silverlake** icon in the activity bar, then **Add IBM i Connection**.
 3. Fill in the host, user and library list, click **Test connection**, then **Save**.
 4. Click the connection to connect. The status bar shows the system name. Click it, or press **Ctrl+Alt+I**, at any time for the quick menu.
@@ -216,7 +218,50 @@ Silverlake puts all of this in one place. It is built for people who are **new t
 
 In the tree, right-click a member → **Select for Compare**, then right-click another → **Compare with Selected**.
 
-### 15. CL runner and spooled files
+### 15. SEU-style source dates
+
+**What:** Every line of a member shows when it was last changed, like the date column in SEU. Lines you edit show today's date (highlighted) until you save.
+
+**Why it helps:** You can see at a glance what changed recently, and saving keeps the dates of every line you didn't touch.
+
+**How:**
+
+- **Ctrl+Alt+D** (or the 📅 icon in the editor title) cycles between *date*, *sequence number + date* and *hidden*.
+- Hover the start of a line for its sequence number and full date.
+- Right-click → **Highlight Lines Changed Since…** (7, 30 or 90 days, or any date) highlights the lines and lists them so you can jump between them.
+- Settings: `silverlake.sourceDates.format` chooses `yymmdd` (SEU) or `iso`.
+
+### 16. F4 prompters
+
+**What and how:**
+
+- **Fixed-format RPG and DDS:** put the cursor on a C, D, F, H or P spec (or a DDS line) and press **F4**. A form shows each column area with its name (Factor 1, Opcode, Result field, Length…) and allowed values. **Apply** writes it back in the right columns. **Apply & next line** keeps going, like SEU. On a blank line, F4 asks which spec to create.
+- **CL commands:** in a CL source, press **F4** on a command. Silverlake reads the command's real definition from the IBM i and shows every parameter with its prompt text, default and allowed values. The command is rewritten in proper CL source layout, with `+` continuations.
+- **Prompt and Run CL Command** (quick menu): type a command name, fill in the form, and it runs.
+
+### 17. Who has my member? (locks)
+
+**What:** When a member is open somewhere else (for example in SEU), the editor shows a banner at the top: **🔒 Locked by *name* (USER) · job … · *SHRUPD**.
+
+**How:**
+
+- **✉ Ask to release** sends a message that pops up on their screen (break message), or goes to their message queue.
+- **🔔 Notify me when free** checks every 15 seconds and tells you when the lock is gone.
+- **More options:** show their job log, or end their job (needs *JOBCTL authority, and they lose unsaved work, so you are asked to confirm).
+
+### 18. Edit conflict protection
+
+**What:** Before saving, Silverlake checks whether the member changed on the IBM i after you opened it, or is locked by another job.
+
+**How:** You get **Compare First** (opens a side-by-side diff with the IBM i copy) or **Overwrite**. Turn it off with `silverlake.conflictCheck`.
+
+### 19. Member list with dates
+
+- Each member shows its **last change date** in the tree. The tooltip adds the creation date and line count.
+- **Sort Members by Name / Date** (Libraries view toolbar) puts the most recently changed members first.
+- Right-click a source file → **Filter Members by Last Change…** shows only members changed today, or in the last 7, 30 or 90 days, or any number of days.
+
+### 20. CL runner and spooled files
 
 - **Ctrl+Alt+L** runs any CL command with your library list. Recent commands are remembered.
 - *My Spooled Files:* open, save or delete your spooled output.
@@ -234,6 +279,8 @@ In the tree, right-click a member → **Select for Compare**, then right-click a
 | Ctrl+Alt+O | Search objects |
 | Ctrl+Alt+F | Search source code |
 | F12 / Shift+F12 / F2 | Go to definition / Find references / Rename |
+| F4 | Prompt the spec (RPG / DDS) or CL command at the cursor |
+| Ctrl+Alt+D | Cycle source dates display |
 
 On a Mac, use **Cmd** instead of **Ctrl**.
 

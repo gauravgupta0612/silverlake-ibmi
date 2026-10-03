@@ -20,6 +20,9 @@ import { registerDataEditor } from './features/dataEditor';
 import { registerSearch } from './features/search';
 import { registerSqlAssist } from './features/sqlAssist';
 import { registerHistory } from './features/history';
+import { registerSourceDates } from './features/sourceDatesView';
+import { registerLocks } from './features/locks';
+import { registerPrompters } from './features/prompter';
 
 let manager: ConnectionManager | undefined;
 
@@ -67,6 +70,9 @@ export function activate(context: vscode.ExtensionContext): void {
   step('search', () => registerSearch(context, m));
   step('sql assist', () => registerSqlAssist(context, m));
   step('local history', () => registerHistory(context, m));
+  step('source dates', () => registerSourceDates(context));
+  step('member locks', () => registerLocks(context, m));
+  step('prompters', () => registerPrompters(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(`Silverlake started with problems: ${failures.join(' | ')}`, 'Show Log')

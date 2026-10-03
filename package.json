@@ -2,7 +2,7 @@
   "name": "silverlake-ibmi",
   "displayName": "Silverlake for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code: connection wizard, library & IFS browser, edit and compile with inline errors, Db2 for i SQL with autocomplete, table data editor, system dashboard, jobs & messages, object and source search, RPG navigation and code checks, local history.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "silverlake",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -463,6 +463,72 @@
         "command": "silverlake.disableLintRule",
         "title": "Turn Off a Code Check",
         "category": "Silverlake"
+      },
+      {
+        "command": "silverlake.toggleSourceDates",
+        "title": "Toggle Source Dates (SEU)",
+        "category": "Silverlake",
+        "icon": "$(calendar)"
+      },
+      {
+        "command": "silverlake.changedSince",
+        "title": "Highlight Lines Changed Since\u2026",
+        "category": "Silverlake",
+        "icon": "$(history)"
+      },
+      {
+        "command": "silverlake.prompt",
+        "title": "Prompt (F4)",
+        "category": "Silverlake",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "silverlake.promptCl",
+        "title": "Prompt and Run CL Command (F4)\u2026",
+        "category": "Silverlake",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "silverlake.filterMembersByDate",
+        "title": "Filter Members by Last Change\u2026",
+        "category": "Silverlake",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "silverlake.sortMembers",
+        "title": "Sort Members by Name / Date",
+        "category": "Silverlake",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "silverlake.lockActions",
+        "title": "Member Lock: Options\u2026",
+        "category": "Silverlake",
+        "icon": "$(lock)"
+      },
+      {
+        "command": "silverlake.lockAskRelease",
+        "title": "Member Lock: Ask Holder to Release\u2026",
+        "category": "Silverlake",
+        "icon": "$(mail)"
+      },
+      {
+        "command": "silverlake.lockWatch",
+        "title": "Member Lock: Notify Me When Free",
+        "category": "Silverlake",
+        "icon": "$(bell)"
+      },
+      {
+        "command": "silverlake.lockRefresh",
+        "title": "Member Lock: Check Again",
+        "category": "Silverlake",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "silverlake.lockEndJob",
+        "title": "Member Lock: End Holder's Job\u2026",
+        "category": "Silverlake",
+        "icon": "$(stop-circle)"
       }
     ],
     "menus": {
@@ -536,6 +602,11 @@
           "command": "silverlake.refreshMessages",
           "when": "view == silverlake.messages",
           "group": "navigation@2"
+        },
+        {
+          "command": "silverlake.sortMembers",
+          "when": "view == silverlake.libraries",
+          "group": "1_search@3"
         }
       ],
       "view/item/context": [
@@ -728,6 +799,11 @@
           "command": "silverlake.compareWithSelected",
           "when": "view == silverlake.ifs && viewItem == ifs.file && silverlake.hasCompareSelection",
           "group": "3@3"
+        },
+        {
+          "command": "silverlake.filterMembersByDate",
+          "when": "view == silverlake.libraries && viewItem == srcfile",
+          "group": "1@2"
         }
       ],
       "editor/title": [
@@ -750,6 +826,11 @@
           "command": "silverlake.showHistory",
           "when": "resourceScheme =~ /^silverlake-(member|ifs)$/",
           "group": "1_silverlake@2"
+        },
+        {
+          "command": "silverlake.toggleSourceDates",
+          "when": "resourceScheme == silverlake-member",
+          "group": "navigation@9"
         }
       ],
       "editor/context": [
@@ -777,6 +858,21 @@
           "command": "silverlake.showHistory",
           "when": "resourceScheme =~ /^silverlake-(member|ifs)$/",
           "group": "silverlake@5"
+        },
+        {
+          "command": "silverlake.prompt",
+          "when": "editorLangId =~ /^(rpgle|dds|cl)$/",
+          "group": "silverlake@0"
+        },
+        {
+          "command": "silverlake.changedSince",
+          "when": "resourceScheme == silverlake-member",
+          "group": "silverlake@6"
+        },
+        {
+          "command": "silverlake.lockActions",
+          "when": "resourceScheme == silverlake-member",
+          "group": "silverlake@7"
         }
       ],
       "commandPalette": [
@@ -875,6 +971,10 @@
         {
           "command": "silverlake.disableLintRule",
           "when": "false"
+        },
+        {
+          "command": "silverlake.filterMembersByDate",
+          "when": "false"
         }
       ]
     },
@@ -913,6 +1013,17 @@
         "key": "ctrl+alt+f",
         "mac": "cmd+alt+f",
         "when": "silverlake.connected"
+      },
+      {
+        "command": "silverlake.prompt",
+        "key": "f4",
+        "when": "editorTextFocus && editorLangId =~ /^(rpgle|dds|cl)$/"
+      },
+      {
+        "command": "silverlake.toggleSourceDates",
+        "key": "ctrl+alt+d",
+        "mac": "cmd+alt+d",
+        "when": "resourceScheme == silverlake-member"
       }
     ],
     "languages": [
@@ -1268,6 +1379,49 @@
             }
           },
           "additionalProperties": false
+        },
+        "silverlake.sourceDates.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Read and save members **with** their sequence numbers and change dates (SRCSEQ/SRCDAT), like SEU. Unchanged lines keep their date; changed lines get today's date. Needs a Mapepire SQL engine; otherwise members are copied as plain text."
+        },
+        "silverlake.sourceDates.display": {
+          "type": "string",
+          "enum": [
+            "date",
+            "seq-date",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Show the change date in front of each line",
+            "Show sequence number and change date",
+            "Hide"
+          ],
+          "default": "date",
+          "description": "What to show in front of each member line (Ctrl+Alt+D cycles)."
+        },
+        "silverlake.sourceDates.format": {
+          "type": "string",
+          "enum": [
+            "yymmdd",
+            "iso"
+          ],
+          "default": "yymmdd",
+          "description": "Date format: SEU-style YYMMDD or ISO YYYY-MM-DD."
+        },
+        "silverlake.conflictCheck": {
+          "type": "boolean",
+          "default": true,
+          "description": "Warn when a member is locked by another job, or changed on the IBM i after you opened it, before your save overwrites it."
+        },
+        "silverlake.members.sortBy": {
+          "type": "string",
+          "enum": [
+            "name",
+            "date"
+          ],
+          "default": "name",
+          "description": "Order of members in the Libraries view."
         }
       }
     }

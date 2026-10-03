@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../core/manager';
-import { errorMessage, logError } from '../core/log';
+import { errorMessage, log, logError } from '../core/log';
 import { parseMemberPath, clString, memberPath } from '../core/util';
+import { SourceRecord, mergeRecords, tooLongLines } from '../core/sourceDates';
+import type { MemberLock } from '../core/connection';
 
 export const MEMBER_SCHEME = 'silverlake-member';
 export const IFS_SCHEME = 'silverlake-ifs';
@@ -9,6 +11,20 @@ export const IFS_SCHEME = 'silverlake-ifs';
 /** Fired after a member / stream file is read from or written to the IBM i (used by local history). */
 export interface FsTransfer { uri: vscode.Uri; content: Uint8Array; kind: 'read' | 'write'; }
 export const fsEvents = new vscode.EventEmitter<FsTransfer>();
+
+/** SEU sequence numbers and dates of each opened member, as last read from / written to the IBM i. */
+export const sourceRecords = new Map<string, SourceRecord[]>();
+export const sourceRecordsChanged = new vscode.EventEmitter<vscode.Uri>();
+
+/** Other jobs holding a lock on each opened member (refreshed on open and before save). */
+export const memberLocks = new Map<string, MemberLock[]>();
+export const memberLocksChanged = new vscode.EventEmitter<{ uri: vscode.Uri; onOpen: boolean }>();
+
+export function describeLock(l: MemberLock): string {
+  return `${l.userText ? `${l.userText} (${l.user})` : l.user} in job ${l.job}`;
+}
+
+class SaveCancelled extends Error {}
 
 export function memberUri(lib: string, file: string, member: string, type: string): vscode.Uri {
   const ext = (type || 'mbr').toLowerCase();
@@ -56,13 +72,35 @@ export class MemberFileSystem extends BaseFs {
 
   createDirectory(): void { throw vscode.FileSystemError.NoPermissions('Use "New Source File…" in the Libraries view.'); }
 
+  /** Change timestamp of each member when it was opened, to detect changes made by others. */
+  private readonly openedAt = new Map<string, string | undefined>();
+
   async readFile(uri: vscode.Uri): Promise<Uint8Array> {
     const { library, file, member } = parseMemberPath(uri.path);
+    const conn = this.conn();
+    const checking = vscode.workspace.getConfiguration('silverlake').get<boolean>('conflictCheck', true);
     try {
-      const text = await this.conn().readMember(library, file, member);
+      // Take the change time *before* reading, so a change made while we read is still detected on save.
+      const state = checking ? await conn.memberState(library, file, member).catch(() => undefined) : undefined;
+      let text: string;
+      if (await conn.canKeepSourceDates()) {
+        const records = await conn.readMemberRecords(library, file, member);
+        sourceRecords.set(uri.toString(), records);
+        sourceRecordsChanged.fire(uri);
+        text = records.map(r => r.text).join('\n');
+        if (records.length) { text += '\n'; }
+      } else {
+        sourceRecords.delete(uri.toString());
+        text = await conn.readMember(library, file, member);
+      }
       const data = Buffer.from(text, 'utf8');
       this.meta.set(uri.path, { mtime: Date.now(), size: data.length });
       fsEvents.fire({ uri, content: data, kind: 'read' });
+      if (state) {
+        this.openedAt.set(uri.toString(), state.changed);
+        memberLocks.set(uri.toString(), state.locks);
+        memberLocksChanged.fire({ uri, onOpen: true });
+      }
       return data;
     } catch (e) {
       logError(e);
@@ -70,9 +108,69 @@ export class MemberFileSystem extends BaseFs {
     }
   }
 
+  /** Ask before overwriting a member that changed on the IBM i or is locked by another job. */
+  private async checkBeforeSave(uri: vscode.Uri, library: string, file: string, member: string): Promise<void> {
+    if (!vscode.workspace.getConfiguration('silverlake').get<boolean>('conflictCheck', true)) { return; }
+    const state = await this.conn().memberState(library, file, member);
+    const opened = this.openedAt.get(uri.toString());
+    if (opened && state.changed && state.changed !== opened) {
+      const choice = await vscode.window.showWarningMessage(
+        `${library}/${file}(${member}) was changed on the IBM i after you opened it (at ${state.changed.replace(/\.\d+$/, '')}).`,
+        { modal: true, detail: 'Saving now would overwrite those changes.' }, 'Compare First', 'Overwrite');
+      if (choice === 'Compare First') {
+        vscode.commands.executeCommand('silverlake.compareWithServer', uri);
+        throw new SaveCancelled('Save cancelled — compare the versions, then save again.');
+      }
+      if (choice !== 'Overwrite') { throw new SaveCancelled('Save cancelled.'); }
+    }
+    memberLocks.set(uri.toString(), state.locks);
+    memberLocksChanged.fire({ uri, onOpen: false });
+    if (state.locks.length) {
+      const choice = await vscode.window.showWarningMessage(
+        `🔒 ${library}/${file}(${member}) is locked by ${state.locks.map(describeLock).join(', ')}.`,
+        { modal: true, detail: 'They may be editing it (for example in SEU). If you save now, the save can fail or one of you can lose changes.' },
+        'Ask Them to Release It', 'Save Anyway');
+      if (choice === 'Ask Them to Release It') {
+        vscode.commands.executeCommand('silverlake.lockAskRelease', uri, state.locks[0]);
+        throw new SaveCancelled('Save postponed — waiting for the lock to be released.');
+      }
+      if (choice !== 'Save Anyway') { throw new SaveCancelled('Save cancelled.'); }
+    }
+  }
+
   async writeFile(uri: vscode.Uri, content: Uint8Array): Promise<void> {
     const { library, file, member } = parseMemberPath(uri.path);
-    await this.conn().writeMember(library, file, member, Buffer.from(content).toString('utf8'));
+    const conn = this.conn();
+    const text = Buffer.from(content).toString('utf8').replace(/\r\n/g, '\n');
+    // Source records never keep trailing blanks, so compare and store lines without them.
+    const lines = text.split('\n').map(l => l.replace(/\s+$/, ''));
+    if (lines.length && lines[lines.length - 1] === '') { lines.pop(); }
+    try {
+      await this.checkBeforeSave(uri, library, file, member);
+      const max = await conn.sourceLineLength(library, file).catch(() => 0);
+      const long = max ? tooLongLines(lines, max) : [];
+      if (long.length) {
+        throw new Error(`Line${long.length > 1 ? 's' : ''} ${long.slice(0, 10).join(', ')}${long.length > 10 ? '…' : ''} ` +
+          `${long.length > 1 ? 'are' : 'is'} longer than the ${max} characters ${library}/${file} can hold. Shorten ${long.length > 1 ? 'them' : 'it'} and save again.`);
+      }
+      const original = sourceRecords.get(uri.toString());
+      if (original && await conn.canKeepSourceDates()) {
+        // Today's date as the IBM i sees it (YYMMDD), for changed lines.
+        const today = Number((await conn.rows<{ D: string }>(
+          `SELECT VARCHAR_FORMAT(CURRENT TIMESTAMP, 'YYMMDD') AS D FROM SYSIBM.SYSDUMMY1`, 1))[0]?.D);
+        if (!today) { throw new Error('Could not read the IBM i date.'); }
+        const merged = mergeRecords(original, lines, today);
+        await conn.writeMemberRecords(library, file, member, merged);
+        sourceRecords.set(uri.toString(), merged);
+        sourceRecordsChanged.fire(uri);
+      } else {
+        await conn.writeMember(library, file, member, lines.join('\n'));
+      }
+      this.openedAt.set(uri.toString(), (await conn.memberState(library, file, member)).changed);
+    } catch (e) {
+      if (e instanceof SaveCancelled) { throw vscode.FileSystemError.NoPermissions(e.message); }
+      throw e;
+    }
     this.meta.set(uri.path, { mtime: Date.now(), size: content.length });
     fsEvents.fire({ uri, content, kind: 'write' });
     this.emitter.fire([{ type: vscode.FileChangeType.Changed, uri }]);
