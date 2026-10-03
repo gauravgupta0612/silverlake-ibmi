@@ -270,6 +270,57 @@ In the tree, right-click a member → **Select for Compare**, then right-click a
 
 ---
 
+### 21. Object information
+
+**What:** One page with everything about an object: owner, created, changed, last used and how many days it was used, size, the source member it was compiled from, journaling, last save, and every other attribute.
+
+**Why it helps:** It replaces DSPOBJD, DSPPGM and a few queries, and the buttons take you straight to the next step.
+
+**How:**
+
+- Click any object in *Libraries & Source → Objects*, or right-click it → **Object Information**.
+- The buttons open the source, show who has the object locked, list where it is used, edit a file's data or generate its SQL.
+- From the quick menu (**Ctrl+Alt+I**) → *Object information…* and type `LIBRARY/OBJECT`.
+
+### 22. Who has this object locked?
+
+**What:** The jobs holding a lock on any object (a file, data area, program…), with the person's name and the lock state — like WRKOBJLCK.
+
+**How:** Right-click an object → **Who Has This Object Locked?** Click a job to see its job log, send the user a message asking them to release it, or end the job (needs *JOBCTL).
+
+### 23. Compare two libraries
+
+**What:** Compares two libraries, for example DEV and PROD, and lists the source members and objects that are only in one of them or different. The newer side is shown.
+
+**Why it helps:** Before a promotion you see exactly what will change, and you can open a side-by-side diff of any changed member with one click.
+
+**How:** Right-click a library → **Compare Two Libraries…** (or the quick menu), pick the two libraries. Click a *different* member to compare its text; click an object for its information.
+
+### 24. Modules & exports
+
+**What:** For a service program: its exported procedures and data in signature order. For a service program or ILE program: its bound modules with their source and dates. Modules whose source changed after they were compiled are highlighted.
+
+**How:** Right-click a *SRVPGM or *PGM → **Show Modules & Exports**. Click a module to open its source.
+
+### 25. SQL power tools
+
+- **Generate SQL (DDL):** right-click a file → **Generate SQL (DDL)**, or run the command and type `LIB/OBJECT`. Works for tables, physical and logical files, views, indexes, procedures and functions. The CREATE statement opens in a new SQL editor. Needs a Mapepire SQL engine.
+- **Run SQL Script:** **Ctrl+Shift+Enter** in a SQL editor runs every statement in the file (or the selection) one after another. Each statement shows ✔ or ✖, its time, its rows or row count, or its error. It stops at the first error unless you turn off `vanthrex.sql.scriptStopOnError`. It asks once before running destructive statements.
+- **SQL history:** every statement you run is remembered (last 50). **SQL History…** lets you run it again, open it, insert it at the cursor or copy it. Click ☆ to save it.
+- **Saved queries:** in a SQL editor, right-click → **Save Query…** and give it a name. **Saved Queries…** lists them for running or inserting; the 🗑 button deletes one.
+
+### 26. Procedure & copybook tools (RPG)
+
+- **Generate prototype from procedure:** put the cursor inside a free-form procedure → right-click → **Generate Prototype from Procedure**. The DCL-PR (return type and every parameter, with their keywords) is copied to the clipboard, ready to paste into your prototype copybook.
+- **Extract to procedure:** select whole lines of free-form calculations → right-click → **Extract to Procedure…** and name it. The lines move into a new procedure at the end of the source and are replaced by a call. Vanthrex refuses when that would change what the code does: lines using local variables of the enclosing procedure, RETURN/LEAVE/ITER, declarations, or a block that is opened but not closed (and the other way round). Programs with procedures need `CTL-OPT DFTACTGRP(*NO)`; you are reminded if it is missing.
+- **Check /COPY usage:** right-click in an RPG source → **Check /COPY Usage**. Each copybook is listed with the declarations your source uses from it, so unused copybooks stand out. In fully free sources the ☐ button comments the unused ones out.
+
+### Coming next: IBM i debugger
+
+Step-through debugging (breakpoints, variables, call stack) is planned for a later release. It uses the IBM i Debug Service, which has to be set up with certificates on the server, so it will come with its own setup guide.
+
+---
+
 ## Keyboard shortcuts
 
 | Keys | Action |
@@ -283,6 +334,7 @@ In the tree, right-click a member → **Select for Compare**, then right-click a
 | F12 / Shift+F12 / F2 | Go to definition / Find references / Rename |
 | F4 | Prompt the spec (RPG / DDS) or CL command at the cursor |
 | Ctrl+Alt+D | Cycle source dates display |
+| Ctrl+Shift+Enter | Run the whole SQL script |
 
 On a Mac, use **Cmd** instead of **Ctrl**.
 

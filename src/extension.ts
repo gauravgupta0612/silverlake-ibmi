@@ -23,6 +23,9 @@ import { registerHistory } from './features/history';
 import { registerSourceDates } from './features/sourceDatesView';
 import { registerLocks } from './features/locks';
 import { registerPrompters } from './features/prompter';
+import { registerObjectTools } from './features/objectTools';
+import { registerSqlTools } from './features/sqlTools';
+import { registerProcedureTools } from './rpg/procCommands';
 
 let manager: ConnectionManager | undefined;
 
@@ -73,6 +76,9 @@ export function activate(context: vscode.ExtensionContext): void {
   step('source dates', () => registerSourceDates(context));
   step('member locks', () => registerLocks(context, m));
   step('prompters', () => registerPrompters(context, m));
+  step('object tools', () => registerObjectTools(context, m));
+  step('sql tools', () => registerSqlTools(context, m));
+  step('procedure tools', () => registerProcedureTools(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(`Vanthrex started with problems: ${failures.join(' | ')}`, 'Show Log')

@@ -83,8 +83,17 @@ export class MemberFileSystem extends BaseFs {
       // Take the change time *before* reading, so a change made while we read is still detected on save.
       const state = checking ? await conn.memberState(library, file, member).catch(() => undefined) : undefined;
       let text: string;
+      let records: SourceRecord[] | undefined;
       if (await conn.canKeepSourceDates()) {
-        const records = await conn.readMemberRecords(library, file, member);
+        try {
+          records = await conn.readMemberRecords(library, file, member);
+        } catch (e) {
+          // Never block opening the source: fall back to a plain copy (dates are then not shown).
+          logError(e);
+          log(`Reading ${library}/${file}(${member}) with source dates failed — opening it without dates.`);
+        }
+      }
+      if (records) {
         sourceRecords.set(uri.toString(), records);
         sourceRecordsChanged.fire(uri);
         text = records.map(r => r.text).join('\n');

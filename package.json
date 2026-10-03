@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code: connection wizard, library & IFS browser, edit and compile with inline errors, Db2 for i SQL with autocomplete, table data editor, system dashboard, jobs & messages, object and source search, RPG navigation and code checks, local history.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -143,13 +143,13 @@
       },
       {
         "command": "vanthrex.addConnection",
-        "title": "Add IBM i Connection\u2026",
+        "title": "Add IBM i Connection…",
         "category": "Vanthrex",
         "icon": "$(add)"
       },
       {
         "command": "vanthrex.editConnection",
-        "title": "Edit Connection\u2026",
+        "title": "Edit Connection…",
         "category": "Vanthrex",
         "icon": "$(edit)"
       },
@@ -189,7 +189,7 @@
       },
       {
         "command": "vanthrex.addLibrary",
-        "title": "Add Library\u2026",
+        "title": "Add Library…",
         "category": "Vanthrex",
         "icon": "$(add)"
       },
@@ -205,12 +205,12 @@
       },
       {
         "command": "vanthrex.newSourceFile",
-        "title": "New Source File\u2026",
+        "title": "New Source File…",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.newMember",
-        "title": "New Member\u2026",
+        "title": "New Member…",
         "category": "Vanthrex",
         "icon": "$(new-file)"
       },
@@ -221,7 +221,7 @@
       },
       {
         "command": "vanthrex.findMember",
-        "title": "Find & Open Member\u2026",
+        "title": "Find & Open Member…",
         "category": "Vanthrex",
         "icon": "$(search)"
       },
@@ -248,18 +248,18 @@
       },
       {
         "command": "vanthrex.ifsChangeRoot",
-        "title": "Go to IFS Directory\u2026",
+        "title": "Go to IFS Directory…",
         "category": "Vanthrex",
         "icon": "$(folder-opened)"
       },
       {
         "command": "vanthrex.ifsNewFile",
-        "title": "New File\u2026",
+        "title": "New File…",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.ifsNewFolder",
-        "title": "New Folder\u2026",
+        "title": "New Folder…",
         "category": "Vanthrex"
       },
       {
@@ -275,7 +275,7 @@
       },
       {
         "command": "vanthrex.compileWith",
-        "title": "Compile With\u2026",
+        "title": "Compile With…",
         "category": "Vanthrex"
       },
       {
@@ -291,7 +291,7 @@
       },
       {
         "command": "vanthrex.runCl",
-        "title": "Run CL Command\u2026",
+        "title": "Run CL Command…",
         "category": "Vanthrex",
         "icon": "$(terminal)"
       },
@@ -308,7 +308,7 @@
       },
       {
         "command": "vanthrex.spoolDownload",
-        "title": "Save Spooled File As\u2026",
+        "title": "Save Spooled File As…",
         "category": "Vanthrex"
       },
       {
@@ -340,7 +340,7 @@
       },
       {
         "command": "vanthrex.filterJobs",
-        "title": "Choose Which Jobs to Show\u2026",
+        "title": "Choose Which Jobs to Show…",
         "category": "Vanthrex",
         "icon": "$(filter)"
       },
@@ -352,7 +352,7 @@
       },
       {
         "command": "vanthrex.endJob",
-        "title": "End Job\u2026",
+        "title": "End Job…",
         "category": "Vanthrex",
         "icon": "$(stop-circle)"
       },
@@ -376,7 +376,7 @@
       },
       {
         "command": "vanthrex.replyMessage",
-        "title": "Reply\u2026",
+        "title": "Reply…",
         "category": "Vanthrex",
         "icon": "$(reply)"
       },
@@ -387,31 +387,31 @@
       },
       {
         "command": "vanthrex.sendMessage",
-        "title": "Send Message\u2026",
+        "title": "Send Message…",
         "category": "Vanthrex",
         "icon": "$(mail)"
       },
       {
         "command": "vanthrex.editData",
-        "title": "Edit Table Data\u2026",
+        "title": "Edit Table Data…",
         "category": "Vanthrex",
         "icon": "$(table)"
       },
       {
         "command": "vanthrex.searchObjects",
-        "title": "Search Objects\u2026",
+        "title": "Search Objects…",
         "category": "Vanthrex",
         "icon": "$(search)"
       },
       {
         "command": "vanthrex.searchSource",
-        "title": "Search Source Code\u2026",
+        "title": "Search Source Code…",
         "category": "Vanthrex",
         "icon": "$(search-fuzzy)"
       },
       {
         "command": "vanthrex.whereUsed",
-        "title": "Where Used\u2026",
+        "title": "Where Used…",
         "category": "Vanthrex",
         "icon": "$(references)"
       },
@@ -423,7 +423,7 @@
       },
       {
         "command": "vanthrex.showHistory",
-        "title": "Show Local History\u2026",
+        "title": "Show Local History…",
         "category": "Vanthrex",
         "icon": "$(history)"
       },
@@ -435,7 +435,7 @@
       },
       {
         "command": "vanthrex.compareMembers",
-        "title": "Compare with Another Member\u2026",
+        "title": "Compare with Another Member…",
         "category": "Vanthrex",
         "icon": "$(diff)"
       },
@@ -478,7 +478,7 @@
       },
       {
         "command": "vanthrex.changedSince",
-        "title": "Highlight Lines Changed Since\u2026",
+        "title": "Highlight Lines Changed Since…",
         "category": "Vanthrex",
         "icon": "$(history)"
       },
@@ -490,13 +490,13 @@
       },
       {
         "command": "vanthrex.promptCl",
-        "title": "Prompt and Run CL Command (F4)\u2026",
+        "title": "Prompt and Run CL Command (F4)…",
         "category": "Vanthrex",
         "icon": "$(list-selection)"
       },
       {
         "command": "vanthrex.filterMembersByDate",
-        "title": "Filter Members by Last Change\u2026",
+        "title": "Filter Members by Last Change…",
         "category": "Vanthrex",
         "icon": "$(filter)"
       },
@@ -508,13 +508,13 @@
       },
       {
         "command": "vanthrex.lockActions",
-        "title": "Member Lock: Options\u2026",
+        "title": "Member Lock: Options…",
         "category": "Vanthrex",
         "icon": "$(lock)"
       },
       {
         "command": "vanthrex.lockAskRelease",
-        "title": "Member Lock: Ask Holder to Release\u2026",
+        "title": "Member Lock: Ask Holder to Release…",
         "category": "Vanthrex",
         "icon": "$(mail)"
       },
@@ -532,9 +532,86 @@
       },
       {
         "command": "vanthrex.lockEndJob",
-        "title": "Member Lock: End Holder's Job\u2026",
+        "title": "Member Lock: End Holder's Job…",
         "category": "Vanthrex",
         "icon": "$(stop-circle)"
+      },
+      {
+        "command": "vanthrex.objectInfo",
+        "title": "Object Information",
+        "category": "Vanthrex",
+        "icon": "$(info)"
+      },
+      {
+        "command": "vanthrex.objectLocks",
+        "title": "Who Has This Object Locked?",
+        "category": "Vanthrex",
+        "icon": "$(lock)"
+      },
+      {
+        "command": "vanthrex.serviceProgramInfo",
+        "title": "Show Modules & Exports",
+        "category": "Vanthrex",
+        "icon": "$(package)"
+      },
+      {
+        "command": "vanthrex.compareLibraries",
+        "title": "Compare Two Libraries…",
+        "category": "Vanthrex",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "vanthrex.generateDdl",
+        "title": "Generate SQL (DDL)",
+        "category": "Vanthrex",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "vanthrex.runSqlScript",
+        "title": "Run SQL Script (All Statements)",
+        "category": "Vanthrex",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "vanthrex.sqlHistory",
+        "title": "SQL History…",
+        "category": "Vanthrex",
+        "icon": "$(history)"
+      },
+      {
+        "command": "vanthrex.clearSqlHistory",
+        "title": "Clear SQL History",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.saveQuery",
+        "title": "Save Query…",
+        "category": "Vanthrex",
+        "icon": "$(star-empty)"
+      },
+      {
+        "command": "vanthrex.savedQueries",
+        "title": "Saved Queries…",
+        "category": "Vanthrex",
+        "icon": "$(star-full)"
+      },
+      {
+        "command": "vanthrex.generatePrototype",
+        "title": "Generate Prototype from Procedure",
+        "category": "Vanthrex",
+        "icon": "$(symbol-interface)"
+      },
+      {
+        "command": "vanthrex.extractProcedure",
+        "title": "Extract to Procedure…",
+        "category": "Vanthrex",
+        "icon": "$(symbol-method)"
+      },
+      {
+        "command": "vanthrex.checkCopybooks",
+        "title": "Check /COPY Usage (Find Unused Copybooks)",
+        "category": "Vanthrex",
+        "icon": "$(references)"
       }
     ],
     "menus": {
@@ -618,6 +695,11 @@
           "command": "vanthrex.sortMembers",
           "when": "view == vanthrex.libraries",
           "group": "1_search@3"
+        },
+        {
+          "command": "vanthrex.compareLibraries",
+          "when": "view == vanthrex.libraries",
+          "group": "9_tools"
         }
       ],
       "view/item/context": [
@@ -815,6 +897,31 @@
           "command": "vanthrex.filterMembersByDate",
           "when": "view == vanthrex.libraries && viewItem == srcfile",
           "group": "1@2"
+        },
+        {
+          "command": "vanthrex.objectInfo",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object/",
+          "group": "0_info@1"
+        },
+        {
+          "command": "vanthrex.objectLocks",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object/",
+          "group": "0_info@2"
+        },
+        {
+          "command": "vanthrex.serviceProgramInfo",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object\\.(srvpgm|pgm)$/",
+          "group": "0_info@3"
+        },
+        {
+          "command": "vanthrex.generateDdl",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@4"
+        },
+        {
+          "command": "vanthrex.compareLibraries",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@1"
         }
       ],
       "editor/title": [
@@ -884,6 +991,31 @@
           "command": "vanthrex.lockActions",
           "when": "resourceScheme == vanthrex-member",
           "group": "vanthrex@7"
+        },
+        {
+          "command": "vanthrex.runSqlScript",
+          "when": "vanthrex.connected && editorLangId == sql",
+          "group": "vanthrex@1"
+        },
+        {
+          "command": "vanthrex.saveQuery",
+          "when": "editorLangId == sql",
+          "group": "vanthrex@1"
+        },
+        {
+          "command": "vanthrex.generatePrototype",
+          "when": "editorLangId == rpgle",
+          "group": "vanthrex@6"
+        },
+        {
+          "command": "vanthrex.extractProcedure",
+          "when": "editorLangId == rpgle && editorHasSelection",
+          "group": "vanthrex@6"
+        },
+        {
+          "command": "vanthrex.checkCopybooks",
+          "when": "vanthrex.connected && editorLangId == rpgle",
+          "group": "vanthrex@6"
         }
       ],
       "commandPalette": [
@@ -1035,6 +1167,12 @@
         "key": "ctrl+alt+d",
         "mac": "cmd+alt+d",
         "when": "resourceScheme == vanthrex-member"
+      },
+      {
+        "command": "vanthrex.runSqlScript",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "editorTextFocus && vanthrex.connected && editorLangId == sql"
       }
     ],
     "languages": [
@@ -1302,7 +1440,7 @@
         "vanthrex.objects.showAll": {
           "type": "boolean",
           "default": true,
-          "description": "Show an 'Objects' folder (programs, files, service programs\u2026) under each library."
+          "description": "Show an 'Objects' folder (programs, files, service programs…) under each library."
         },
         "vanthrex.dashboard.refreshSeconds": {
           "type": "number",
@@ -1433,6 +1571,11 @@
           ],
           "default": "name",
           "description": "Order of members in the Libraries view."
+        },
+        "vanthrex.sql.scriptStopOnError": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run SQL Script: stop at the first statement that fails (off = run every statement and report failures)."
         }
       }
     }

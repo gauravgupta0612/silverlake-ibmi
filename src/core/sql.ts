@@ -78,9 +78,19 @@ export class MapepireEngine implements SqlEngine {
         throw new Error(result.error || `SQL failed (SQLSTATE ${result.sql_state})`);
       }
       const rows = [...(result.data ?? [])];
-      while (!result.is_done && rows.length < maxRows) {
-        result = await q.fetchMore(Math.min(1000, maxRows - rows.length));
+      // Statements without a result set (CREATE, DROP, CALL, INSERT…) report has_results = false and
+      // sometimes is_done = false: fetching more from them fails with "Result set was null".
+      const hasResults = (result as { has_results?: boolean }).has_results !== false && !!result.metadata?.columns?.length;
+      let done = !hasResults || result.is_done;
+      while (!done && rows.length < maxRows) {
+        try {
+          result = await q.fetchMore(Math.min(1000, maxRows - rows.length));
+        } catch (e) {
+          if (/result set was null/i.test(String(e))) { done = true; break; }
+          throw e;
+        }
         rows.push(...(result.data ?? []));
+        done = result.is_done;
       }
       const columns = result.metadata?.columns?.map(c => c.label || c.name)
         ?? (rows[0] ? Object.keys(rows[0]) : []);
@@ -88,7 +98,7 @@ export class MapepireEngine implements SqlEngine {
         columns,
         rows,
         updateCount: result.update_count ?? -1,
-        truncated: !result.is_done,
+        truncated: !done,
         elapsedMs: Date.now() - started,
         engine: this.name,
       };

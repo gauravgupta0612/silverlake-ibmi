@@ -73,8 +73,9 @@ export class LibraryTreeProvider implements vscode.TreeDataProvider<LibNode> {
         const item = new vscode.TreeItem(n.name, C.None);
         item.iconPath = new vscode.ThemeIcon(OBJECT_ICONS[n.type] ?? 'symbol-misc');
         item.description = `${n.type}${n.attribute ? ` ${n.attribute}` : ''}${n.text ? ` — ${n.text}` : ''}`;
-        item.tooltip = `${n.library}/${n.name} ${n.type} ${n.attribute}\n${n.text}`;
-        item.contextValue = n.type === '*PGM' ? 'object.pgm' : n.type === '*FILE' ? 'object.file' : 'object';
+        item.tooltip = `${n.library}/${n.name} ${n.type} ${n.attribute}\n${n.text}\nClick for object information`;
+        item.command = { command: 'vanthrex.objectInfo', title: 'Object information', arguments: [{ library: n.library, name: n.name, type: n.type }] };
+        item.contextValue = n.type === '*PGM' ? 'object.pgm' : n.type === '*FILE' ? 'object.file' : n.type === '*SRVPGM' ? 'object.srvpgm' : 'object';
         return item;
       }
       case 'message': {

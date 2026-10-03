@@ -361,6 +361,35 @@ export class IbmiConnection implements vscode.Disposable {
     log(`Saved ${lib}/${file}(${member}) with source dates (${records.length} lines)`);
   }
 
+  /**
+   * Jobs holding a lock on an object (or one member of a file), strongest lock state per job.
+   * OBJECT_LOCK_INFO names the member column SYSTEM_TABLE_MEMBER; on releases without it we fall
+   * back to file-level locks, which still shows who has the file open.
+   */
+  async lockHolders(lib: string, name: string, type: string, member?: string): Promise<{ JOB: string; ST: string }[]> {
+    const select = `SELECT JOB_NAME AS JOB, MAX(LOCK_STATE) AS ST FROM QSYS2.OBJECT_LOCK_INFO WHERE `;
+    const tail = ` AND OBJECT_TYPE = ${sqlString(type)} AND LOCK_SCOPE <> 'LOCK SPACE'`;
+    const sys = `SYSTEM_OBJECT_SCHEMA = ${sqlString(lib)} AND SYSTEM_OBJECT_NAME = ${sqlString(name)}${tail}`;
+    const sqlNames = `OBJECT_SCHEMA = ${sqlString(lib)} AND OBJECT_NAME = ${sqlString(name)}${tail}`;
+    const attempts = [
+      ...(member ? [`${sys} AND SYSTEM_TABLE_MEMBER = ${sqlString(member)}`] : []),
+      sys,
+      sqlNames,
+    ];
+    let last: unknown;
+    for (const where of attempts) {
+      try {
+        return await this.rows<{ JOB: string; ST: string }>(`${select}${where} GROUP BY JOB_NAME`, 50);
+      } catch (e) {
+        last = e;
+        // Column not found on this release: try the next, simpler form.
+        if (!/SQL0206|42703/.test(String(e))) { throw e; }
+      }
+    }
+    log(`OBJECT_LOCK_INFO: ${last}`);
+    return [];
+  }
+
   /** Last change time of a member, and jobs (other than ours) holding a lock on it. */
   async memberState(lib: string, file: string, member: string): Promise<{ changed?: string; locks: MemberLock[] }> {
     let changed: string | undefined;
@@ -372,9 +401,7 @@ export class IbmiConnection implements vscode.Disposable {
       changed = r[0]?.T ? String(r[0].T) : undefined;
     } catch (e) { log(`Member change time: ${e}`); }
     try {
-      const r = await this.rows<{ JOB: string; ST: string }>(
-        `SELECT JOB_NAME AS JOB, MAX(LOCK_STATE) AS ST FROM QSYS2.OBJECT_LOCK_INFO WHERE OBJECT_SCHEMA = ${sqlString(lib)} ` +
-        `AND OBJECT_NAME = ${sqlString(file)} AND MEMBER_NAME = ${sqlString(member)} AND LOCK_SCOPE <> 'LOCK SPACE' GROUP BY JOB_NAME`, 50);
+      const r = await this.lockHolders(lib, file, '*FILE', member);
       locks = r.map(x => {
         const job = String(x.JOB).trim();
         const [, user = '', name = ''] = job.split('/');
