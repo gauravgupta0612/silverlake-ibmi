@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code with an AI assistant (@vanthrex): connection wizard for several systems, library & IFS browser, edit and compile with inline errors, Git for IBM i source, call graph & impact analysis, Db2 for i SQL with autocomplete and explain, table data editor, debugger, system dashboard, jobs & messages, RPG navigation, fixed-to-free conversion and code checks.",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -2203,7 +2203,6 @@
     "url": "https://github.com/gauravgupta0612/silverlake-ibmi/issues"
   },
   "homepage": "https://gauravgupta0612.github.io/vanthrex-ibmi-docs/",
-  "preview": true,
   "pricing": "Free",
   "galleryBanner": {
     "color": "#1F3A5F",
