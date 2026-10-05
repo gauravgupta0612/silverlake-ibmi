@@ -79,7 +79,7 @@ export function registerBrowseCommands(
   reg('vanthrex.deleteConnection', async (p: ConnectionProfile) => {
     const ok = await vscode.window.showWarningMessage(`Remove connection "${p.name}" and its saved password?`, { modal: true }, 'Remove');
     if (ok !== 'Remove') { return; }
-    if (manager.connection?.profile.id === p.id) { await manager.disconnect(); }
+    if (manager.isOpen(p.id)) { await manager.disconnect(p.id); }
     await manager.profiles.remove(p.id);
   });
   reg('vanthrex.connect', async (p?: ConnectionProfile) => {
@@ -93,7 +93,29 @@ export function registerBrowseCommands(
     }
     if (profile) { await manager.connect(profile); }
   });
-  reg('vanthrex.disconnect', () => manager.disconnect());
+  reg('vanthrex.disconnect', (p?: ConnectionProfile) => manager.disconnect(p?.id));
+  reg('vanthrex.disconnectAll', () => manager.disconnectAll());
+  reg('vanthrex.switchConnection', async () => {
+    const open = manager.openConnections;
+    const active = manager.connection?.profile.id;
+    type Item = vscode.QuickPickItem & { id?: string };
+    const items: Item[] = [
+      ...open.map(c => ({
+        label: `${c.profile.id === active ? '$(vm-running)' : '$(vm-active)'} ${c.profile.name}`,
+        description: `${c.user}@${c.profile.host}${c.profile.id === active ? ' · active' : ''}`,
+        id: c.profile.id,
+      })),
+      ...manager.profiles.list().filter(p => !manager.isOpen(p.id)).map(p => ({
+        label: `$(vm) ${p.name}`, description: `${p.user.toUpperCase()}@${p.host} · connect`, id: p.id,
+      })),
+    ];
+    if (!items.length) { return vscode.commands.executeCommand('vanthrex.addConnection'); }
+    const pick = await vscode.window.showQuickPick(items, { title: 'Switch IBM i system', placeHolder: 'Open systems switch instantly; others connect and stay open' });
+    if (!pick?.id) { return; }
+    if (manager.isOpen(pick.id)) { return manager.switchTo(pick.id); }
+    const profile = manager.profiles.get(pick.id);
+    if (profile) { await manager.connect(profile); }
+  });
   reg('vanthrex.openWalkthrough', () =>
     vscode.commands.executeCommand('workbench.action.openWalkthrough', `${context.extension.id}#vanthrex.gettingStarted`, false));
 
@@ -101,7 +123,13 @@ export function registerBrowseCommands(
     const c = manager.connection;
     type Item = vscode.QuickPickItem & { cmd?: string };
     const items: Item[] = c ? [
+      { label: '$(sparkle) Ask the IBM i AI assistant…', cmd: 'vanthrex.ai.open' },
       { label: '$(dashboard) System dashboard', cmd: 'vanthrex.openDashboard' },
+      { label: '$(arrow-swap) Switch / add IBM i system…', cmd: 'vanthrex.switchConnection' },
+      { label: '$(type-hierarchy) Call graph & impact analysis…', cmd: 'vanthrex.callGraph' },
+      { label: '$(source-control) Export source to a Git repository…', cmd: 'vanthrex.git.export' },
+      { label: '$(cloud-upload) Git: upload changed files to IBM i', cmd: 'vanthrex.git.upload' },
+      { label: '$(cloud-download) Git: get changes from IBM i', cmd: 'vanthrex.git.download' },
       { label: '$(debug-alt) Debug a program…', cmd: 'vanthrex.debugProgram' },
       { label: '$(checklist) Debugger setup check', cmd: 'vanthrex.debugSetup' },
       { label: '$(terminal) Run CL command…', cmd: 'vanthrex.runCl' },
@@ -123,6 +151,7 @@ export function registerBrowseCommands(
       { label: '$(book) Open documentation', cmd: 'vanthrex.openDocs' },
       { label: '$(edit) Edit this connection…', cmd: 'vanthrex.editConnection' },
       { label: '$(debug-disconnect) Disconnect', cmd: 'vanthrex.disconnect' },
+      ...(manager.openConnections.length > 1 ? [{ label: '$(debug-disconnect) Disconnect all systems', cmd: 'vanthrex.disconnectAll' }] : []),
     ] : [
       { label: '$(plug) Connect…', cmd: 'vanthrex.connect' },
       { label: '$(add) Add connection…', cmd: 'vanthrex.addConnection' },

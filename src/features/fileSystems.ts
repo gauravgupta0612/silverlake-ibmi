@@ -35,6 +35,9 @@ export function ifsUri(path: string): vscode.Uri {
   return vscode.Uri.from({ scheme: IFS_SCHEME, path });
 }
 
+/** The system (profile id) each open member / IFS file was read from, so a save never goes to another system. */
+export const documentOrigin = new Map<string, { id: string; name: string }>();
+
 abstract class BaseFs implements vscode.FileSystemProvider {
   protected readonly emitter = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
   readonly onDidChangeFile = this.emitter.event;
@@ -45,6 +48,21 @@ abstract class BaseFs implements vscode.FileSystemProvider {
     const c = this.manager.connection;
     if (!c) { throw vscode.FileSystemError.Unavailable('Not connected to an IBM i system.'); }
     return c;
+  }
+
+  protected rememberOrigin(uri: vscode.Uri, c: { profile: { id: string; name: string } }): void {
+    documentOrigin.set(uri.toString(), { id: c.profile.id, name: c.profile.name });
+  }
+
+  /** With several systems connected, a file must be saved to the system it was opened from. */
+  protected checkOrigin(uri: vscode.Uri): void {
+    const origin = documentOrigin.get(uri.toString());
+    const c = this.conn();
+    if (origin && origin.id !== c.profile.id) {
+      throw vscode.FileSystemError.NoPermissions(
+        `This file was opened from ${origin.name}, but the active system is now ${c.profile.name}. ` +
+        `Switch back to ${origin.name} (click the system name in the status bar) and save again.`);
+    }
   }
 
   watch(): vscode.Disposable { return new vscode.Disposable(() => undefined); }
@@ -103,6 +121,7 @@ export class MemberFileSystem extends BaseFs {
         text = await conn.readMember(library, file, member);
       }
       const data = Buffer.from(text, 'utf8');
+      this.rememberOrigin(uri, conn);
       this.meta.set(uri.path, { mtime: Date.now(), size: data.length });
       fsEvents.fire({ uri, content: data, kind: 'read' });
       if (state) {
@@ -150,6 +169,7 @@ export class MemberFileSystem extends BaseFs {
   async writeFile(uri: vscode.Uri, content: Uint8Array): Promise<void> {
     const { library, file, member } = parseMemberPath(uri.path);
     const conn = this.conn();
+    this.checkOrigin(uri);
     const text = Buffer.from(content).toString('utf8').replace(/\r\n/g, '\n');
     // Source records never keep trailing blanks, so compare and store lines without them.
     const lines = text.split('\n').map(l => l.replace(/\s+$/, ''));
@@ -180,6 +200,7 @@ export class MemberFileSystem extends BaseFs {
       if (e instanceof SaveCancelled) { throw vscode.FileSystemError.NoPermissions(e.message); }
       throw e;
     }
+    this.rememberOrigin(uri, conn);
     this.meta.set(uri.path, { mtime: Date.now(), size: content.length });
     fsEvents.fire({ uri, content, kind: 'write' });
     this.emitter.fire([{ type: vscode.FileChangeType.Changed, uri }]);
@@ -239,7 +260,9 @@ export class IfsFileSystem extends BaseFs {
 
   async readFile(uri: vscode.Uri): Promise<Uint8Array> {
     try {
-      const data = await this.conn().readStreamFile(uri.path);
+      const conn = this.conn();
+      const data = await conn.readStreamFile(uri.path);
+      this.rememberOrigin(uri, conn);
       fsEvents.fire({ uri, content: data, kind: 'read' });
       return data;
     } catch (e) {
@@ -249,11 +272,13 @@ export class IfsFileSystem extends BaseFs {
 
   async writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean }): Promise<void> {
     const conn = this.conn();
+    this.checkOrigin(uri);
     let exists = true;
     try { await conn.stat(uri.path); } catch { exists = false; }
     if (!exists && !options.create) { throw vscode.FileSystemError.FileNotFound(uri); }
     if (exists && !options.overwrite) { throw vscode.FileSystemError.FileExists(uri); }
     await conn.writeStreamFile(uri.path, content);
+    this.rememberOrigin(uri, conn);
     fsEvents.fire({ uri, content, kind: 'write' });
     if (!exists) {
       // Tag new files as UTF-8 so compilers and editors on IBM i read them correctly.

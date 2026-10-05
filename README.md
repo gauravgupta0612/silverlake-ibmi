@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/gauravgupta0612/silverlake-ibmi/actions/workflows/ci.yml/badge.svg)](https://github.com/gauravgupta0612/silverlake-ibmi/actions/workflows/ci.yml)
 
-An all-in-one IBM i workbench for VS Code, built to be easy for first-time users. Connect with a guided form, browse libraries and the IFS, edit and compile with inline errors, run Db2 for i SQL in a sortable grid, read spooled files and get help writing RPG, all from one sidebar.
+An all-in-one IBM i workbench for VS Code, built to be easy for first-time users. Connect with a guided form, browse libraries and the IFS, edit and compile with inline errors, run Db2 for i SQL in a sortable grid, read spooled files and get help writing RPG, all from one sidebar — now with an **AI assistant (`@vanthrex`)**, **Git for IBM i source**, an interactive **call graph**, **several systems at once** and **SQL Explain**.
 
 > 📖 **Documentation:** [https://gauravgupta0612.github.io/vanthrex-ibmi-docs/](https://gauravgupta0612.github.io/vanthrex-ibmi-docs/) — installation, setup, every feature, commands, settings, troubleshooting and FAQ ([docs repository](https://github.com/gauravgupta0612/vanthrex-ibmi-docs)).
 >
@@ -16,6 +16,11 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 
 | Area | What you get |
 |---|---|
+| **AI assistant** *(new in 0.6)* | `@vanthrex` in the VS Code chat: `/explain`, `/document`, `/review`, `/modernize`, `/test` (RPGUnit), `/fix` compile errors, `/sql` against your real tables, `/object`. It looks things up on the connected system (read-only, with confirmation) and its tools also work in Copilot agent mode. |
+| **Git for IBM i source** *(new in 0.6)* | Export libraries to a Git repository, get changes from the IBM i, upload changed files (to the same or another library), commit & push, and the Git history of any member with compare and restore. |
+| **Call graph & impact** *(new in 0.6)* | Interactive diagram of callers and callees (programs, service programs, files with their usage), several levels deep, with *Copy as Mermaid*. |
+| **Several systems at once** *(new in 0.6)* | Stay connected to DEV, TEST and PROD and switch instantly; files always save to the system they came from. |
+| **SQL Explain** *(new in 0.6)* | Table scans, indexes used, temporary indexes, sorts and advised indexes for a query, with `CREATE INDEX` suggestions. |
 | **Connect** | Guided form with **Test connection**, SSH password or key, passwords in the VS Code secret store, status-bar quick menu (`Ctrl+Alt+I`), optional auto-reconnect. |
 | **Browse** | *Libraries & Source* (source files, members, objects), *IFS Browser*, *My Spooled Files*. Find a member by pattern across your library list. |
 | **Edit** | Members and IFS files open like local files; `Ctrl+S` saves to the IBM i. New RPG and CL members start from a template that compiles as-is. |
@@ -23,7 +28,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **SQL** | `Ctrl+Enter` runs the statement under the cursor. Results grid with sort, filter, copy and CSV export. Confirmation before destructive statements. `ibmi-…` snippets for IBM i Services. |
 | **CL** | `Ctrl+Alt+L` runs a CL command with your library list and keeps a history. |
 | **Spool** | Open, save or delete your spooled files. |
-| **RPG** | Highlighting for free and fixed format, outline and breadcrumbs, hovers for BIFs and opcodes, **column hints on fixed-format specs**, `%` completion, snippets, and **fixed C-spec → free** conversion. |
+| **RPG** | Highlighting for free and fixed format, outline and breadcrumbs, hovers for BIFs and opcodes, **column hints on fixed-format specs**, `%` completion, snippets, and **fixed → free** conversion of H, F, D, P and C specs. |
 | **CL / DDS** | Syntax highlighting and snippets. |
 | **System dashboard** *(new)* | CPU, system ASP, jobs, memory, top CPU jobs, latest QSYSOPR messages and PTF group levels, refreshing automatically. |
 | **Jobs & messages** *(new)* | *Active Jobs* view (yours, a user, a subsystem or all): job log, hold, release, end. *Messages* view for QSYSOPR and your own queue: messages waiting for an answer come first and you reply in two clicks. |
@@ -82,6 +87,10 @@ Press `F5` to start an Extension Development Host (launch settings are in `.vsco
 | `vanthrex.dataEditor.pageSize` | 100 | Rows per page in the table data editor. |
 | `vanthrex.history.enabled` / `maxVersions` | true / 50 | Local history of members and IFS files. |
 | `vanthrex.lint.enabled` / `rules` / `maxProcedureLines` | true / all on / 200 | RPG code checks. |
+| `vanthrex.connections.keepOthersOpen` | true | Keep other systems connected when you connect to another one. |
+| `vanthrex.ai.enabled` / `useTools` / `allowQueries` / `confirmQueries` | true | AI assistant, its look-ups, its read-only queries and the confirmation before each query. |
+| `vanthrex.git.authorName` / `authorEmail` | empty | Author for commits made by Vanthrex's Git commands (empty = your Git configuration). |
+| `vanthrex.callGraph.depth` / `maxNodes` / `hideSystemObjects` | 2 / 200 / true | Call graph levels, size and IBM-supplied objects. |
 
 ## How it works
 
@@ -104,16 +113,18 @@ Press `F5` to start an Extension Development Host (launch settings are in `.vsco
 | `Ctrl+Alt+D` | Cycle source dates: date → sequence + date → hidden |
 | `Ctrl+Shift+Enter` | Run the whole SQL script (in .sql files) |
 | `Ctrl+Alt+G` | Debug the program of the current source |
+| `@vanthrex` in the chat | Ask the IBM i AI assistant |
 
-## Known limitations (v0.5)
+## Known limitations (v0.6)
 
 - **Where used** builds its cross-reference with DSPPGMREF in QTEMP, so it needs a Mapepire SQL engine (not db2util). Scanning large libraries takes a while.
 - The table data editor writes each change straight away (no commitment control). Rows are identified by relative record number, so don't reorganize a file while editing it.
 - Source dates and the conflict checks need a Mapepire SQL engine. With db2util, members are copied as plain text (dates are reset on save, as before).
 - Rename only works inside one source and refuses length changes in fixed-format sources, because they would shift columns.
 
-- One active connection at a time.
 - Generate SQL (DDL) needs a Mapepire SQL engine. Extract to procedure works on free-form calculations and does not create parameters.
 - The debugger needs the IBM i Debug Service (PTF) and IBM's IBM i Debug extension; it debugs programs started in a batch job (service entry points are planned).
-- The fixed → free converter handles C-specs only (H/F/D specs are left as they are). Anything it can't convert safely is marked `// TODO`.
+- The fixed → free converter does not convert I and O specs or primary/table files; anything it can't convert safely is marked `// TODO`.
+- The AI assistant needs a chat model in VS Code (for example GitHub Copilot Chat); the code you ask about is sent to that model.
+- The call graph and SQL Explain need a Mapepire SQL engine.
 - Interactive (5250) commands such as `WRKACTJOB` can't run from the CL runner; use their `OUTPUT(*PRINT)` form or the IBM i Services SQL snippets.

@@ -1,17 +1,20 @@
 {
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
-  "description": "A friendly, all-in-one IBM i workbench for VS Code: connection wizard, library & IFS browser, edit and compile with inline errors, Db2 for i SQL with autocomplete, table data editor, system dashboard, jobs & messages, object and source search, RPG navigation and code checks, local history.",
-  "version": "0.5.0",
+  "description": "A friendly, all-in-one IBM i workbench for VS Code with an AI assistant (@vanthrex): connection wizard for several systems, library & IFS browser, edit and compile with inline errors, Git for IBM i source, call graph & impact analysis, Db2 for i SQL with autocomplete and explain, table data editor, debugger, system dashboard, jobs & messages, RPG navigation, fixed-to-free conversion and code checks.",
+  "version": "0.6.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.95.0"
   },
   "categories": [
     "Programming Languages",
     "Snippets",
+    "AI",
+    "Chat",
+    "Debuggers",
     "Other"
   ],
   "keywords": [
@@ -22,7 +25,12 @@
     "RPGLE",
     "CL",
     "Db2 for i",
-    "Mapepire"
+    "Mapepire",
+    "AI",
+    "Copilot",
+    "Git",
+    "Call graph",
+    "Free-form RPG"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
@@ -129,6 +137,22 @@
             "description": "Open the System Dashboard, check active jobs and answer QSYSOPR messages, search objects (Ctrl+Alt+O) or source code (Ctrl+Alt+F), and edit table data in a grid.\n[Open System Dashboard](command:vanthrex.openDashboard)",
             "media": {
               "markdown": "media/walkthrough/more.md"
+            }
+          },
+          {
+            "id": "ai",
+            "title": "Ask the AI assistant",
+            "description": "Type **@vanthrex** in the chat to explain RPG, write SQL against your real tables, fix compile errors or modernize code. Right-click in a source → **Vanthrex AI**.\n[Ask @vanthrex](command:vanthrex.ai.open)",
+            "media": {
+              "markdown": "media/walkthrough/ai.md"
+            }
+          },
+          {
+            "id": "git",
+            "title": "Put your source in Git",
+            "description": "Right-click a library → **Git: Export Source to a Git Repository**, then use **Get Changes from IBM i** / **Upload Changed Files** to keep both sides in step. See every version of a member with **Git: History of This Member**.\n[Export a library](command:vanthrex.git.export)",
+            "media": {
+              "markdown": "media/walkthrough/git.md"
             }
           }
         ]
@@ -318,7 +342,7 @@
       },
       {
         "command": "vanthrex.convertToFree",
-        "title": "Convert Fixed-Format C-Specs to Free",
+        "title": "Convert Fixed Format to Free (H, F, D, P and C Specs)",
         "category": "Vanthrex"
       },
       {
@@ -624,6 +648,130 @@
         "title": "Debugger Setup Check",
         "category": "Vanthrex",
         "icon": "$(checklist)"
+      },
+      {
+        "command": "vanthrex.switchConnection",
+        "title": "Switch IBM i System…",
+        "category": "Vanthrex",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "vanthrex.disconnectAll",
+        "title": "Disconnect All Systems",
+        "category": "Vanthrex",
+        "icon": "$(debug-disconnect)"
+      },
+      {
+        "command": "vanthrex.explainSql",
+        "title": "Explain SQL (Performance)",
+        "category": "Vanthrex",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "vanthrex.explain.createIndexSql",
+        "title": "Write CREATE INDEX for Advised Index",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.callGraph",
+        "title": "Call Graph…",
+        "category": "Vanthrex",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "vanthrex.impactAnalysis",
+        "title": "Impact Analysis (Who Uses This?)…",
+        "category": "Vanthrex",
+        "icon": "$(references)"
+      },
+      {
+        "command": "vanthrex.git.export",
+        "title": "Git: Export Source to a Git Repository…",
+        "category": "Vanthrex",
+        "icon": "$(repo-push)"
+      },
+      {
+        "command": "vanthrex.git.download",
+        "title": "Git: Get Changes from IBM i",
+        "category": "Vanthrex",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "vanthrex.git.upload",
+        "title": "Git: Upload Changed Files to IBM i",
+        "category": "Vanthrex",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "vanthrex.git.commitPush",
+        "title": "Git: Commit & Push IBM i Source…",
+        "category": "Vanthrex",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "vanthrex.git.memberHistory",
+        "title": "Git: History of This Member…",
+        "category": "Vanthrex",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "vanthrex.ai.open",
+        "title": "AI: Ask the IBM i Assistant…",
+        "category": "Vanthrex",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "vanthrex.ai.explain",
+        "title": "AI: Explain This Code",
+        "category": "Vanthrex",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "vanthrex.ai.document",
+        "title": "AI: Document This Code",
+        "category": "Vanthrex",
+        "icon": "$(book)"
+      },
+      {
+        "command": "vanthrex.ai.review",
+        "title": "AI: Review This Code",
+        "category": "Vanthrex",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "vanthrex.ai.modernize",
+        "title": "AI: Modernize to Free-Form RPG",
+        "category": "Vanthrex",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "vanthrex.ai.test",
+        "title": "AI: Generate Unit Tests (RPGUnit)",
+        "category": "Vanthrex",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "vanthrex.ai.fix",
+        "title": "AI: Explain & Fix Compile Errors",
+        "category": "Vanthrex",
+        "icon": "$(lightbulb-autofix)"
+      },
+      {
+        "command": "vanthrex.ai.sql",
+        "title": "AI: Write SQL from a Description…",
+        "category": "Vanthrex",
+        "icon": "$(database)"
+      },
+      {
+        "command": "vanthrex.ai.explainObject",
+        "title": "AI: Explain This Object",
+        "category": "Vanthrex",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "vanthrex.ai.openSql",
+        "title": "AI: Open SQL in Scratchpad",
+        "category": "Vanthrex"
       }
     ],
     "menus": {
@@ -717,6 +865,21 @@
           "command": "vanthrex.debugSetup",
           "when": "view == vanthrex.connections && vanthrex.connected",
           "group": "9_help"
+        },
+        {
+          "command": "vanthrex.switchConnection",
+          "when": "view == vanthrex.connections && vanthrex.connected",
+          "group": "navigation@2"
+        },
+        {
+          "command": "vanthrex.ai.open",
+          "when": "view == vanthrex.connections",
+          "group": "navigation@3"
+        },
+        {
+          "command": "vanthrex.disconnectAll",
+          "when": "view == vanthrex.connections && vanthrex.multipleConnections",
+          "group": "1_connections"
         }
       ],
       "view/item/context": [
@@ -949,6 +1112,41 @@
           "command": "vanthrex.debugProgram",
           "when": "view == vanthrex.libraries && viewItem == object.pgm",
           "group": "0_info@0"
+        },
+        {
+          "command": "vanthrex.disconnect",
+          "when": "view == vanthrex.connections && viewItem == connection.background",
+          "group": "inline"
+        },
+        {
+          "command": "vanthrex.switchConnection",
+          "when": "view == vanthrex.connections && viewItem == connection.background",
+          "group": "1@0"
+        },
+        {
+          "command": "vanthrex.git.export",
+          "when": "view == vanthrex.libraries && viewItem =~ /^(library|srcfile)$/",
+          "group": "5_git@1"
+        },
+        {
+          "command": "vanthrex.git.memberHistory",
+          "when": "view == vanthrex.libraries && viewItem == member",
+          "group": "5_git@1"
+        },
+        {
+          "command": "vanthrex.callGraph",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object\\.(pgm|srvpgm|file)$|^object$/",
+          "group": "2_analyse@1"
+        },
+        {
+          "command": "vanthrex.impactAnalysis",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object/",
+          "group": "2_analyse@2"
+        },
+        {
+          "command": "vanthrex.ai.explainObject",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object/",
+          "group": "2_analyse@3"
         }
       ],
       "editor/title": [
@@ -981,6 +1179,16 @@
           "command": "vanthrex.debugProgram",
           "when": "vanthrex.connected && editorLangId =~ /^(rpgle|cl)$/",
           "group": "navigation@9"
+        },
+        {
+          "command": "vanthrex.git.memberHistory",
+          "when": "resourceScheme == vanthrex-member",
+          "group": "1_vanthrex@3"
+        },
+        {
+          "command": "vanthrex.explainSql",
+          "when": "vanthrex.connected && editorLangId == sql",
+          "group": "navigation@2"
         }
       ],
       "editor/context": [
@@ -1053,6 +1261,16 @@
           "command": "vanthrex.debugProgram",
           "when": "vanthrex.connected && editorLangId =~ /^(rpgle|cl)$/",
           "group": "vanthrex@7"
+        },
+        {
+          "submenu": "vanthrex.ai",
+          "when": "editorLangId =~ /^(rpgle|cl|dds|sql|cobol)$/",
+          "group": "vanthrex@0"
+        },
+        {
+          "command": "vanthrex.explainSql",
+          "when": "vanthrex.connected && editorLangId == sql",
+          "group": "vanthrex@1"
         }
       ],
       "commandPalette": [
@@ -1155,6 +1373,75 @@
         {
           "command": "vanthrex.filterMembersByDate",
           "when": "false"
+        },
+        {
+          "command": "vanthrex.explain.createIndexSql",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ai.openSql",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.disconnectAll",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.explainSql",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.callGraph",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.impactAnalysis",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.git.export",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.git.download",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.git.upload",
+          "when": "vanthrex.connected"
+        }
+      ],
+      "vanthrex.ai": [
+        {
+          "command": "vanthrex.ai.explain",
+          "group": "1@1"
+        },
+        {
+          "command": "vanthrex.ai.document",
+          "group": "1@2"
+        },
+        {
+          "command": "vanthrex.ai.review",
+          "group": "1@3"
+        },
+        {
+          "command": "vanthrex.ai.modernize",
+          "when": "editorLangId == rpgle",
+          "group": "2@1"
+        },
+        {
+          "command": "vanthrex.ai.test",
+          "when": "editorLangId == rpgle",
+          "group": "2@2"
+        },
+        {
+          "command": "vanthrex.ai.fix",
+          "group": "2@3"
+        },
+        {
+          "command": "vanthrex.ai.sql",
+          "when": "editorLangId == sql",
+          "group": "3@1"
         }
       ]
     },
@@ -1639,9 +1926,253 @@
           "type": "boolean",
           "default": false,
           "description": "Write a trace of the debug protocol to the IBM i Debug output (for support)."
+        },
+        "vanthrex.connections.keepOthersOpen": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep other systems connected when you connect to another one, so you can switch between them instantly (Ctrl+Alt+S)."
+        },
+        "vanthrex.callGraph.depth": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 8,
+          "description": "How many levels of callers / callees the call graph shows at first."
+        },
+        "vanthrex.callGraph.maxNodes": {
+          "type": "number",
+          "default": 200,
+          "minimum": 20,
+          "maximum": 2000,
+          "description": "Largest number of objects drawn in a call graph."
+        },
+        "vanthrex.callGraph.hideSystemObjects": {
+          "type": "boolean",
+          "default": true,
+          "description": "Leave IBM-supplied objects (QCMDEXC, QSYSPRT…) out of the call graph."
+        },
+        "vanthrex.git.authorName": {
+          "type": "string",
+          "default": "",
+          "description": "Name used for commits made by Vanthrex's Git commands (empty = your Git configuration)."
+        },
+        "vanthrex.git.authorEmail": {
+          "type": "string",
+          "default": "",
+          "description": "E-mail used for commits made by Vanthrex's Git commands (empty = your Git configuration)."
+        },
+        "vanthrex.ai.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the @vanthrex AI assistant and the AI commands. Code you ask about is sent to the language model you selected in VS Code chat."
+        },
+        "vanthrex.ai.useTools": {
+          "type": "boolean",
+          "default": true,
+          "description": "Let the AI assistant look things up on the connected IBM i (object descriptions, table columns, source, read-only queries)."
+        },
+        "vanthrex.ai.allowQueries": {
+          "type": "boolean",
+          "default": true,
+          "description": "Let the AI run read-only SQL queries (SELECT / WITH / VALUES only; anything that changes data is refused)."
+        },
+        "vanthrex.ai.confirmQueries": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask before the AI runs a query on the IBM i."
+        },
+        "vanthrex.ai.maxSourceChars": {
+          "type": "number",
+          "default": 60000,
+          "minimum": 2000,
+          "description": "Largest amount of source text sent to the language model in one request."
         }
       }
-    }
+    },
+    "submenus": [
+      {
+        "id": "vanthrex.ai",
+        "label": "Vanthrex AI",
+        "icon": "$(sparkle)"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "vanthrex.assistant",
+        "name": "vanthrex",
+        "fullName": "Vanthrex IBM i",
+        "isSticky": true,
+        "description": "Ask about IBM i: explain RPG/CL, write Db2 SQL, fix compile errors, modernize code…",
+        "commands": [
+          {
+            "name": "explain",
+            "description": "Explain the selected code or the open source"
+          },
+          {
+            "name": "document",
+            "description": "Write documentation comments"
+          },
+          {
+            "name": "review",
+            "description": "Review the code for bugs, performance and maintainability"
+          },
+          {
+            "name": "modernize",
+            "description": "Rewrite as modern free-form RPG"
+          },
+          {
+            "name": "test",
+            "description": "Generate RPGUnit unit tests"
+          },
+          {
+            "name": "fix",
+            "description": "Explain and fix the compile errors"
+          },
+          {
+            "name": "sql",
+            "description": "Write Db2 for i SQL from a description"
+          },
+          {
+            "name": "object",
+            "description": "Explain an object: LIB/NAME *TYPE"
+          }
+        ]
+      }
+    ],
+    "languageModelTools": [
+      {
+        "name": "vanthrex_runQuery",
+        "displayName": "IBM i: Run read-only SQL",
+        "toolReferenceName": "ibmiQuery",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(database)",
+        "tags": [
+          "ibmi",
+          "db2",
+          "sql"
+        ],
+        "userDescription": "Run a read-only Db2 for i query on the connected IBM i.",
+        "modelDescription": "Runs ONE read-only Db2 for i SQL statement (SELECT, WITH or VALUES) on the IBM i connected in Vanthrex and returns up to 200 rows as text. Statements that change data are refused. Use it to look at data, catalog views (QSYS2.SYSTABLES, QSYS2.SYSCOLUMNS) and IBM i services (QSYS2.ACTIVE_JOB_INFO, QSYS2.OBJECT_STATISTICS, …). System naming LIB/FILE works.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sql": {
+              "type": "string",
+              "description": "The SELECT / WITH / VALUES statement"
+            },
+            "maxRows": {
+              "type": "number",
+              "description": "Rows to return (1-200, default 50)"
+            }
+          },
+          "required": [
+            "sql"
+          ]
+        }
+      },
+      {
+        "name": "vanthrex_readSource",
+        "displayName": "IBM i: Read source member",
+        "toolReferenceName": "ibmiSource",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(file-code)",
+        "tags": [
+          "ibmi",
+          "source"
+        ],
+        "userDescription": "Read a source member or IFS stream file from the connected IBM i.",
+        "modelDescription": "Returns the text of a source member given as LIBRARY/FILE(MEMBER), e.g. MYLIB/QRPGLESRC(ORDENTRY), or of an IFS stream file given as an absolute path, from the IBM i connected in Vanthrex. Use it to read copybooks, called programs or prototypes.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "member": {
+              "type": "string",
+              "description": "LIBRARY/FILE(MEMBER) or /ifs/path"
+            }
+          },
+          "required": [
+            "member"
+          ]
+        }
+      },
+      {
+        "name": "vanthrex_describeObject",
+        "displayName": "IBM i: Describe object",
+        "toolReferenceName": "ibmiObject",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(info)",
+        "tags": [
+          "ibmi"
+        ],
+        "userDescription": "Describe an IBM i object: attributes, source, columns of a file, modules of a program.",
+        "modelDescription": "Describes an IBM i object given as LIBRARY/NAME (optionally with a type such as *PGM, *SRVPGM, *FILE): type, attribute, text, owner, size, dates, source member; for files also the columns (name, type, length, text) and indexes; for programs the bound modules and their source.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "object": {
+              "type": "string",
+              "description": "LIBRARY/NAME"
+            },
+            "type": {
+              "type": "string",
+              "description": "Object type, e.g. *FILE (optional)"
+            }
+          },
+          "required": [
+            "object"
+          ]
+        }
+      },
+      {
+        "name": "vanthrex_searchObjects",
+        "displayName": "IBM i: Search objects",
+        "toolReferenceName": "ibmiSearch",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(search)",
+        "tags": [
+          "ibmi"
+        ],
+        "userDescription": "Find IBM i objects by name or description.",
+        "modelDescription": "Finds objects on the connected IBM i whose name or text description matches a pattern (* is a wildcard), in the user's library list or in one library. Returns library, name, type, attribute and text. Use it to find the real table or program names before writing SQL or code.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "pattern": {
+              "type": "string",
+              "description": "Name or text, e.g. CUST* or customer"
+            },
+            "type": {
+              "type": "string",
+              "description": "Object type such as *FILE or *PGM (optional)"
+            },
+            "library": {
+              "type": "string",
+              "description": "One library (optional; default the library list)"
+            }
+          },
+          "required": [
+            "pattern"
+          ]
+        }
+      },
+      {
+        "name": "vanthrex_systemStatus",
+        "displayName": "IBM i: System status",
+        "toolReferenceName": "ibmiStatus",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(pulse)",
+        "tags": [
+          "ibmi",
+          "operations"
+        ],
+        "userDescription": "CPU, disk, jobs waiting for a reply and the latest QSYSOPR messages.",
+        "modelDescription": "Returns the connected IBM i's CPU and system ASP use, job counts, jobs in MSGW (waiting for a reply) and the latest QSYSOPR messages. Use it to answer questions about system health or stuck jobs.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ]
   },
   "scripts": {
     "build": "node esbuild.js",
@@ -1659,7 +2190,7 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/ssh2": "^1.15.6",
-    "@types/vscode": "1.85.0",
+    "@types/vscode": "1.95.0",
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.0",
     "typescript": "^5.4.0"

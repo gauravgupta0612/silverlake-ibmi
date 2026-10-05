@@ -3,9 +3,14 @@ import { IbmiConnection } from './connection';
 import { ConnectionProfile, ProfileStore } from './profiles';
 import { errorMessage, log, logError, showLog } from './log';
 
-/** Owns the single active IBM i connection and broadcasts connect/disconnect. */
+/**
+ * Owns the IBM i connections. Several systems can be connected at the same time; one of them is
+ * the *active* connection that the views, editors and commands work with. Switching between open
+ * connections is instant (no new sign-on).
+ */
 export class ConnectionManager implements vscode.Disposable {
-  private active?: IbmiConnection;
+  private readonly open = new Map<string, IbmiConnection>();
+  private activeId?: string;
   private readonly _onDidChange = new vscode.EventEmitter<IbmiConnection | undefined>();
   readonly onDidChange = this._onDidChange.event;
   private readonly statusItem: vscode.StatusBarItem;
@@ -18,7 +23,18 @@ export class ConnectionManager implements vscode.Disposable {
   }
 
   get connection(): IbmiConnection | undefined {
-    return this.active?.isConnected ? this.active : undefined;
+    const c = this.activeId ? this.open.get(this.activeId) : undefined;
+    return c?.isConnected ? c : undefined;
+  }
+
+  /** Every connection that is currently open (the active one first). */
+  get openConnections(): IbmiConnection[] {
+    const all = [...this.open.values()].filter(c => c.isConnected);
+    return all.sort((a, b) => (a.profile.id === this.activeId ? -1 : b.profile.id === this.activeId ? 1 : a.profile.name.localeCompare(b.profile.name)));
+  }
+
+  isOpen(profileId: string): boolean {
+    return !!this.open.get(profileId)?.isConnected;
   }
 
   /** The active connection, or a friendly error when not connected. */
@@ -30,8 +46,18 @@ export class ConnectionManager implements vscode.Disposable {
     return c;
   }
 
+  private keepOthersOpen(): boolean {
+    return vscode.workspace.getConfiguration('vanthrex').get<boolean>('connections.keepOthersOpen', true);
+  }
+
   async connect(profile: ConnectionProfile): Promise<IbmiConnection | undefined> {
-    if (this.active) { await this.disconnect(); }
+    // Already open: just make it the active one.
+    const existing = this.open.get(profile.id);
+    if (existing?.isConnected) {
+      if (this.activeId !== profile.id) { await this.switchTo(profile.id); }
+      return existing;
+    }
+    if (!this.keepOthersOpen()) { await this.disconnectAll(); }
 
     let password = await this.profiles.getPassword(profile.id);
     if (profile.authType === 'password' && !password) {
@@ -67,26 +93,52 @@ export class ConnectionManager implements vscode.Disposable {
       return undefined;
     }
 
-    this.active = conn;
+    this.open.set(profile.id, conn);
+    this.activeId = profile.id;
     conn.ssh.connection?.on('close', () => {
-      if (this.active === conn) {
-        log('SSH connection closed by the remote system');
-        this.active = undefined;
-        this.fire();
-        vscode.window.showWarningMessage(`Connection to ${profile.name} was closed.`, 'Reconnect')
-          .then(c => { if (c) { this.connect(profile); } });
-      }
+      if (this.open.get(profile.id) !== conn) { return; }
+      log(`SSH connection to ${profile.host} closed by the remote system`);
+      this.open.delete(profile.id);
+      if (this.activeId === profile.id) { this.activeId = [...this.open.values()].find(c => c.isConnected)?.profile.id; }
+      this.fire();
+      vscode.window.showWarningMessage(`Connection to ${profile.name} was closed.`, 'Reconnect')
+        .then(c => { if (c) { this.connect(profile); } });
     });
     await this.profiles.setLastUsed(profile.id);
     this.fire();
-    vscode.window.setStatusBarMessage(`$(check) Connected to ${profile.name}`, 4000);
+    const others = this.openConnections.length - 1;
+    vscode.window.setStatusBarMessage(`$(check) Connected to ${profile.name}${others ? ` (${others} other system${others > 1 ? 's' : ''} still open)` : ''}`, 4000);
     return conn;
   }
 
-  async disconnect(): Promise<void> {
-    const conn = this.active;
-    this.active = undefined;
+  /** Make another open connection the active one. */
+  async switchTo(profileId: string): Promise<void> {
+    const c = this.open.get(profileId);
+    if (!c?.isConnected) { throw new Error('That system is not connected.'); }
+    if (this.activeId === profileId) { return; }
+    this.activeId = profileId;
+    await this.profiles.setLastUsed(profileId);
+    this.fire();
+    vscode.window.setStatusBarMessage(`$(arrow-swap) Now working on ${c.profile.name}`, 3000);
+  }
+
+  /** Disconnect one system (the active one by default). Another open system becomes active. */
+  async disconnect(profileId = this.activeId): Promise<void> {
+    if (!profileId) { this.fire(); return; }
+    const conn = this.open.get(profileId);
+    this.open.delete(profileId);
+    if (this.activeId === profileId) {
+      this.activeId = [...this.open.values()].find(c => c.isConnected)?.profile.id;
+    }
     if (conn) { await conn.dispose(); }
+    this.fire();
+  }
+
+  async disconnectAll(): Promise<void> {
+    const all = [...this.open.values()];
+    this.open.clear();
+    this.activeId = undefined;
+    for (const c of all) { await c.dispose(); }
     this.fire();
   }
 
@@ -100,19 +152,23 @@ export class ConnectionManager implements vscode.Disposable {
 
   private fire(): void {
     vscode.commands.executeCommand('setContext', 'vanthrex.connected', !!this.connection);
+    vscode.commands.executeCommand('setContext', 'vanthrex.multipleConnections', this.openConnections.length > 1);
     this.updateStatus();
     this._onDidChange.fire(this.connection);
   }
 
   private updateStatus(): void {
     const c = this.connection;
+    const count = this.openConnections.length;
     if (c) {
-      this.statusItem.text = `$(server) ${c.profile.name}`;
+      this.statusItem.text = `$(server) ${c.profile.name}${count > 1 ? ` +${count - 1}` : ''}`;
       this.statusItem.tooltip = new vscode.MarkdownString(
         `**${c.profile.name}** — ${c.user}@${c.profile.host}\n\n` +
         `Current library: ${c.profile.currentLibrary || '*none*'}\n\n` +
         `Library list: ${c.profile.libraries.join(', ') || '*none*'}\n\n` +
-        `SQL engine: ${c.sqlEngineName}\n\nClick for the IBM i quick menu`);
+        `SQL engine: ${c.sqlEngineName}\n\n` +
+        (count > 1 ? `Also connected: ${this.openConnections.slice(1).map(o => o.profile.name).join(', ')} — switch from the quick menu\n\n` : '') +
+        'Click for the IBM i quick menu');
       this.statusItem.backgroundColor = undefined;
     } else {
       this.statusItem.text = '$(plug) IBM i: not connected';
@@ -121,7 +177,8 @@ export class ConnectionManager implements vscode.Disposable {
   }
 
   dispose(): void {
-    this.active?.dispose();
+    for (const c of this.open.values()) { c.dispose(); }
+    this.open.clear();
     this.statusItem.dispose();
     this._onDidChange.dispose();
   }

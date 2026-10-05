@@ -27,6 +27,10 @@ import { registerObjectTools } from './features/objectTools';
 import { registerSqlTools } from './features/sqlTools';
 import { registerProcedureTools } from './rpg/procCommands';
 import { registerDebugger } from './features/debugger';
+import { registerSqlExplain } from './features/sqlExplain';
+import { registerCallGraph } from './features/callGraphView';
+import { registerGit } from './git/gitSync';
+import { registerAi } from './ai/assistant';
 
 let manager: ConnectionManager | undefined;
 
@@ -81,6 +85,10 @@ export function activate(context: vscode.ExtensionContext): void {
   step('sql tools', () => registerSqlTools(context, m));
   step('procedure tools', () => registerProcedureTools(context, m));
   step('debugger', () => registerDebugger(context, m));
+  step('sql explain', () => registerSqlExplain(context, m));
+  step('call graph', () => registerCallGraph(context, m));
+  step('git', () => registerGit(context, m));
+  step('ai assistant', () => registerAi(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(`Vanthrex started with problems: ${failures.join(' | ')}`, 'Show Log')
@@ -105,5 +113,5 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export async function deactivate(): Promise<void> {
-  await manager?.disconnect();
+  await manager?.disconnectAll();
 }

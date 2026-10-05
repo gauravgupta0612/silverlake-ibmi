@@ -204,9 +204,9 @@ Vanthrex puts all of this in one place. It is built for people who are **new to 
 
 ### 13. Fixed → free format conversion
 
-**What:** Converts fixed-format C-specs into free format, with indentation, indicator handling and `%FOUND` / `%EOF` checks.
+**What:** Converts fixed-format RPG into free format — **H, F, D and P specs** (`ctl-opt`, `dcl-f`, `dcl-s`, `dcl-c`, `dcl-ds`, `dcl-pr`, `dcl-pi`, `dcl-proc`) as well as C-specs, with indentation, indicator handling and `%FOUND` / `%EOF` checks. Long names, continued keywords and literals, OVERLAY and program-described files are handled; compile-time data is left as it is.
 
-**How:** Select the lines → right-click → **Convert Fixed-Format C-Specs to Free**. Anything it can't convert safely is marked `// TODO`.
+**How:** Select the lines → right-click → **Convert Fixed Format to Free (H, F, D, P and C Specs)**, or run it with nothing selected to convert the whole source. Anything it can't convert safely is marked `// TODO`. Want it rewritten in modern style too? Ask **@vanthrex /modernize**.
 
 ### 14. Local history and compare
 
@@ -330,6 +330,76 @@ In the tree, right-click a member → **Select for Compare**, then right-click a
 
 The server side (the IBM i Debug Service, its PTFs and its certificate) is set up once by an administrator — see the *Debugging* page of the documentation.
 
+### 28. AI assistant for IBM i (`@vanthrex`) — new in 0.6
+
+**What:** An IBM i expert in the VS Code chat. Type **@vanthrex** and ask in plain language, or use a command:
+
+| Command | What it does |
+|---|---|
+| `/explain` | Explains the selected code or the open source: purpose, inputs, files and programs used, main flow |
+| `/document` | Adds a program header and procedure comments without changing the logic |
+| `/review` | Prioritised list of bugs, error-handling gaps, performance and security issues |
+| `/modernize` | Rewrites fixed format / old-style code as modern **FREE RPG with the same behaviour |
+| `/test` | Generates RPGUnit tests for a procedure |
+| `/fix` | Explains each compile error and gives the corrected code |
+| `/sql` | Writes Db2 for i SQL against your **real** tables and columns |
+| `/object LIB/NAME *TYPE` | Explains an object: what it is, who uses it, what it touches |
+
+**Why it helps:** It knows your system — library list, IBM i release — and looks things up instead of guessing: object descriptions, table columns and indexes, source members, object search, system status and read-only queries.
+
+**Safe by design:** it only reads. Queries must be a single SELECT / WITH / VALUES; data-change statements and functions with side effects (QCMDEXC, IFS_WRITE…) are refused, and Vanthrex asks before every query and before reading an IFS file. The code you ask about is sent to the language model you chose in VS Code chat.
+
+**How:**
+
+- Needs a chat model in VS Code (for example GitHub Copilot Chat).
+- Right-click in a source → **Vanthrex AI** → Explain / Document / Review / Modernize / Unit tests / Fix compile errors / Write SQL.
+- On an IBM i compile error, the 💡 offers **Ask AI to explain and fix this compile error**.
+- Right-click an object → **AI: Explain This Object**.
+- In Copilot **agent mode** the same tools are available as `#ibmiQuery`, `#ibmiSource`, `#ibmiObject`, `#ibmiSearch` and `#ibmiStatus`.
+
+### 29. Git for IBM i source — new in 0.6
+
+**What:** Keep your IBM i source in Git (GitHub, GitLab, Azure DevOps, Bitbucket…) and move changes both ways.
+
+**Why it helps:** Real version history, pull requests and code review for RPG and CL, without changing how the IBM i is organised.
+
+**How:**
+
+1. Right-click a library (or one source file) → **Git: Export Source to a Git Repository…**, choose a folder. Members are saved as `library/sourcefile/member.type` (for example `mylib/qrpglesrc/ordentry.rpgle`). Vanthrex offers to create the repository, make the first commit and publish it.
+2. **Git: Get Changes from IBM i** brings in only the members changed on the system since the last sync.
+3. Edit locally (or merge a pull request), then **Git: Upload Changed Files to IBM i** — to the libraries they came from or to another library such as your development library. New files become new members.
+4. **Git: Commit & Push** commits with your Git name, or with `vanthrex.git.authorName` / `vanthrex.git.authorEmail`, and pushes.
+5. In a member, **Git: History of This Member** (editor title `…` menu or right-click the member) lists every committed version: compare it with the IBM i copy or the previous version, open it, or restore it into the editor.
+
+Files changed on both sides since the last sync are flagged and never overwritten silently. `.vanthrex/sync.json` remembers what was last exchanged — commit it with the source.
+
+### 30. Call graph & impact analysis — new in 0.6
+
+**What:** An interactive diagram of how objects connect: who calls a program or uses a file (callers — the impact of a change) and what it calls and uses (callees), several levels deep. Files show how they are used (input / output / update).
+
+**Why it helps:** Before you change a file layout or a program's parameters, you see every program affected — across libraries — in seconds.
+
+**How:**
+
+- Right-click a program, service program or file → **Call Graph…** or **Impact Analysis (Who Uses This?)…**, or use the quick menu.
+- Choose the libraries to analyse (your library list, one library or a list).
+- In the graph: **Callers / Both / Callees**, **− / +** for depth, **Hide files**, **Fit**, drag to pan and scroll to zoom. Click an object to centre the graph on it, open its source, see its information or ask the AI about it.
+- **Copy as Mermaid** puts the diagram on the clipboard for a README, wiki or pull request.
+
+Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEMP).
+
+### 31. Several systems at once — new in 0.6
+
+**What:** Stay connected to DEV, TEST and PROD together and switch in one click.
+
+**How:** Connect to a second system as usual — the first stays connected in the background. Switch with **Switch IBM i System** (quick menu, Connections view toolbar, or click a background connection). Views and commands follow the active system. A member or IFS file is always saved to the system it was opened from; Vanthrex refuses to save it to another one. Turn this off with `vanthrex.connections.keepOthersOpen`.
+
+### 32. Explain SQL (performance) — new in 0.6
+
+**What:** A *Visual Explain*-style summary of a query: table scans and why, indexes used, temporary indexes built, sorts, and the indexes the optimizer advises — with plain-language tips.
+
+**How:** Put the cursor in a SELECT in a SQL editor → **Explain SQL (Performance)** (editor title or right-click). Vanthrex runs the query (first 100 rows) under a database monitor in your SQL job and shows the report. Click an advised index to get a `CREATE INDEX` statement to review and run. Needs a Mapepire SQL engine.
+
 ---
 
 ## Keyboard shortcuts
@@ -347,6 +417,7 @@ The server side (the IBM i Debug Service, its PTFs and its certificate) is set u
 | Ctrl+Alt+D | Cycle source dates display |
 | Ctrl+Shift+Enter | Run the whole SQL script |
 | Ctrl+Alt+G | Debug the program of the current source |
+| @vanthrex in the chat | Ask the IBM i AI assistant |
 
 On a Mac, use **Cmd** instead of **Ctrl**.
 

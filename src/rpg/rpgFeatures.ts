@@ -120,8 +120,12 @@ export function registerRpgFeatures(context: vscode.ExtensionContext): void {
       const sel = editor.selection.isEmpty
         ? new vscode.Range(0, 0, doc.lineCount - 1, doc.lineAt(doc.lineCount - 1).text.length)
         : new vscode.Range(editor.selection.start.line, 0, editor.selection.end.line, doc.lineAt(editor.selection.end.line).text.length);
+      if (editor.selection.isEmpty && isFullyFree(doc)) {
+        vscode.window.showInformationMessage('This source is already fully free-form (**FREE). Select pasted fixed-format lines to convert just those.');
+        return;
+      }
       if (editor.selection.isEmpty) {
-        const ok = await vscode.window.showWarningMessage('Convert all fixed-format C-specs in this source?', { modal: true }, 'Convert');
+        const ok = await vscode.window.showWarningMessage('Convert all fixed-format H, F, D, P and C specs in this source to free form?', { modal: true }, 'Convert');
         if (ok !== 'Convert') { return; }
       }
       const lines = doc.getText(sel).split(/\r?\n/);

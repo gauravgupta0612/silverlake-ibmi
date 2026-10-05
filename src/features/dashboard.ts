@@ -46,7 +46,9 @@ export class Dashboard {
       if (m.type === 'auto') { this.auto = !!m.on; this.schedule(); }
       if (m.type === 'command') { vscode.commands.executeCommand(m.command); }
     });
-    const sub = manager.onDidChange(c => { if (!c) { this.panel.dispose(); sub.dispose(); } });
+    const shownId = manager.connection?.profile.id;
+    // Close when disconnected or when another system becomes the active one.
+    const sub = manager.onDidChange(c => { if (!c || c.profile.id !== shownId) { this.panel.dispose(); sub.dispose(); } });
     this.refresh();
   }
 

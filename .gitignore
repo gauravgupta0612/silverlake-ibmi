@@ -9,3 +9,6 @@ Claude outputs/
 *.log
 .DS_Store
 Thumbs.db
+
+# Release helper clones
+.publish/

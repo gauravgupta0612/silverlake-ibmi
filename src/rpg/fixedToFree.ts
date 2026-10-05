@@ -1,4 +1,5 @@
-// Fixed-format RPG IV C-spec -> free-format converter (pure module, unit tested).
+// Fixed-format RPG IV -> free-format converter (pure module, unit tested).
+// C-specs are converted here; H, F, D and P specs by ./fixedDecls.
 // Converts the common operation codes; anything it can't safely convert is kept as a
 // "// TODO" comment so nothing is silently lost.
 
@@ -7,6 +8,8 @@ export interface ConvertOptions {
   baseIndent?: string;
   /** Indentation per nesting level. */
   step?: string;
+  /** Also convert H, F, D and P specs to free-form declarations (default true). */
+  declarations?: boolean;
 }
 
 export interface ConvertResult {
@@ -29,6 +32,8 @@ interface CSpec {
   extF2: string;
   comment: string;
 }
+
+import { convertDeclarations, wrapAt80 } from './fixedDecls';
 
 const CMP: Record<string, string> = { EQ: '=', NE: '<>', GT: '>', LT: '<', GE: '>=', LE: '<=' };
 
@@ -87,10 +92,38 @@ export function convertFixedToFree(input: string[], options: ConvertOptions = {}
     }
   };
 
+  const declarations = options.declarations !== false;
+  let declBuffer: string[] = [];
+  const flushDecls = () => {
+    if (!declBuffer.length) { return; }
+    // Trailing blank lines and comments belong after the declarations, in place.
+    const r = convertDeclarations(declBuffer, base, step);
+    out.push(...r.lines);
+    todo += r.todo;
+    declBuffer = [];
+  };
+  const isDeclLine = (l: string) => {
+    const sp = (l[5] ?? ' ').toUpperCase();
+    return 'HFDP'.includes(sp) && sp !== ' ' && l[6] !== '*' && l[6] !== '/' && !/^\s*\/\//.test(l.substring(6));
+  };
+  // Compile-time data (**CTDATA, **FTRANS, **ALTSEQ…) is copied unchanged.
+  const dataStart = input.findIndex(l => /^\*\*(?!free\b)/i.test(l));
+  const tail = dataStart >= 0 ? input.slice(dataStart) : [];
+  if (dataStart >= 0) { input = input.slice(0, dataStart); }
+
   for (const raw of input) {
     const line = raw.replace(/\s+$/, '');
     const spec = (line[5] ?? ' ').toUpperCase();
     const col7 = line[6] ?? ' ';
+
+    if (declarations) {
+      // Blank lines, comments and compiler directives between declarations stay with them.
+      const inBetween = !line.trim() || col7 === '*' || col7 === '/' || /^\s*\/\//.test(line.substring(6));
+      if (isDeclLine(line) || (declBuffer.length && inBetween && !/^\/(free|end-free)\b/i.test(line.substring(6).trim()))) {
+        declBuffer.push(line); continue;
+      }
+      flushDecls();
+    }
 
     if (!line.trim()) { out.push(''); continue; }
     if (/^\s*\/(free|end-free)\b/i.test(line.substring(5))) { continue; }
@@ -240,7 +273,9 @@ export function convertFixedToFree(input: string[], options: ConvertOptions = {}
     if (conditioned) { level--; emit('endif;'); }
   }
   closeCall();
-  return { lines: out, todo };
+  flushDecls();
+  const lines = base ? wrapAt80(out) : out;
+  return { lines: [...lines, ...tail.map(l => l.replace(/\s+$/, ''))], todo };
 
   function whenLike(text: string): void {
     const top = stack[stack.length - 1];
