@@ -43,3 +43,20 @@ test('layout puts callers left of the root and mermaid text is produced', () => 
   assert.match(m, /-->\|update\|/);
   assert.strictEqual(usageLabel(3), 'input/output');
 });
+
+test('dynamic calls are added as dashed nodes next to the program that makes them', () => {
+  const { addDynamicCalls } = require('../out/core/callGraph');
+  const g = buildCallGraph({ lib: 'APP', name: 'ORDERS', type: '*FILE' }, refs, 'callers', 2);
+  const found = new Map([['APP/ORDCALC', [
+    { kind: 'program', target: 'PGMVAR', line: 12, source: 'APP/QRPGLESRC(ORDCALC)' },
+    { kind: 'program', target: 'pgmvar', line: 40, source: 'APP/QRPGLESRC(ORDCALC)' },
+  ]]]);
+  const d = addDynamicCalls(g, found);
+  const dyn = d.nodes.filter(n => n.type === '*DYNAMIC');
+  assert.strictEqual(dyn.length, 1);
+  assert.strictEqual(dyn[0].depth, -0.5);
+  assert.match(dyn[0].text, /line 12, 40/);
+  assert.ok(d.edges.some(e => e.dynamic && e.from === 'APP/ORDCALC*PGM'));
+  assert.deepStrictEqual(impactSummary(d), impactSummary(g));
+  assert.match(toMermaid(d), /-\.->\|dynamic\|/);
+});

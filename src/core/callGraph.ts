@@ -21,7 +21,7 @@ export interface GraphNode {
   depth: number;      // 0 = root, < 0 callers, > 0 callees
 }
 
-export interface GraphEdge { from: string; to: string; label: string; }
+export interface GraphEdge { from: string; to: string; label: string; dynamic?: boolean; }
 
 export interface CallGraph {
   root: string;
@@ -154,9 +154,39 @@ export function buildCallGraph(
   return { root: rootNode.id, nodes: [...nodes.values()], edges: [...edges.values()], truncated };
 }
 
+/** A call found in a program's source whose target is only known at run time. */
+export interface DynamicRef { kind: 'program' | 'procedure'; target: string; line: number; source: string; }
+
+export const DYNAMIC_TYPE = '*DYNAMIC';
+
+/**
+ * Add the dynamic calls found in the sources of the graph's programs (key LIB/NAME) as dashed
+ * "?" nodes next to the program that makes them — DSPPGMREF cannot see these calls.
+ */
+export function addDynamicCalls(g: CallGraph, found: Map<string, DynamicRef[]>): CallGraph {
+  const nodes = [...g.nodes];
+  const edges = [...g.edges];
+  for (const n of g.nodes) {
+    const calls = found.get(`${n.lib}/${n.name}`);
+    if (!calls?.length || n.type === DYNAMIC_TYPE) { continue; }
+    const byTarget = new Map<string, DynamicRef[]>();
+    for (const c of calls) { (byTarget.get(c.target.toUpperCase()) ?? byTarget.set(c.target.toUpperCase(), []).get(c.target.toUpperCase())!).push(c); }
+    for (const [target, refs] of byTarget) {
+      const id = `${n.id}?${target}`;
+      const kind = refs[0].kind === 'program' ? 'program' : 'procedure';
+      nodes.push({
+        id, lib: '? dynamic', name: refs[0].target, type: DYNAMIC_TYPE, depth: n.depth + 0.5,
+        text: `${kind} name in ${refs[0].target} — ${refs[0].source} line ${refs.map(r => r.line).join(', ')}`,
+      });
+      edges.push({ from: n.id, to: id, label: 'dynamic', dynamic: true });
+    }
+  }
+  return { ...g, nodes, edges };
+}
+
 /** Programs affected by a change to the root (all callers, any depth in the graph). */
 export function impactSummary(g: CallGraph): { programs: number; libraries: string[] } {
-  const callers = g.nodes.filter(n => n.depth < 0);
+  const callers = g.nodes.filter(n => n.depth < 0 && n.type !== DYNAMIC_TYPE);
   return { programs: callers.length, libraries: [...new Set(callers.map(n => n.lib))].sort() };
 }
 
@@ -188,11 +218,12 @@ export function toMermaid(g: CallGraph): string {
   const ids = new Map(g.nodes.map((n, i) => [n.id, `n${i}`]));
   const shape = (n: GraphNode) => {
     const label = `${n.lib}/${n.name}<br/>${n.type}`.replace(/"/g, "'");
-    return n.type === '*FILE' ? `[("${label}")]` : n.type === '*SRVPGM' ? `[["${label}"]]` : `["${label}"]`;
+    return n.type === DYNAMIC_TYPE ? `{{"? ${n.name.replace(/"/g, "'")}<br/>dynamic"}}`
+      : n.type === '*FILE' ? `[("${label}")]` : n.type === '*SRVPGM' ? `[["${label}"]]` : `["${label}"]`;
   };
   const lines = ['flowchart LR'];
   for (const n of g.nodes) { lines.push(`  ${ids.get(n.id)}${shape(n)}`); }
-  for (const e of g.edges) { lines.push(`  ${ids.get(e.from)} -->${e.label ? `|${e.label}|` : ''} ${ids.get(e.to)}`); }
+  for (const e of g.edges) { lines.push(`  ${ids.get(e.from)} ${e.dynamic ? '-.->' : '-->'}${e.label ? `|${e.label}|` : ''} ${ids.get(e.to)}`); }
   lines.push(`  style ${ids.get(g.root)} stroke-width:3px`);
   return lines.join('\n');
 }

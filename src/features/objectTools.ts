@@ -13,7 +13,7 @@ type ObjArg = { library: string; name: string; type?: string };
 const ALLOWED = new Set([
   'vanthrex.objectInfo', 'vanthrex.objectLocks', 'vanthrex.whereUsed', 'vanthrex.openProgramSource',
   'vanthrex.serviceProgramInfo', 'vanthrex.editData', 'vanthrex.generateDdl', 'vanthrex.jobLog',
-  'vanthrex.openMemberSource', 'vanthrex.diffMembers', 'vscode.open', 'vanthrex.lockHolderActions',
+  'vanthrex.openMemberSource', 'vanthrex.diffMembers', 'vscode.open', 'vanthrex.lockHolderActions', 'vanthrex.procedureCallers',
 ]);
 
 async function askObject(title: string): Promise<ObjArg | undefined> {
@@ -68,6 +68,7 @@ async function objectInfo(manager: ConnectionManager, o: ObjArg): Promise<void> 
     actions.unshift({ label: 'Open program source', command: 'vanthrex.openProgramSource', args: [arg] });
   }
   if (type === '*SRVPGM' || type === '*PGM') { actions.push({ label: 'Modules & exports', command: 'vanthrex.serviceProgramInfo', args: [arg] }); }
+  if (type === '*SRVPGM') { actions.push({ label: 'Who calls each exported procedure?', command: 'vanthrex.procedureCallers', args: [arg] }); }
   if (type === '*FILE') {
     actions.push({ label: 'Edit data', command: 'vanthrex.editData', args: [arg] });
     actions.push({ label: 'Generate SQL (DDL)', command: 'vanthrex.generateDdl', args: [arg] });
@@ -176,7 +177,10 @@ async function serviceProgramInfo(manager: ConnectionManager, o: ObjArg): Promis
   const report: Report = {
     title: `${o.library}/${o.name} ${type}`,
     subtitle: `${exports.length} export(s), ${modules.length} module(s). Click a module to open its source.`,
-    actions: [{ label: 'Object information', command: 'vanthrex.objectInfo', args: [{ ...o, type }] }],
+    actions: [
+      { label: 'Object information', command: 'vanthrex.objectInfo', args: [{ ...o, type }] },
+      ...(type === '*SRVPGM' ? [{ label: 'Who calls each exported procedure?', command: 'vanthrex.procedureCallers', args: [{ ...o, type }] }] : []),
+    ],
     tables: [
       ...(type === '*SRVPGM' ? [{
         title: 'Exports (signature order)', columns: ['Symbol', 'Kind'], filter: true,

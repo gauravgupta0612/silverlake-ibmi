@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code with an AI assistant (@vanthrex): connection wizard for several systems, library & IFS browser, edit and compile with inline errors, call graph & impact analysis, Db2 for i SQL with autocomplete and explain, table data editor, debugger, system dashboard, jobs & messages, RPG navigation, fixed-to-free conversion and code checks.",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -685,6 +685,17 @@
         "icon": "$(references)"
       },
       {
+        "command": "vanthrex.procedureCallers",
+        "title": "Who Calls Each Exported Procedure?…",
+        "category": "Vanthrex",
+        "icon": "$(symbol-method)"
+      },
+      {
+        "command": "vanthrex.openSourceAtLine",
+        "title": "Open Source at Line",
+        "category": "Vanthrex"
+      },
+      {
         "command": "vanthrex.git.export",
         "title": "Git: Export Source to a Git Repository…",
         "category": "Vanthrex",
@@ -1144,6 +1155,11 @@
           "group": "2_analyse@2"
         },
         {
+          "command": "vanthrex.procedureCallers",
+          "when": "view == vanthrex.libraries && viewItem == object.srvpgm",
+          "group": "2_analyse@3"
+        },
+        {
           "command": "vanthrex.ai.explainObject",
           "when": "view == vanthrex.libraries && viewItem =~ /^object/",
           "group": "2_analyse@3"
@@ -1397,6 +1413,14 @@
         {
           "command": "vanthrex.impactAnalysis",
           "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.procedureCallers",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.openSourceAtLine",
+          "when": "false"
         },
         {
           "command": "vanthrex.git.export",

@@ -4,13 +4,22 @@ import { IbmiConnection } from '../core/connection';
 import { errorMessage, log, logError, showLog } from '../core/log';
 import { assertSystemName, isValidSystemName, sqlString } from '../core/util';
 import {
-  CallGraph, Direction, GraphNode, NODE_H, NODE_W, PgmRef, buildCallGraph, impactSummary, layoutGraph, toMermaid,
+  CallGraph, DYNAMIC_TYPE, Direction, DynamicRef, GraphNode, NODE_H, NODE_W, PgmRef, addDynamicCalls, buildCallGraph, impactSummary, layoutGraph, toMermaid,
 } from '../core/callGraph';
+import { findDynamicCalls } from '../rpg/callScan';
+import { SourceReader, SourceRef, eachLimited, languageOf, openSourceAtLine, sourceLabel, sourcesOfPrograms } from './sourceScan';
 import { escapeHtml, nonce } from './webviewUtil';
 
 type ObjArg = { library: string; name: string; type?: string; text?: string };
 
-interface Scope { key: string; profileId: string; system: string; libs: string[]; refs: PgmRef[]; at: Date; }
+export interface Scope {
+  key: string; profileId: string; system: string; libs: string[]; refs: PgmRef[]; at: Date;
+  /** Dynamic calls found by scanning program sources (key LIB/NAME), and the programs already scanned. */
+  dynamic?: Map<string, DynamicRef[]>; scanned?: Set<string>; sources?: Map<string, SourceRef>; notScanned?: number;
+}
+
+/** At most this many programs are scanned for dynamic calls at a time. */
+const MAX_DYNAMIC_SCAN = 150;
 const scopes = new Map<string, Scope>();
 
 function s(r: Record<string, unknown>, ...names: string[]): string {
@@ -25,7 +34,7 @@ function isSystemRef(r: PgmRef): boolean {
 }
 
 /** Build (or reuse) the cross-reference of every program in the given libraries. */
-async function crossReference(conn: IbmiConnection, libs: string[], refresh: boolean): Promise<Scope> {
+export async function crossReference(conn: IbmiConnection, libs: string[], refresh: boolean): Promise<Scope> {
   const key = `${conn.profile.id}:${libs.join(',')}`;
   const cached = scopes.get(key);
   if (cached && !refresh) { return cached; }
@@ -57,13 +66,13 @@ async function crossReference(conn: IbmiConnection, libs: string[], refresh: boo
   return scope;
 }
 
-async function pickLibraries(conn: IbmiConnection, root: ObjArg): Promise<string[] | undefined> {
+export async function pickLibraries(conn: IbmiConnection, root: ObjArg): Promise<string[] | undefined> {
   const libl = [...new Set([conn.profile.currentLibrary, ...conn.profile.libraries, root.library].filter(Boolean) as string[])].map(l => l.toUpperCase());
   const pick = await vscode.window.showQuickPick([
     { label: '$(library) My library list', detail: libl.join(', '), value: 'libl' },
     { label: `$(folder) Only ${root.library}`, value: 'one' },
     { label: '$(edit) These libraries…', value: 'custom' },
-  ], { title: `Call graph of ${root.library}/${root.name} — which libraries hold the programs to analyse?` });
+  ], { title: `${root.library}/${root.name} — which libraries hold the programs to analyse?` });
   if (!pick) { return undefined; }
   if (pick.value === 'libl') { return libl; }
   if (pick.value === 'one') { return [root.library]; }
@@ -77,6 +86,7 @@ const COLORS: Record<string, string> = {
   '*PGM': 'var(--vscode-charts-blue, #3794ff)', '*SRVPGM': 'var(--vscode-charts-purple, #b180d7)',
   '*MODULE': 'var(--vscode-charts-purple, #b180d7)', '*FILE': 'var(--vscode-charts-green, #89d185)',
   '*DTAARA': 'var(--vscode-charts-yellow, #cca700)', '*DTAQ': 'var(--vscode-charts-orange, #d18616)',
+  [DYNAMIC_TYPE]: 'var(--vscode-charts-red, #f14c4c)',
 };
 
 function renderSvg(g: CallGraph): { svg: string; width: number; height: number } {
@@ -91,17 +101,20 @@ function renderSvg(g: CallGraph): { svg: string; width: number; height: number }
       ? `M${a.x + NODE_W / 2},${a.y + NODE_H} C${a.x + NODE_W / 2},${a.y + NODE_H + 60} ${b.x + NODE_W / 2},${b.y + NODE_H + 60} ${b.x + NODE_W / 2},${b.y + NODE_H}`
       : `M${x1},${y1} C${x1 + 45},${y1} ${x2 - 45},${y2} ${x2},${y2}`;
     const label = e.label ? `<text class="elabel" x="${(x1 + x2) / 2}" y="${(y1 + y2) / 2 - 4}">${escapeHtml(e.label)}</text>` : '';
-    return `<path class="edge" d="${d}" marker-end="url(#arrow)"/>${label}`;
+    return `<path class="edge${e.dynamic ? ' dyn' : ''}" d="${d}" marker-end="url(#arrow)"/>${label}`;
   }).join('');
   const nodes = l.nodes.map(n => {
     const color = COLORS[n.type] ?? 'var(--vscode-foreground)';
-    const name = n.name.length > 18 ? n.name.substring(0, 17) + '…' : n.name;
-    return `<g class="node${n.id === g.root ? ' root' : ''}" data-id="${escapeHtml(n.id)}" transform="translate(${n.x},${n.y})">` +
+    const dyn = n.type === DYNAMIC_TYPE;
+    const shown = dyn ? `? ${n.name}` : n.name;
+    const name = shown.length > 18 ? shown.substring(0, 17) + '…' : shown;
+    const meta = dyn ? 'run-time target' : `${n.lib} · ${n.type}`;
+    return `<g class="node${n.id === g.root ? ' root' : ''}${dyn ? ' dyn' : ''}" data-id="${escapeHtml(n.id)}" transform="translate(${n.x},${n.y})">` +
       `<title>${escapeHtml(`${n.lib}/${n.name} ${n.type}${n.text ? ' — ' + n.text : ''}`)}</title>` +
       `<rect width="${NODE_W}" height="${NODE_H}" rx="6" style="stroke:${color}"/>` +
       `<rect width="6" height="${NODE_H}" rx="3" style="fill:${color};stroke:none"/>` +
       `<text class="name" x="14" y="16">${escapeHtml(name)}</text>` +
-      `<text class="meta" x="14" y="31">${escapeHtml(`${n.lib} · ${n.type}`)}</text></g>`;
+      `<text class="meta" x="14" y="31">${escapeHtml(meta)}</text></g>`;
   }).join('');
   return { svg: `<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">` +
     `<path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker></defs>${edges}${nodes}`, width: l.width, height: l.height };
@@ -137,7 +150,8 @@ class CallGraphPanel {
     const max = vscode.workspace.getConfiguration('vanthrex').get<number>('callGraph.maxNodes', 200);
     const refs = this.hideFiles ? this.scope.refs.filter(r => r.refType !== '*FILE') : this.scope.refs;
     const rootType = this.root.type && this.root.type !== '*ALL' ? this.root.type : '*PGM';
-    this.graph = buildCallGraph({ lib: this.root.library, name: this.root.name, type: rootType, text: this.root.text }, refs, this.direction, this.depth, max);
+    const graph = buildCallGraph({ lib: this.root.library, name: this.root.name, type: rootType, text: this.root.text }, refs, this.direction, this.depth, max);
+    this.graph = this.scope.dynamic ? addDynamicCalls(graph, this.scope.dynamic) : graph;
     this.panel.title = `Call graph: ${this.root.name}`;
     this.panel.webview.html = this.html(this.graph);
   }
@@ -151,6 +165,8 @@ class CallGraphPanel {
     } else if (m.type === 'mermaid' && this.graph) {
       await vscode.env.clipboard.writeText('```mermaid\n' + toMermaid(this.graph) + '\n```\n');
       vscode.window.showInformationMessage('Mermaid diagram copied — paste it into a Markdown file, wiki or pull request.');
+    } else if (m.type === 'dynamic') {
+      await this.findDynamicCalls();
     } else if (m.type === 'refresh') {
       const conn = this.manager.require();
       if (conn.profile.id !== this.scope.profileId) {
@@ -164,8 +180,78 @@ class CallGraphPanel {
     }
   }
 
+  /** Scan the sources of the programs in the graph for calls whose target is a variable. */
+  private async findDynamicCalls(): Promise<void> {
+    const conn = this.manager.require();
+    if (conn.profile.id !== this.scope.profileId) {
+      throw new Error(`This graph was built on ${this.scope.system}; switch back to it to scan its sources.`);
+    }
+    const scope = this.scope;
+    scope.dynamic ??= new Map(); scope.scanned ??= new Set(); scope.sources ??= new Map(); scope.notScanned ??= 0;
+    const programs = (this.graph?.nodes ?? [])
+      .filter(n => (n.type === '*PGM' || n.type === '*SRVPGM') && n.lib !== '*LIBL' && !scope.scanned!.has(`${n.lib}/${n.name}`))
+      .map(n => ({ lib: n.lib, name: n.name }));
+    if (!programs.length) { vscode.window.showInformationMessage('Every program in this graph has already been scanned for dynamic calls.'); return; }
+    const batch = programs.slice(0, MAX_DYNAMIC_SCAN);
+    let found = 0; let skipped = 0;
+    await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: 'Finding dynamic calls…', cancellable: true },
+      async (progress, token) => {
+        progress.report({ message: `locating the source of ${batch.length} program(s)…` });
+        const sources = await sourcesOfPrograms(conn, batch);
+        const work: SourceRef[] = [];
+        for (const p of batch) {
+          const key = `${p.lib}/${p.name}`;
+          const refs = (sources.get(key) ?? []).filter(r => sourceLabel(r) && languageOf(r) !== 'other');
+          if (!refs.length) { skipped++; scope.scanned!.add(key); }
+          work.push(...refs);
+        }
+        const reader = new SourceReader(conn);
+        let done = 0;
+        await eachLimited(work, 4, async r => {
+          progress.report({ message: `${++done}/${work.length} ${sourceLabel(r)}`, increment: 100 / Math.max(1, work.length) });
+          try {
+            const text = await reader.read(r);
+            const lang = languageOf(r);
+            const copied = lang === 'rpg' ? (await reader.copiedPrototypes(text, r)).prototypes : [];
+            const calls = findDynamicCalls(text, lang, copied);
+            const label = sourceLabel(r);
+            scope.sources!.set(label, r);
+            if (calls.length) {
+              const list = scope.dynamic!.get(r.program) ?? [];
+              list.push(...calls.map(c => ({ kind: c.kind, target: c.target, line: c.line, source: label })));
+              scope.dynamic!.set(r.program, list);
+              found += calls.length;
+            }
+          } catch (e) { skipped++; log(`Dynamic calls: could not read ${sourceLabel(r)}: ${errorMessage(e)}`); }
+          scope.scanned!.add(r.program);
+        }, token);
+      });
+    scope.notScanned! += skipped;
+    this.render();
+    const more = programs.length > batch.length ? ` ${programs.length - batch.length} more program(s) remain — click the button again to continue.` : '';
+    vscode.window.showInformationMessage(
+      `${found} dynamic call(s) found in ${batch.length} program(s).${skipped ? ` ${skipped} could not be scanned (no RPG/CL source found).` : ''}${more}`);
+  }
+
   private async nodeActions(n: GraphNode): Promise<void> {
     type A = vscode.QuickPickItem & { run: () => unknown };
+    if (n.type === DYNAMIC_TYPE) {
+      const parent = this.graph?.edges.find(e => e.to === n.id)?.from;
+      const owner = this.graph?.nodes.find(x => x.id === parent);
+      const refs = (owner && this.scope.dynamic?.get(`${owner.lib}/${owner.name}`) || [])
+        .filter(r => r.target.toUpperCase() === n.name.toUpperCase());
+      const items: A[] = refs.map(r => ({
+        label: `$(go-to-file) ${r.source} line ${r.line}`, description: `${r.kind} name in ${r.target}`,
+        run: () => { const src = this.scope.sources?.get(r.source); return src ? openSourceAtLine(src, r.line) : undefined; },
+      }));
+      const pick = await vscode.window.showQuickPick(items, {
+        title: `Dynamic ${refs[0]?.kind ?? 'call'}: target held in ${n.name}`,
+        placeHolder: 'The called object is decided at run time, so it is not in the cross-reference. Open the call:',
+      });
+      if (pick) { await pick.run(); }
+      return;
+    }
     const o = { library: n.lib, name: n.name, type: n.type };
     const isProgram = ['*PGM', '*SRVPGM', '*MODULE'].includes(n.type);
     const actions: A[] = [
@@ -173,6 +259,7 @@ class CallGraphPanel {
       { label: '$(info) Object information', run: () => vscode.commands.executeCommand('vanthrex.objectInfo', o) },
     ];
     if (isProgram) { actions.push({ label: '$(go-to-file) Open source', run: () => vscode.commands.executeCommand('vanthrex.openProgramSource', o) }); }
+    if (n.type === '*SRVPGM' && n.lib !== '*LIBL') { actions.push({ label: '$(symbol-method) Who calls each exported procedure?', run: () => vscode.commands.executeCommand('vanthrex.procedureCallers', o) }); }
     if (n.type === '*FILE') { actions.push({ label: '$(table) Edit data', run: () => vscode.commands.executeCommand('vanthrex.editData', o) }); }
     actions.push({ label: '$(sparkle) Ask AI to explain this object', run: () => vscode.commands.executeCommand('vanthrex.ai.open', `/object ${n.lib}/${n.name} ${n.type}`) });
     actions.push({ label: '$(clippy) Copy qualified name', run: () => vscode.env.clipboard.writeText(`${n.lib}/${n.name}`) });
@@ -185,11 +272,13 @@ class CallGraphPanel {
     const n = nonce();
     const { svg, width, height } = renderSvg(g);
     const impact = impactSummary(g);
-    const callees = g.nodes.filter(x => x.depth > 0).length;
+    const callees = g.nodes.filter(x => x.depth > 0 && x.type !== DYNAMIC_TYPE).length;
+    const dynamicCount = g.nodes.filter(x => x.type === DYNAMIC_TYPE).length;
     const root = g.nodes.find(x => x.id === g.root)!;
     const summary = [
       this.direction !== 'callees' ? `<b>${impact.programs}</b> program(s) in ${impact.libraries.length ? escapeHtml(impact.libraries.join(', ')) : 'no library'} use it` : '',
       this.direction !== 'callers' ? `it uses <b>${callees}</b> object(s)` : '',
+      this.scope.dynamic ? `<b>${dynamicCount}</b> dynamic call target(s) shown` : '',
     ].filter(Boolean).join(' · ');
     const btn = (label: string, attrs: string, active = false) => `<button ${attrs} class="${active ? 'on' : ''}">${label}</button>`;
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -211,6 +300,8 @@ class CallGraphPanel {
   .edge { fill: none; stroke: var(--vscode-descriptionForeground); stroke-opacity: .7; stroke-width: 1.2; }
   .arrowhead { fill: var(--vscode-descriptionForeground); } .elabel { fill: var(--vscode-descriptionForeground); font-size: 10px; text-anchor: middle; }
   .warn { color: var(--vscode-editorWarning-foreground); }
+  .edge.dyn { stroke-dasharray: 5 4; stroke: var(--vscode-charts-red, #f14c4c); }
+  .node.dyn rect:first-of-type { stroke-dasharray: 5 3; }
 </style></head><body>
 <header>
   <h1>${escapeHtml(`${root.lib}/${root.name}`)} <span class="sub" style="width:auto">${escapeHtml(root.type)}</span></h1>
@@ -222,6 +313,7 @@ class CallGraphPanel {
   <span class="sep"></span>
   ${btn(this.hideFiles ? 'Show files' : 'Hide files', 'id="files"')}
   ${btn('Fit', 'id="fit"')}
+  ${btn('Find dynamic calls', 'id="dynamic" title="Scan the programs\' source for CALLs whose program or procedure name is in a variable (DSPPGMREF cannot see them)"')}
   ${btn('Copy as Mermaid', 'id="mermaid"')}
   ${btn('Rebuild cross-reference', 'id="refresh"')}
   <div class="sub">${summary || 'No references found.'} — analysed ${escapeHtml(this.scope.libs.join(', '))} on ${escapeHtml(this.scope.system)} at ${this.scope.at.toLocaleTimeString()}.
@@ -239,6 +331,7 @@ class CallGraphPanel {
   document.getElementById('more').addEventListener('click', () => vscode.postMessage({ type: 'set', depth: ${this.depth + 1} }));
   document.getElementById('files').addEventListener('click', () => vscode.postMessage({ type: 'set', hideFiles: ${!this.hideFiles} }));
   document.getElementById('mermaid').addEventListener('click', () => vscode.postMessage({ type: 'mermaid' }));
+  document.getElementById('dynamic').addEventListener('click', () => vscode.postMessage({ type: 'dynamic' }));
   document.getElementById('refresh').addEventListener('click', () => vscode.postMessage({ type: 'refresh' }));
   document.getElementById('fit').addEventListener('click', () => { vb = { ...full }; apply(); });
   let drag, moved = false;

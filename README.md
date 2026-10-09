@@ -17,7 +17,8 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | Area | What you get |
 |---|---|
 | **AI assistant** *(new in 0.6)* | `@vanthrex` in the VS Code chat: `/explain`, `/document`, `/review`, `/modernize`, `/test` (RPGUnit), `/fix` compile errors, `/sql` against your real tables, `/object`. It looks things up on the connected system (read-only, with confirmation) and its tools also work in Copilot agent mode. |
-| **Call graph & impact** *(new in 0.6)* | Interactive diagram of callers and callees (programs, service programs, files with their usage), several levels deep, with *Copy as Mermaid*. |
+| **Call graph & impact** | Interactive diagram of callers and callees (programs, service programs, files with their usage), several levels deep, with *Copy as Mermaid*. *New in 0.7:* **Find dynamic calls** shows calls whose program name is in a variable. |
+| **Who calls each exported procedure?** *(new in 0.7)* | For a service program: every program, source line and statement that calls each exported procedure — prototypes and /COPY members included — and the exports nobody calls. |
 | **Several systems at once** *(new in 0.6)* | Stay connected to DEV, TEST and PROD and switch instantly; files always save to the system they came from. |
 | **SQL Explain** *(new in 0.6)* | Table scans, indexes used, temporary indexes, sorts and advised indexes for a query, with `CREATE INDEX` suggestions. |
 | **Connect** | Guided form with **Test connection**, SSH password or key, passwords in the VS Code secret store, status-bar quick menu (`Ctrl+Alt+I`), optional auto-reconnect. |

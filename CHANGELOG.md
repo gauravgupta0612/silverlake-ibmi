@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.0
+
+**New: Who calls each exported procedure?**
+
+- Right-click a service program → **Who Calls Each Exported Procedure?…** (also on the object information page, *Modules & Exports* and the call graph). Vanthrex finds the programs bound to it (QSYS2.BOUND_SRVPGM_INFO, or the DSPPGMREF cross-reference), reads their RPG and CL source — with the prototypes in their /COPY members — and lists, for every exported procedure, each program, source line and statement that calls it.
+- Prototypes are followed: `EXTPROC('SYMBOL')`, `EXTPROC(*DCLCASE)`, fixed-form `PR` specs (long names too), `CALLB`, `%PADDR` and CL `CALLPRC`.
+- Exported procedures nobody calls in the analysed libraries are marked, as are calls matched by name only because a /COPY member could not be read. Click a call to open the source at that line.
+
+**New: dynamic calls in the call graph**
+
+- **Find dynamic calls** scans the source of the programs in the graph for calls whose target is only known at run time — `CALL` with a variable in RPG, prototypes with `EXTPGM(variable)` / `EXTPROC(variable)`, CL `CALL PGM(&VAR)` — and shows them as dashed red nodes. Click one to open the call. DSPPGMREF cannot see these calls, so the graph now tells you where it is blind.
+
 ## 0.6.1
 
 - **Stable release:** Vanthrex for IBM i is no longer marked as *Preview* on the VS Code Marketplace.

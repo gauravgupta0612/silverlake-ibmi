@@ -29,6 +29,7 @@ import { registerProcedureTools } from './rpg/procCommands';
 import { registerDebugger } from './features/debugger';
 import { registerSqlExplain } from './features/sqlExplain';
 import { registerCallGraph } from './features/callGraphView';
+import { registerProcedureCallers } from './features/procedureCallers';
 import { registerGit } from './git/gitSync';
 import { registerAi } from './ai/assistant';
 
@@ -87,6 +88,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('debugger', () => registerDebugger(context, m));
   step('sql explain', () => registerSqlExplain(context, m));
   step('call graph', () => registerCallGraph(context, m));
+  step('procedure callers', () => registerProcedureCallers(context, m));
   step('git', () => registerGit(context, m));
   step('ai assistant', () => registerAi(context, m));
 

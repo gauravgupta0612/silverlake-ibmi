@@ -386,7 +386,17 @@ Files changed on both sides since the last sync are flagged and never overwritte
 - In the graph: **Callers / Both / Callees**, **− / +** for depth, **Hide files**, **Fit**, drag to pan and scroll to zoom. Click an object to centre the graph on it, open its source, see its information or ask the AI about it.
 - **Copy as Mermaid** puts the diagram on the clipboard for a README, wiki or pull request.
 
+- **Find dynamic calls** *(new in 0.7)* scans the source of the programs in the graph for calls whose target is a variable (`CALL PGMVAR`, `EXTPGM(variable)`, CL `CALL PGM(&PGM)`) and shows them as dashed red nodes; click one to open the call.
+
 Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEMP).
+
+### 30b. Who calls each exported procedure? — new in 0.7
+
+**What:** For a service program, every program that calls each of its exported procedures — with the source member, line and statement.
+
+**Why it helps:** "Program X is bound to service program Y" is not enough before you change a procedure's parameters. This tells you exactly which of the exports each program uses, and which exports nobody calls.
+
+**How:** Right-click a service program → **Who Calls Each Exported Procedure?…** (or use the button on *Modules & Exports* or in the call graph), then choose the libraries to analyse. Vanthrex finds the bound programs, reads their RPG and CL source with the prototypes of their /COPY members, and follows `EXTPROC`, `*DCLCASE`, fixed-form prototypes, `CALLB`, `%PADDR` and `CALLPRC`. Click a call to open the source at that line.
 
 ### 31. Several systems at once — new in 0.6
 
