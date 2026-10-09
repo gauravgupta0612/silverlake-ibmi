@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/gauravgupta0612/silverlake-ibmi/actions/workflows/ci.yml/badge.svg)](https://github.com/gauravgupta0612/silverlake-ibmi/actions/workflows/ci.yml)
 
-An all-in-one IBM i workbench for VS Code, built to be easy for first-time users. Connect with a guided form, browse libraries and the IFS, edit and compile with inline errors, run Db2 for i SQL in a sortable grid, read spooled files and get help writing RPG, all from one sidebar — now with an **AI assistant (`@vanthrex`)**, **Git for IBM i source**, an interactive **call graph**, **several systems at once** and **SQL Explain**.
+An all-in-one IBM i workbench for VS Code, built to be easy for first-time users. Connect with a guided form, browse libraries and the IFS, edit and compile with inline errors, run Db2 for i SQL in a sortable grid, read spooled files and get help writing RPG, all from one sidebar — now with an **AI assistant (`@vanthrex`)**, an interactive **call graph**, **several systems at once** and **SQL Explain**.
 
 > 📖 **Documentation:** [https://gauravgupta0612.github.io/vanthrex-ibmi-docs/](https://gauravgupta0612.github.io/vanthrex-ibmi-docs/) — installation, setup, every feature, commands, settings, troubleshooting and FAQ ([docs repository](https://github.com/gauravgupta0612/vanthrex-ibmi-docs)).
 >
@@ -17,7 +17,6 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | Area | What you get |
 |---|---|
 | **AI assistant** *(new in 0.6)* | `@vanthrex` in the VS Code chat: `/explain`, `/document`, `/review`, `/modernize`, `/test` (RPGUnit), `/fix` compile errors, `/sql` against your real tables, `/object`. It looks things up on the connected system (read-only, with confirmation) and its tools also work in Copilot agent mode. |
-| **Git for IBM i source** *(new in 0.6)* | Export libraries to a Git repository, get changes from the IBM i, upload changed files (to the same or another library), commit & push, and the Git history of any member with compare and restore. |
 | **Call graph & impact** *(new in 0.6)* | Interactive diagram of callers and callees (programs, service programs, files with their usage), several levels deep, with *Copy as Mermaid*. |
 | **Several systems at once** *(new in 0.6)* | Stay connected to DEV, TEST and PROD and switch instantly; files always save to the system they came from. |
 | **SQL Explain** *(new in 0.6)* | Table scans, indexes used, temporary indexes, sorts and advised indexes for a query, with `CREATE INDEX` suggestions. |
@@ -89,7 +88,6 @@ Press `F5` to start an Extension Development Host (launch settings are in `.vsco
 | `vanthrex.lint.enabled` / `rules` / `maxProcedureLines` | true / all on / 200 | RPG code checks. |
 | `vanthrex.connections.keepOthersOpen` | true | Keep other systems connected when you connect to another one. |
 | `vanthrex.ai.enabled` / `useTools` / `allowQueries` / `confirmQueries` | true | AI assistant, its look-ups, its read-only queries and the confirmation before each query. |
-| `vanthrex.git.authorName` / `authorEmail` | empty | Author for commits made by Vanthrex's Git commands (empty = your Git configuration). |
 | `vanthrex.callGraph.depth` / `maxNodes` / `hideSystemObjects` | 2 / 200 / true | Call graph levels, size and IBM-supplied objects. |
 
 ## How it works

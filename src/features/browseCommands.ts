@@ -9,6 +9,9 @@ import { ConnectionForm } from './connectionForm';
 import { ifsUri, memberUri } from './fileSystems';
 import { runSqlAndShow } from './sqlRunner';
 
+/** Git for IBM i is hidden from users for now. Keep false until the feature is released. */
+const GIT_FOR_IBMI_ENABLED = false;
+
 type Member = Extract<LibNode, { kind: 'member' }>;
 type SrcFile = Extract<LibNode, { kind: 'srcfile' }>;
 type Library = Extract<LibNode, { kind: 'library' }>;
@@ -127,9 +130,12 @@ export function registerBrowseCommands(
       { label: '$(dashboard) System dashboard', cmd: 'vanthrex.openDashboard' },
       { label: '$(arrow-swap) Switch / add IBM i system…', cmd: 'vanthrex.switchConnection' },
       { label: '$(type-hierarchy) Call graph & impact analysis…', cmd: 'vanthrex.callGraph' },
-      { label: '$(source-control) Export source to a Git repository…', cmd: 'vanthrex.git.export' },
-      { label: '$(cloud-upload) Git: upload changed files to IBM i', cmd: 'vanthrex.git.upload' },
-      { label: '$(cloud-download) Git: get changes from IBM i', cmd: 'vanthrex.git.download' },
+      // Git for IBM i is hidden for now (condition forced to false). Change to true to show it again.
+      ...(GIT_FOR_IBMI_ENABLED ? [
+        { label: '$(source-control) Export source to a Git repository…', cmd: 'vanthrex.git.export' },
+        { label: '$(cloud-upload) Git: upload changed files to IBM i', cmd: 'vanthrex.git.upload' },
+        { label: '$(cloud-download) Git: get changes from IBM i', cmd: 'vanthrex.git.download' },
+      ] : []),
       { label: '$(debug-alt) Debug a program…', cmd: 'vanthrex.debugProgram' },
       { label: '$(checklist) Debugger setup check', cmd: 'vanthrex.debugSetup' },
       { label: '$(terminal) Run CL command…', cmd: 'vanthrex.runCl' },

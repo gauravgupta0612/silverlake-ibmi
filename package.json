@@ -1,7 +1,7 @@
 {
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
-  "description": "A friendly, all-in-one IBM i workbench for VS Code with an AI assistant (@vanthrex): connection wizard for several systems, library & IFS browser, edit and compile with inline errors, Git for IBM i source, call graph & impact analysis, Db2 for i SQL with autocomplete and explain, table data editor, debugger, system dashboard, jobs & messages, RPG navigation, fixed-to-free conversion and code checks.",
+  "description": "A friendly, all-in-one IBM i workbench for VS Code with an AI assistant (@vanthrex): connection wizard for several systems, library & IFS browser, edit and compile with inline errors, call graph & impact analysis, Db2 for i SQL with autocomplete and explain, table data editor, debugger, system dashboard, jobs & messages, RPG navigation, fixed-to-free conversion and code checks.",
   "version": "0.6.1",
   "publisher": "gauravgupta0612",
   "license": "MIT",
@@ -28,7 +28,6 @@
     "Mapepire",
     "AI",
     "Copilot",
-    "Git",
     "Call graph",
     "Free-form RPG"
   ],
@@ -153,7 +152,8 @@
             "description": "Right-click a library → **Git: Export Source to a Git Repository**, then use **Get Changes from IBM i** / **Upload Changed Files** to keep both sides in step. See every version of a member with **Git: History of This Member**.\n[Export a library](command:vanthrex.git.export)",
             "media": {
               "markdown": "media/walkthrough/git.md"
-            }
+            },
+            "when": "false"
           }
         ]
       }
@@ -1125,12 +1125,12 @@
         },
         {
           "command": "vanthrex.git.export",
-          "when": "view == vanthrex.libraries && viewItem =~ /^(library|srcfile)$/",
+          "when": "false && view == vanthrex.libraries && viewItem =~ /^(library|srcfile)$/",
           "group": "5_git@1"
         },
         {
           "command": "vanthrex.git.memberHistory",
-          "when": "view == vanthrex.libraries && viewItem == member",
+          "when": "false && view == vanthrex.libraries && viewItem == member",
           "group": "5_git@1"
         },
         {
@@ -1182,7 +1182,7 @@
         },
         {
           "command": "vanthrex.git.memberHistory",
-          "when": "resourceScheme == vanthrex-member",
+          "when": "false && resourceScheme == vanthrex-member",
           "group": "1_vanthrex@3"
         },
         {
@@ -1400,15 +1400,23 @@
         },
         {
           "command": "vanthrex.git.export",
-          "when": "vanthrex.connected"
+          "when": "false && vanthrex.connected"
         },
         {
           "command": "vanthrex.git.download",
-          "when": "vanthrex.connected"
+          "when": "false && vanthrex.connected"
         },
         {
           "command": "vanthrex.git.upload",
-          "when": "vanthrex.connected"
+          "when": "false && vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.git.commitPush",
+          "when": "false && vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.git.memberHistory",
+          "when": "false && vanthrex.connected"
         }
       ],
       "vanthrex.ai": [
@@ -1950,16 +1958,6 @@
           "type": "boolean",
           "default": true,
           "description": "Leave IBM-supplied objects (QCMDEXC, QSYSPRT…) out of the call graph."
-        },
-        "vanthrex.git.authorName": {
-          "type": "string",
-          "default": "",
-          "description": "Name used for commits made by Vanthrex's Git commands (empty = your Git configuration)."
-        },
-        "vanthrex.git.authorEmail": {
-          "type": "string",
-          "default": "",
-          "description": "E-mail used for commits made by Vanthrex's Git commands (empty = your Git configuration)."
         },
         "vanthrex.ai.enabled": {
           "type": "boolean",
