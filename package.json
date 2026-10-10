@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code with an AI assistant (@vanthrex): connection wizard for several systems, library & IFS browser, edit and compile with inline errors, call graph & impact analysis, Db2 for i SQL with autocomplete and explain, table data editor, debugger, system dashboard, jobs & messages, RPG navigation, fixed-to-free conversion and code checks.",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -307,6 +307,12 @@
         "title": "Run SQL Statement",
         "category": "Vanthrex",
         "icon": "$(play)"
+      },
+      {
+        "command": "vanthrex.sqlQuery",
+        "title": "Run SQL Query…",
+        "category": "Vanthrex",
+        "icon": "$(database)"
       },
       {
         "command": "vanthrex.newSqlScratchpad",
@@ -1163,6 +1169,11 @@
           "command": "vanthrex.ai.explainObject",
           "when": "view == vanthrex.libraries && viewItem =~ /^object/",
           "group": "2_analyse@3"
+        },
+        {
+          "command": "vanthrex.sqlQuery",
+          "when": "view == vanthrex.libraries && viewItem =~ /^(library|srcfile|member|object.*)$/",
+          "group": "2_analyse@9"
         }
       ],
       "editor/title": [
@@ -1441,6 +1452,10 @@
         {
           "command": "vanthrex.git.memberHistory",
           "when": "false && vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.sqlQuery",
+          "when": "vanthrex.connected"
         }
       ],
       "vanthrex.ai": [

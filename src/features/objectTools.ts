@@ -13,7 +13,7 @@ type ObjArg = { library: string; name: string; type?: string };
 const ALLOWED = new Set([
   'vanthrex.objectInfo', 'vanthrex.objectLocks', 'vanthrex.whereUsed', 'vanthrex.openProgramSource',
   'vanthrex.serviceProgramInfo', 'vanthrex.editData', 'vanthrex.generateDdl', 'vanthrex.jobLog',
-  'vanthrex.openMemberSource', 'vanthrex.diffMembers', 'vscode.open', 'vanthrex.lockHolderActions', 'vanthrex.procedureCallers',
+  'vanthrex.openMemberSource', 'vanthrex.diffMembers', 'vscode.open', 'vanthrex.lockHolderActions', 'vanthrex.procedureCallers', 'vanthrex.sqlQuery',
 ]);
 
 async function askObject(title: string): Promise<ObjArg | undefined> {
@@ -69,6 +69,7 @@ async function objectInfo(manager: ConnectionManager, o: ObjArg): Promise<void> 
   }
   if (type === '*SRVPGM' || type === '*PGM') { actions.push({ label: 'Modules & exports', command: 'vanthrex.serviceProgramInfo', args: [arg] }); }
   if (type === '*SRVPGM') { actions.push({ label: 'Who calls each exported procedure?', command: 'vanthrex.procedureCallers', args: [arg] }); }
+  actions.push({ label: 'Run SQL query…', command: 'vanthrex.sqlQuery', args: [arg] });
   if (type === '*FILE') {
     actions.push({ label: 'Edit data', command: 'vanthrex.editData', args: [arg] });
     actions.push({ label: 'Generate SQL (DDL)', command: 'vanthrex.generateDdl', args: [arg] });

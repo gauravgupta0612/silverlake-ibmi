@@ -14,7 +14,7 @@ import { SourceReader, SourceRef, eachLimited, languageOf, openSourceAtLine, sou
 
 type ObjArg = { library: string; name: string; type?: string; text?: string };
 
-const ALLOWED = new Set(['vanthrex.openSourceAtLine', 'vanthrex.objectInfo', 'vanthrex.serviceProgramInfo', 'vanthrex.callGraph']);
+const ALLOWED = new Set(['vanthrex.openSourceAtLine', 'vanthrex.objectInfo', 'vanthrex.serviceProgramInfo', 'vanthrex.callGraph', 'vanthrex.sqlQuery']);
 const v = (r: Record<string, unknown>, k: string) => String(r[k] ?? '').trim();
 
 /** Programs (and service programs) in `libs` that are bound to LIB/SRVPGM. */
@@ -113,6 +113,7 @@ export async function procedureCallers(manager: ConnectionManager, o: ObjArg): P
     actions: [
       { label: 'Modules & exports', command: 'vanthrex.serviceProgramInfo', args: [{ library: lib, name, type: '*SRVPGM' }] },
       { label: 'Call graph', command: 'vanthrex.callGraph', args: [{ library: lib, name, type: '*SRVPGM' }] },
+      { label: 'Run SQL query…', command: 'vanthrex.sqlQuery', args: [{ library: lib, name, type: '*SRVPGM' }] },
     ],
     tables: [
       {

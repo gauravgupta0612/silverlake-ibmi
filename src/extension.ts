@@ -30,6 +30,7 @@ import { registerDebugger } from './features/debugger';
 import { registerSqlExplain } from './features/sqlExplain';
 import { registerCallGraph } from './features/callGraphView';
 import { registerProcedureCallers } from './features/procedureCallers';
+import { registerSqlQueryPanel } from './features/sqlQueryPanel';
 import { registerGit } from './git/gitSync';
 import { registerAi } from './ai/assistant';
 
@@ -89,6 +90,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('sql explain', () => registerSqlExplain(context, m));
   step('call graph', () => registerCallGraph(context, m));
   step('procedure callers', () => registerProcedureCallers(context, m));
+  step('sql query panel', () => registerSqlQueryPanel(context, m));
   step('git', () => registerGit(context, m));
   step('ai assistant', () => registerAi(context, m));
 

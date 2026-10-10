@@ -165,6 +165,8 @@ class CallGraphPanel {
     } else if (m.type === 'mermaid' && this.graph) {
       await vscode.env.clipboard.writeText('```mermaid\n' + toMermaid(this.graph) + '\n```\n');
       vscode.window.showInformationMessage('Mermaid diagram copied — paste it into a Markdown file, wiki or pull request.');
+    } else if (m.type === 'sql') {
+      await vscode.commands.executeCommand('vanthrex.sqlQuery', { library: this.root.library, name: this.root.name, type: this.root.type });
     } else if (m.type === 'dynamic') {
       await this.findDynamicCalls();
     } else if (m.type === 'refresh') {
@@ -261,6 +263,7 @@ class CallGraphPanel {
     if (isProgram) { actions.push({ label: '$(go-to-file) Open source', run: () => vscode.commands.executeCommand('vanthrex.openProgramSource', o) }); }
     if (n.type === '*SRVPGM' && n.lib !== '*LIBL') { actions.push({ label: '$(symbol-method) Who calls each exported procedure?', run: () => vscode.commands.executeCommand('vanthrex.procedureCallers', o) }); }
     if (n.type === '*FILE') { actions.push({ label: '$(table) Edit data', run: () => vscode.commands.executeCommand('vanthrex.editData', o) }); }
+    if (n.lib !== '*LIBL') { actions.push({ label: '$(database) Run SQL query…', run: () => vscode.commands.executeCommand('vanthrex.sqlQuery', o) }); }
     actions.push({ label: '$(sparkle) Ask AI to explain this object', run: () => vscode.commands.executeCommand('vanthrex.ai.open', `/object ${n.lib}/${n.name} ${n.type}`) });
     actions.push({ label: '$(clippy) Copy qualified name', run: () => vscode.env.clipboard.writeText(`${n.lib}/${n.name}`) });
     if (n.lib === '*LIBL') { actions.splice(1, 0, { label: '$(warning) Library not resolved (*LIBL) — it is outside the analysed libraries', run: () => undefined }); }
@@ -314,6 +317,7 @@ class CallGraphPanel {
   ${btn(this.hideFiles ? 'Show files' : 'Hide files', 'id="files"')}
   ${btn('Fit', 'id="fit"')}
   ${btn('Find dynamic calls', 'id="dynamic" title="Scan the programs\' source for CALLs whose program or procedure name is in a variable (DSPPGMREF cannot see them)"')}
+  ${btn('Run SQL…', 'id="sql" title="Open an SQL editor with ready-made queries for this object"')}
   ${btn('Copy as Mermaid', 'id="mermaid"')}
   ${btn('Rebuild cross-reference', 'id="refresh"')}
   <div class="sub">${summary || 'No references found.'} — analysed ${escapeHtml(this.scope.libs.join(', '))} on ${escapeHtml(this.scope.system)} at ${this.scope.at.toLocaleTimeString()}.
@@ -332,6 +336,7 @@ class CallGraphPanel {
   document.getElementById('files').addEventListener('click', () => vscode.postMessage({ type: 'set', hideFiles: ${!this.hideFiles} }));
   document.getElementById('mermaid').addEventListener('click', () => vscode.postMessage({ type: 'mermaid' }));
   document.getElementById('dynamic').addEventListener('click', () => vscode.postMessage({ type: 'dynamic' }));
+  document.getElementById('sql').addEventListener('click', () => vscode.postMessage({ type: 'sql' }));
   document.getElementById('refresh').addEventListener('click', () => vscode.postMessage({ type: 'refresh' }));
   document.getElementById('fit').addEventListener('click', () => { vb = { ...full }; apply(); });
   let drag, moved = false;

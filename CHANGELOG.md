@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1
+
+**New: SQL editor with results, right where you are**
+
+- **Run SQL Query…** on any library, source file, member or object in the *Libraries & Source* view (right-click), in the call graph (**Run SQL…** button, or click an object), on *Object information*, *Who calls each exported procedure?* and in the quick menu.
+- It opens an SQL editor already filled with a useful query for what you clicked — first 100 rows, row count and columns of a file; program information, bound modules, exports and the programs bound to a service program; objects, tables and source members of a library; lock holders; and more. Pick another ready-made query from the list or write your own.
+- **▶ Run** (or Ctrl+Enter) shows the data underneath: sort by clicking a column, filter rows, copy as CSV, or open the query in an SQL scratchpad. Destructive statements still ask first.
+
 ## 0.7.0
 
 **New: Who calls each exported procedure?**

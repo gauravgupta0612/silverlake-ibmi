@@ -25,7 +25,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **Browse** | *Libraries & Source* (source files, members, objects), *IFS Browser*, *My Spooled Files*. Find a member by pattern across your library list. |
 | **Edit** | Members and IFS files open like local files; `Ctrl+S` saves to the IBM i. New RPG and CL members start from a template that compiles as-is. |
 | **Compile** | `Ctrl+Alt+C`. The command is chosen from the source type, you pick once when several fit, and errors from EVFEVENT appear inline and in *Problems*. |
-| **SQL** | `Ctrl+Enter` runs the statement under the cursor. Results grid with sort, filter, copy and CSV export. Confirmation before destructive statements. `ibmi-…` snippets for IBM i Services. |
+| **SQL** | **Run SQL Query…** (right-click a library, file, member or object, or in the call graph) opens an SQL editor with ready-made queries and the results underneath. `Ctrl+Enter` runs the statement under the cursor. Results grid with sort, filter, copy and CSV export. Confirmation before destructive statements. `ibmi-…` snippets for IBM i Services. |
 | **CL** | `Ctrl+Alt+L` runs a CL command with your library list and keeps a history. |
 | **Spool** | Open, save or delete your spooled files. |
 | **RPG** | Highlighting for free and fixed format, outline and breadcrumbs, hovers for BIFs and opcodes, **column hints on fixed-format specs**, `%` completion, snippets, and **fixed → free** conversion of H, F, D, P and C specs. |

@@ -144,6 +144,7 @@ export function registerBrowseCommands(
       { label: '$(search-fuzzy) Search source code…', cmd: 'vanthrex.searchSource' },
       { label: '$(table) Edit table data…', cmd: 'vanthrex.editData' },
       { label: '$(mail) Send a message…', cmd: 'vanthrex.sendMessage' },
+      { label: '$(database) SQL editor with results…', cmd: 'vanthrex.sqlQuery' },
       { label: '$(database) New SQL scratchpad', cmd: 'vanthrex.newSqlScratchpad' },
       { label: '$(history) SQL history…', cmd: 'vanthrex.sqlHistory' },
       { label: '$(star-full) Saved queries…', cmd: 'vanthrex.savedQueries' },
