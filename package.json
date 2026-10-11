@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.11.0",
+  "version": "1.0.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -1006,6 +1006,79 @@
         "command": "vanthrex.downloadSaveFile",
         "title": "%command.downloadSaveFile%",
         "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.storageAdvisor",
+        "title": "%command.storageAdvisor%",
+        "category": "Vanthrex",
+        "icon": "$(database)"
+      },
+      {
+        "command": "vanthrex.ifsStorage",
+        "title": "%command.ifsStorage%",
+        "category": "Vanthrex",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "vanthrex.alerts.show",
+        "title": "%command.alerts.show%",
+        "category": "Vanthrex",
+        "icon": "$(bell)"
+      },
+      {
+        "command": "vanthrex.alerts.toggle",
+        "title": "%command.alerts.toggle%",
+        "category": "Vanthrex",
+        "icon": "$(bell-slash)"
+      },
+      {
+        "command": "vanthrex.messageFile",
+        "title": "%command.messageFile%",
+        "category": "Vanthrex",
+        "icon": "$(mail)"
+      },
+      {
+        "command": "vanthrex.messageFile.add",
+        "title": "%command.messageFile.add%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.fieldFinder",
+        "title": "%command.fieldFinder%",
+        "category": "Vanthrex",
+        "icon": "$(symbol-field)"
+      },
+      {
+        "command": "vanthrex.promoteObjects",
+        "title": "%command.promoteObjects%",
+        "category": "Vanthrex",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "vanthrex.promotionLog",
+        "title": "%command.promotionLog%",
+        "category": "Vanthrex",
+        "icon": "$(history)"
+      },
+      {
+        "command": "vanthrex.extras.row",
+        "title": "%command.extras.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.alerts.reply",
+        "title": "%command.alerts.reply%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.promote.run",
+        "title": "%command.promote.run%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.promote.undo",
+        "title": "%command.promote.undo%",
+        "category": "Vanthrex"
       }
     ],
     "menus": {
@@ -1119,6 +1192,11 @@
           "command": "vanthrex.workWith",
           "when": "view == vanthrex.jobs",
           "group": "navigation@9"
+        },
+        {
+          "command": "vanthrex.alerts.show",
+          "when": "view == vanthrex.jobs",
+          "group": "navigation@8"
         }
       ],
       "view/item/context": [
@@ -1461,6 +1539,26 @@
           "command": "vanthrex.workWith",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "1_info@8"
+        },
+        {
+          "command": "vanthrex.messageFile",
+          "when": "view == vanthrex.libraries && viewItem == object.msgf",
+          "group": "0_info@1"
+        },
+        {
+          "command": "vanthrex.promoteObjects",
+          "when": "view == vanthrex.libraries && viewItem =~ /^(library|object.*)$/",
+          "group": "5_compare@5"
+        },
+        {
+          "command": "vanthrex.storageAdvisor",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@6"
+        },
+        {
+          "command": "vanthrex.alerts.show",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "1_info@7"
         }
       ],
       "editor/title": [
@@ -1786,6 +1884,26 @@
         },
         {
           "command": "vanthrex.downloadSaveFile",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.extras.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.alerts.reply",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.promote.run",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.promote.undo",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.messageFile.add",
           "when": "false"
         }
       ],
@@ -2354,6 +2472,42 @@
           "default": 60000,
           "minimum": 2000,
           "description": "%config.ai.maxSourceChars%"
+        },
+        "vanthrex.alerts.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.alerts.enabled%"
+        },
+        "vanthrex.alerts.intervalSeconds": {
+          "type": "number",
+          "default": 60,
+          "minimum": 30,
+          "description": "%config.alerts.intervalSeconds%"
+        },
+        "vanthrex.alerts.scope": {
+          "type": "string",
+          "enum": [
+            "mine",
+            "all"
+          ],
+          "default": "mine",
+          "enumDescriptions": [
+            "%config.alerts.scope.enum.0%",
+            "%config.alerts.scope.enum.1%"
+          ],
+          "description": "%config.alerts.scope%"
+        },
+        "vanthrex.alerts.diskPercent": {
+          "type": "number",
+          "default": 85,
+          "minimum": 50,
+          "maximum": 99,
+          "description": "%config.alerts.diskPercent%"
+        },
+        "vanthrex.promotion.backupLibrary": {
+          "type": "string",
+          "default": "QGPL",
+          "description": "%config.promotion.backupLibrary%"
         }
       }
     },

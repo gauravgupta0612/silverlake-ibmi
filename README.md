@@ -49,6 +49,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **System tools** *(new in 0.9)* | **Journal explorer** (who changed which rows, from which program), **authority checker** that explains *why* a user can't use an object and offers the fix, **data queue & data area** viewer/editor, and a **PTF & system health** report compared with IBM's latest PTF levels. |
 | **Your language** *(new in 0.10)* | The whole interface in **English, French, Spanish, German, Italian, Portuguese (Brazil), Japanese and Simplified Chinese** — it follows the VS Code display language. |
 | **Work with…** *(new in 0.11)* | The 5250 *WRK* screens in VS Code: **subsystems, job queues, output queues, job scheduler, user profiles, system values, security audit journal, save files (save / restore / download / upload), TCP/IP connections and servers**. |
+| **Operations** *(new in 1.0)* | **Storage & cleanup advisor**, **live alerts** (MSGW, QSYSOPR inquiries, abnormal job ends, disk), **message file editor**, **field finder**, and **object promotion DEV → TEST → PROD** with backup, compare, log and undo. |
 
 ## Requirements on the IBM i
 
