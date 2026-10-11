@@ -35,6 +35,7 @@ import { registerGit } from './git/gitSync';
 import { registerAi } from './ai/assistant';
 import { registerInsights } from './features/insightsView';
 import { registerAdmin } from './features/adminView';
+import { registerWorkWith } from './features/workWithView';
 
 let manager: ConnectionManager | undefined;
 
@@ -97,6 +98,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('ai assistant', () => registerAi(context, m));
   step('insights', () => registerInsights(context, m));
   step('system tools', () => registerAdmin(context, m));
+  step('work with', () => registerWorkWith(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

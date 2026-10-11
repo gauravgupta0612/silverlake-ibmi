@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -881,6 +881,131 @@
         "title": "%command.systemHealth%",
         "category": "Vanthrex",
         "icon": "$(pulse)"
+      },
+      {
+        "command": "vanthrex.workWith",
+        "title": "%command.workWith%",
+        "category": "Vanthrex",
+        "icon": "$(server-process)"
+      },
+      {
+        "command": "vanthrex.wrkSubsystems",
+        "title": "%command.wrkSubsystems%",
+        "category": "Vanthrex",
+        "icon": "$(server-process)"
+      },
+      {
+        "command": "vanthrex.wrkJobQueues",
+        "title": "%command.wrkJobQueues%",
+        "category": "Vanthrex",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "vanthrex.wrkOutputQueues",
+        "title": "%command.wrkOutputQueues%",
+        "category": "Vanthrex",
+        "icon": "$(output)"
+      },
+      {
+        "command": "vanthrex.wrkJobSchedule",
+        "title": "%command.wrkJobSchedule%",
+        "category": "Vanthrex",
+        "icon": "$(calendar)"
+      },
+      {
+        "command": "vanthrex.addJobSchedule",
+        "title": "%command.addJobSchedule%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.wrkUserProfiles",
+        "title": "%command.wrkUserProfiles%",
+        "category": "Vanthrex",
+        "icon": "$(account)"
+      },
+      {
+        "command": "vanthrex.wrkSystemValues",
+        "title": "%command.wrkSystemValues%",
+        "category": "Vanthrex",
+        "icon": "$(settings)"
+      },
+      {
+        "command": "vanthrex.auditJournal",
+        "title": "%command.auditJournal%",
+        "category": "Vanthrex",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "vanthrex.wrkSaveFiles",
+        "title": "%command.wrkSaveFiles%",
+        "category": "Vanthrex",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "vanthrex.saveFileContents",
+        "title": "%command.saveFileContents%",
+        "category": "Vanthrex",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "vanthrex.saveToSaveFile",
+        "title": "%command.saveToSaveFile%",
+        "category": "Vanthrex",
+        "icon": "$(save)"
+      },
+      {
+        "command": "vanthrex.uploadSaveFile",
+        "title": "%command.uploadSaveFile%",
+        "category": "Vanthrex",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "vanthrex.wrkConnections",
+        "title": "%command.wrkConnections%",
+        "category": "Vanthrex",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "vanthrex.wrkTcpServers",
+        "title": "%command.wrkTcpServers%",
+        "category": "Vanthrex",
+        "icon": "$(radio-tower)"
+      },
+      {
+        "command": "vanthrex.wrkInterfaces",
+        "title": "%command.wrkInterfaces%",
+        "category": "Vanthrex",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "vanthrex.ww.row",
+        "title": "%command.ww.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.wrkSubsystemJobs",
+        "title": "%command.wrkSubsystemJobs%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.wrkJobQueue",
+        "title": "%command.wrkJobQueue%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.wrkOutputQueue",
+        "title": "%command.wrkOutputQueue%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.restoreFromSaveFile",
+        "title": "%command.restoreFromSaveFile%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.downloadSaveFile",
+        "title": "%command.downloadSaveFile%",
+        "category": "Vanthrex"
       }
     ],
     "menus": {
@@ -989,6 +1114,11 @@
           "command": "vanthrex.disconnectAll",
           "when": "view == vanthrex.connections && vanthrex.multipleConnections",
           "group": "1_connections"
+        },
+        {
+          "command": "vanthrex.workWith",
+          "when": "view == vanthrex.jobs",
+          "group": "navigation@9"
         }
       ],
       "view/item/context": [
@@ -1311,6 +1441,26 @@
           "command": "vanthrex.systemHealth",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "1_info@9"
+        },
+        {
+          "command": "vanthrex.saveFileContents",
+          "when": "view == vanthrex.libraries && viewItem == object.savf",
+          "group": "0_info@1"
+        },
+        {
+          "command": "vanthrex.wrkSaveFiles",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@3"
+        },
+        {
+          "command": "vanthrex.saveToSaveFile",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@4"
+        },
+        {
+          "command": "vanthrex.workWith",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "1_info@8"
         }
       ],
       "editor/title": [
@@ -1612,6 +1762,30 @@
         },
         {
           "command": "vanthrex.clearDataQueue",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ww.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.wrkSubsystemJobs",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.wrkJobQueue",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.wrkOutputQueue",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.restoreFromSaveFile",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.downloadSaveFile",
           "when": "false"
         }
       ],

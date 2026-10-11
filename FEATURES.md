@@ -469,6 +469,30 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 
 **How:** Vanthrex follows the VS Code display language. **Ctrl+Shift+P → Configure Display Language**, choose the language (VS Code offers to install its language pack) and restart. IBM i commands, object types, message IDs and SQL are never translated; IBM's own help text (message help, job logs) comes from the IBM i in the language installed there. Want another language or found a better word? Open an issue — translations live in `l10n/bundle.l10n.<lang>.json` and `package.nls.<lang>.json`.
 
+### 41. Work management — new in 0.11
+
+**What:** Subsystems (WRKSBS), job queues and their waiting jobs (WRKJOBQ), output queues and their spooled files (WRKOUTQ), and job schedule entries (WRKJOBSCDE).
+
+**How:** **IBM i: Work with…** → pick a screen. Click a row for its options: start / end a subsystem, hold / release / clear a queue, release / hold / run next / end a waiting job, open / hold / release / move / delete a spooled file, add / hold / release / remove a schedule entry. Every command is shown before it runs, with **Copy Command** as an alternative.
+
+### 42. Users & security — new in 0.11
+
+- **User profiles** (WRKUSRPRF): filter non-IBM, disabled, with special authorities, or group profiles; enable, disable, expire the password (passwords are never shown or set); see the user's active jobs and owned objects.
+- **System values** (WRKSYSVAL): all of them, read-only, with the important ones grouped and explained.
+- **Security audit journal** (QAUDJRN): pick event types (authority failures, invalid passwords, profile and system value changes, deleted objects…), a time range and optionally a user. Needs *AUDIT or *ALLOBJ.
+
+### 43. Save / restore — new in 0.11
+
+**What:** Save files in a library (WRKSAVF) and their contents; save a library or objects to a save file (SAVLIB / SAVOBJ, target release, compression, run now or submit to batch); restore everything or some objects, also into another library (RSTLIB / RSTOBJ); download a save file to the PC or upload one.
+
+**How:** Right-click a library → **Work with Save Files** / **Save Library or Objects…**, or right-click a save file → **Show Save File Contents**. Listing contents needs IBM i 7.4 with recent Db2 PTF groups.
+
+### 44. Network & services — new in 0.11
+
+**What:** TCP/IP connections with the job and user behind each, and listening ports (NETSTAT); the common TCP/IP servers with their status and start / end (STRTCPSVR / ENDTCPSVR, STRHOSTSVR); IP interfaces and routes.
+
+**How:** **IBM i: Work with…** → *TCP/IP connections*, *TCP/IP servers* or *IP interfaces*. Ending SSHD or your own connection disconnects Vanthrex — you are warned first. Starting and ending servers needs *IOSYSCFG.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
