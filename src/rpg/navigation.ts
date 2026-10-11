@@ -134,19 +134,19 @@ export function registerRpgNavigation(context: vscode.ExtensionContext, manager:
     vscode.languages.registerRenameProvider(RPG, {
       prepareRename(doc, pos) {
         const w = wordAt(doc.lineAt(pos.line).text, pos.character);
-        if (!w) { throw new Error('Place the cursor on a name to rename it.'); }
+        if (!w) { throw new Error(vscode.l10n.t('Place the cursor on a name to rename it.')); }
         if (!resolveDefinition(cache.get(doc), w.word, pos.line)) {
-          throw new Error(`"${w.word}" is not declared in this source, so it can't be renamed safely here.`);
+          throw new Error(vscode.l10n.t('"{0}" is not declared in this source, so it can\'t be renamed safely here.', w.word));
         }
         return { range: new vscode.Range(pos.line, w.start, pos.line, w.end), placeholder: w.word };
       },
       provideRenameEdits(doc, pos, newName) {
-        if (!/^[A-Za-z$#@_][\w$#@]*$/.test(newName)) { throw new Error(`"${newName}" is not a valid RPG name.`); }
+        if (!/^[A-Za-z$#@_][\w$#@]*$/.test(newName)) { throw new Error(vscode.l10n.t('"{0}" is not a valid RPG name.', newName)); }
         const w = wordAt(doc.lineAt(pos.line).text, pos.character);
         if (!w) { return undefined; }
         const parse = cache.get(doc);
         if (!parse.fullyFree && newName.length !== w.word.length) {
-          throw new Error(`This source is not **FREE: renaming to a name of a different length would shift fixed-format columns. Use a ${w.word.length}-character name.`);
+          throw new Error(vscode.l10n.t('This source is not **FREE: renaming to a name of a different length would shift fixed-format columns. Use a {0}-character name.', w.word.length));
         }
         const def = resolveDefinition(parse, w.word, pos.line);
         // A procedure-local name only changes inside its procedure; a global one everywhere

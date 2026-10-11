@@ -16,16 +16,16 @@ const MONITOR = 'QTEMP/SLKDBMON';
 export async function explainSql(manager: ConnectionManager, statement: string): Promise<void> {
   const conn = manager.require();
   if (!isReadOnlySql(statement)) {
-    throw new Error('Explain runs the statement to watch the optimizer, so it only accepts queries (SELECT, WITH or VALUES).');
+    throw new Error(vscode.l10n.t('Explain runs the statement to watch the optimizer, so it only accepts queries (SELECT, WITH or VALUES).'));
   }
   await conn.sql('VALUES 1', 1);
   if (!conn.sqlKeepsJob) {
-    throw new Error('Explain needs the Mapepire SQL engine (the database monitor runs in the SQL job). Change the SQL engine in the connection settings.');
+    throw new Error(vscode.l10n.t('Explain needs the Mapepire SQL engine (the database monitor runs in the SQL job). Change the SQL engine in the connection settings.'));
   }
   const cmd = (c: string) => conn.sql(`CALL QSYS2.QCMDEXC(${sqlString(c)})`, 1);
 
   const result = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: 'Explaining the query (running it under a database monitor)…' },
+    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Explaining the query (running it under a database monitor)…') },
     async () => {
       await cmd(`DLTF FILE(${MONITOR})`).catch(() => undefined);
       await cmd(`STRDBMON OUTFILE(${MONITOR}) JOB(*) TYPE(*DETAIL)`);
@@ -43,7 +43,7 @@ export async function explainSql(manager: ConnectionManager, statement: string):
       return { elapsed, rows, error, records };
     });
 
-  if (result.error) { throw new Error(`The query failed: ${result.error}`); }
+  if (result.error) { throw new Error(vscode.l10n.t('The query failed: {0}', result.error)); }
   const s = summarizeMonitor(result.records);
 
   // The index advisor knows more about the tables that were scanned.
@@ -59,14 +59,14 @@ export async function explainSql(manager: ConnectionManager, statement: string):
       for (const a of adv) {
         const keys = String(a.K ?? '').trim();
         advisorRows.push([t, keys, String(a.T ?? '').trim(), Number(a.N ?? 0), String(a.L ?? '').replace(/\.\d+$/, '')]);
-        advisorActions.push({ label: 'Write the CREATE INDEX statement', command: 'vanthrex.explain.createIndexSql', args: [t, keys] });
+        advisorActions.push({ label: vscode.l10n.t('Write the CREATE INDEX statement'), command: 'vanthrex.explain.createIndexSql', args: [t, keys] });
       }
     } catch (e) { log(`Index advisor: ${errorMessage(e)}`); }
   }
 
   const verdict = s.tableScans.length || s.temporaryIndexes.length ? '⚠ Could be faster' : s.indexesUsed.length ? '✔ Uses indexes' : 'ℹ Simple plan';
   showReport('explain', {
-    title: `Explain: ${verdict}`,
+    title: vscode.l10n.t('Explain: {0}', verdict),
     subtitle: statement.replace(/\s+/g, ' ').substring(0, 300),
     facts: [
       ['Run time (first 100 rows)', `${result.elapsed} ms`],
@@ -80,21 +80,21 @@ export async function explainSql(manager: ConnectionManager, statement: string):
       ['Access plan rebuilt (reason)', s.planRebuilt.join(', ') || undefined],
     ],
     tables: [
-      { title: 'Advice', columns: ['Tip'], rows: s.tips.map(t => [t]), empty: 'No advice — nothing stood out.' },
-      { title: 'Table scans', columns: ['Table', 'Rows', 'Why'], rows: s.tableScans.map(t => [t.table, t.rows, t.reason]), empty: 'No table scans.' },
-      { title: 'Indexes used', columns: ['Table', 'Index'], rows: s.indexesUsed.map(t => [t.table, t.index]), empty: 'No indexes were used.' },
+      { title: vscode.l10n.t('Advice'), columns: ['Tip'], rows: s.tips.map(t => [t]), empty: vscode.l10n.t('No advice — nothing stood out.') },
+      { title: vscode.l10n.t('Table scans'), columns: ['Table', 'Rows', 'Why'], rows: s.tableScans.map(t => [t.table, t.rows, t.reason]), empty: vscode.l10n.t('No table scans.') },
+      { title: vscode.l10n.t('Indexes used'), columns: ['Table', 'Index'], rows: s.indexesUsed.map(t => [t.table, t.index]), empty: vscode.l10n.t('No indexes were used.') },
       {
-        title: 'Indexes advised for this query', columns: ['Table', 'Key columns'],
+        title: vscode.l10n.t('Indexes advised for this query'), columns: ['Table', 'Key columns'],
         rows: s.advised.map(a => [a.table, a.keys]),
-        rowActions: s.advised.map(a => ({ label: 'Write the CREATE INDEX statement', command: 'vanthrex.explain.createIndexSql', args: [a.table, a.keys] })),
-        empty: 'The optimizer did not advise an index for this query.',
+        rowActions: s.advised.map(a => ({ label: vscode.l10n.t('Write the CREATE INDEX statement'), command: 'vanthrex.explain.createIndexSql', args: [a.table, a.keys] })),
+        empty: vscode.l10n.t('The optimizer did not advise an index for this query.'),
       },
       {
-        title: 'Index advisor history for these tables', columns: ['Table', 'Key columns', 'Type', 'Times advised', 'Last advised'],
-        rows: advisorRows, rowActions: advisorActions, empty: 'No earlier advice recorded.',
+        title: vscode.l10n.t('Index advisor history for these tables'), columns: ['Table', 'Key columns', 'Type', 'Times advised', 'Last advised'],
+        rows: advisorRows, rowActions: advisorActions, empty: vscode.l10n.t('No earlier advice recorded.'),
       },
     ],
-    note: 'Collected with a database monitor (STRDBMON) on your SQL job while the query ran. Click an advised index to get a CREATE INDEX statement you can review and run.',
+    note: vscode.l10n.t('Collected with a database monitor (STRDBMON) on your SQL job while the query ran. Click an advised index to get a CREATE INDEX statement you can review and run.'),
   }, ALLOWED);
 }
 
@@ -105,9 +105,9 @@ export function registerSqlExplain(context: vscode.ExtensionContext, manager: Co
         let statement = typeof sql === 'string' ? sql : undefined;
         if (statement) {
           // Called with a statement from elsewhere (e.g. an AI answer): show it and ask before running it.
-          const ok = await vscode.window.showInformationMessage('Explain runs this query on the IBM i to watch the optimizer:',
-            { modal: true, detail: statement.length > 1500 ? statement.substring(0, 1500) + '…' : statement }, 'Run and Explain');
-          if (ok !== 'Run and Explain') { return; }
+          const ok = await vscode.window.showInformationMessage(vscode.l10n.t('Explain runs this query on the IBM i to watch the optimizer:'),
+            { modal: true, detail: statement.length > 1500 ? statement.substring(0, 1500) + '…' : statement }, vscode.l10n.t('Run and Explain'));
+          if (ok !== vscode.l10n.t('Run and Explain')) { return; }
         }
         const editor = vscode.window.activeTextEditor;
         if (!statement && editor) {
@@ -116,12 +116,12 @@ export function registerSqlExplain(context: vscode.ExtensionContext, manager: Co
             : editor.document.getText(editor.selection);
         }
         if (!statement?.trim()) {
-          statement = await vscode.window.showInputBox({ title: 'Explain a query', prompt: 'SELECT statement', ignoreFocusOut: true });
+          statement = await vscode.window.showInputBox({ title: vscode.l10n.t('Explain a query'), prompt: 'SELECT statement', ignoreFocusOut: true });
         }
         if (statement?.trim()) { await explainSql(manager, statement.trim()); }
       } catch (e) {
         logError(e);
-        const c = await vscode.window.showErrorMessage(errorMessage(e), 'Show Log');
+        const c = await vscode.window.showErrorMessage(errorMessage(e), vscode.l10n.t('Show Log'));
         if (c) { showLog(); }
       }
     }),

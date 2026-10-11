@@ -16,7 +16,7 @@ type ObjArg = { library: string; name: string; type?: string };
 async function generateDdl(manager: ConnectionManager, o: ObjArg): Promise<void> {
   const conn = manager.require();
   if (!conn.sqlKeepsJob) {
-    throw new Error('Generate SQL needs the Mapepire SQL engine (it reads the result from QTEMP). Change the SQL engine in the connection settings.');
+    throw new Error(vscode.l10n.t('Generate SQL needs the Mapepire SQL engine (it reads the result from QTEMP). Change the SQL engine in the connection settings.'));
   }
   const t = await conn.rows<{ T: string }>(
     `SELECT TABLE_TYPE AS T FROM QSYS2.SYSTABLES WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(o.library)} AND SYSTEM_TABLE_NAME = ${sqlString(o.name)}`, 1);
@@ -89,23 +89,23 @@ ${body}</body></html>`;
 async function runScript(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
   const editor = vscode.window.activeTextEditor;
-  if (!editor || editor.document.languageId !== 'sql') { throw new Error('Open a .sql file (or the SQL scratchpad) first.'); }
+  if (!editor || editor.document.languageId !== 'sql') { throw new Error(vscode.l10n.t('Open a .sql file (or the SQL scratchpad) first.')); }
   const text = editor.selection.isEmpty ? editor.document.getText() : editor.document.getText(editor.selection);
   const statements = splitSqlStatements(text).map(s => s.sql);
-  if (!statements.length) { throw new Error('No SQL statements found.'); }
+  if (!statements.length) { throw new Error(vscode.l10n.t('No SQL statements found.')); }
   const cfg = vscode.workspace.getConfiguration('vanthrex');
   const risky = statements.filter(isDestructiveSql);
   if (cfg.get<boolean>('sql.confirmDestructive', true) && risky.length) {
     const ok = await vscode.window.showWarningMessage(
-      `${risky.length} of the ${statements.length} statements can change or remove a lot of data (DROP, TRUNCATE, DELETE/UPDATE without WHERE). Run the script?`,
-      { modal: true }, 'Run Script');
-    if (ok !== 'Run Script') { return; }
+      vscode.l10n.t('{0} of the {1} statements can change or remove a lot of data (DROP, TRUNCATE, DELETE/UPDATE without WHERE). Run the script?', risky.length, statements.length),
+      { modal: true }, vscode.l10n.t('Run Script'));
+    if (ok !== vscode.l10n.t('Run Script')) { return; }
   }
   const stopOnError = cfg.get<boolean>('sql.scriptStopOnError', true);
   const maxRows = Math.min(cfg.get<number>('sql.maxRows', 500), 200);
   const steps: StepResult[] = [];
   const title = `SQL Script (${statements.length})`;
-  await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Running SQL script', cancellable: true }, async (progress, token) => {
+  await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Running SQL script'), cancellable: true }, async (progress, token) => {
     for (const [i, sql] of statements.entries()) {
       if (token.isCancellationRequested) { break; }
       progress.report({ message: `${i + 1} of ${statements.length}`, increment: 100 / statements.length });
@@ -141,10 +141,10 @@ function currentStatement(): string | undefined {
 
 async function useStatement(manager: ConnectionManager, state: vscode.Memento, sql: string): Promise<void> {
   const pick = await vscode.window.showQuickPick([
-    { label: '$(play) Run it', id: 'run' },
-    { label: '$(go-to-file) Open in a new SQL editor', id: 'open' },
-    { label: '$(insert) Insert at the cursor', id: 'insert' },
-    { label: '$(clippy) Copy', id: 'copy' },
+    { label: vscode.l10n.t('$(play) Run it'), id: 'run' },
+    { label: vscode.l10n.t('$(go-to-file) Open in a new SQL editor'), id: 'open' },
+    { label: vscode.l10n.t('$(insert) Insert at the cursor'), id: 'insert' },
+    { label: vscode.l10n.t('$(clippy) Copy'), id: 'copy' },
   ], { title: sql.replace(/\s+/g, ' ').slice(0, 100) });
   if (!pick) { return; }
   if (pick.id === 'run') { return runSqlAndShow(manager, state, sql); }
@@ -167,18 +167,18 @@ export function registerSqlTools(context: vscode.ExtensionContext, manager: Conn
     vscode.commands.registerCommand('vanthrex.generateDdl', guard(async (n?: ObjArg) => {
       let o = n?.library && n.name ? n : undefined;
       if (!o) {
-        const v = await vscode.window.showInputBox({ title: 'Generate SQL (DDL)', prompt: 'LIBRARY/TABLE, view, index, procedure or function', placeHolder: 'MYLIB/CUSTMAST' });
+        const v = await vscode.window.showInputBox({ title: vscode.l10n.t('Generate SQL (DDL)'), prompt: vscode.l10n.t('LIBRARY/TABLE, view, index, procedure or function'), placeHolder: 'MYLIB/CUSTMAST' });
         if (!v?.includes('/')) { return; }
         const [library, name] = v.trim().toUpperCase().split('/');
         o = { library, name };
       }
-      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Generating SQL for ${o.library}/${o.name}…` },
+      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Generating SQL for {0}/{1}…', o.library, o.name) },
         () => generateDdl(manager, o!));
     })),
     vscode.commands.registerCommand('vanthrex.runSqlScript', guard(() => runScript(manager))),
     vscode.commands.registerCommand('vanthrex.sqlHistory', guard(async () => {
       const history = state.get<string[]>(HISTORY_KEY, []);
-      if (!history.length) { vscode.window.showInformationMessage('No SQL history yet. Statements you run with Ctrl+Enter appear here.'); return; }
+      if (!history.length) { vscode.window.showInformationMessage(vscode.l10n.t('No SQL history yet. Statements you run with Ctrl+Enter appear here.')); return; }
       const qp = vscode.window.createQuickPick<vscode.QuickPickItem & { sql: string }>();
       qp.title = 'SQL history (most recent first)';
       qp.matchOnDetail = true;
@@ -192,13 +192,13 @@ export function registerSqlTools(context: vscode.ExtensionContext, manager: Conn
       qp.show();
     })),
     vscode.commands.registerCommand('vanthrex.clearSqlHistory', guard(async () => {
-      const ok = await vscode.window.showWarningMessage('Clear the SQL history?', { modal: true }, 'Clear');
+      const ok = await vscode.window.showWarningMessage(vscode.l10n.t('Clear the SQL history?'), { modal: true }, vscode.l10n.t('Clear'));
       if (ok) { await state.update(HISTORY_KEY, []); }
     })),
     vscode.commands.registerCommand('vanthrex.saveQuery', guard(async (preset?: string) => {
       const sql = typeof preset === 'string' ? preset : currentStatement();
-      if (!sql) { throw new Error('Put the cursor in a SQL statement (or select it) first.'); }
-      const name = await vscode.window.showInputBox({ title: 'Save query', prompt: 'Name for this query', value: sql.replace(/\s+/g, ' ').slice(0, 40), ignoreFocusOut: true });
+      if (!sql) { throw new Error(vscode.l10n.t('Put the cursor in a SQL statement (or select it) first.')); }
+      const name = await vscode.window.showInputBox({ title: vscode.l10n.t('Save query'), prompt: vscode.l10n.t('Name for this query'), value: sql.replace(/\s+/g, ' ').slice(0, 40), ignoreFocusOut: true });
       if (!name?.trim()) { return; }
       const saved = state.get<SavedQuery[]>(SAVED_KEY, []).filter(q => q.name !== name.trim());
       await state.update(SAVED_KEY, [...saved, { name: name.trim(), sql }].sort((a, b) => a.name.localeCompare(b.name)));
@@ -206,11 +206,11 @@ export function registerSqlTools(context: vscode.ExtensionContext, manager: Conn
     })),
     vscode.commands.registerCommand('vanthrex.savedQueries', guard(async () => {
       const saved = state.get<SavedQuery[]>(SAVED_KEY, []);
-      if (!saved.length) { vscode.window.showInformationMessage('No saved queries yet. Use "Vanthrex: Save Query" in a SQL editor, or the ☆ button in SQL History.'); return; }
+      if (!saved.length) { vscode.window.showInformationMessage(vscode.l10n.t('No saved queries yet. Use "Vanthrex: Save Query" in a SQL editor, or the ☆ button in SQL History.')); return; }
       const qp = vscode.window.createQuickPick<vscode.QuickPickItem & { q: SavedQuery }>();
       qp.title = 'Saved queries';
       qp.matchOnDetail = true;
-      qp.items = saved.map(q => ({ label: `$(star-full) ${q.name}`, detail: q.sql.replace(/\s+/g, ' ').slice(0, 160), q,
+      qp.items = saved.map(q => ({ label: vscode.l10n.t('$(star-full) {0}', q.name), detail: q.sql.replace(/\s+/g, ' ').slice(0, 160), q,
         buttons: [{ iconPath: new vscode.ThemeIcon('trash'), tooltip: 'Delete' }] }));
       qp.onDidTriggerItemButton(async e => {
         await state.update(SAVED_KEY, state.get<SavedQuery[]>(SAVED_KEY, []).filter(x => x.name !== e.item.q.name));

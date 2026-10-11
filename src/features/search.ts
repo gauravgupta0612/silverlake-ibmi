@@ -17,17 +17,17 @@ function libraryScope(conn: IbmiConnection): string[] {
 export async function pickScope(conn: IbmiConnection, title: string): Promise<string[] | undefined> {
   const libs = libraryScope(conn);
   const pick = await vscode.window.showQuickPick([
-    { label: '$(library) My library list', detail: libs.join(', ') || '(empty)', value: 'libl' },
-    { label: '$(globe) All user libraries (*ALLUSR)', detail: 'Slower — searches every non-IBM library', value: 'allusr' },
-    { label: '$(edit) One library…', value: 'one' },
+    { label: vscode.l10n.t('$(library) My library list'), detail: libs.join(', ') || '(empty)', value: 'libl' },
+    { label: vscode.l10n.t('$(globe) All user libraries (*ALLUSR)'), detail: vscode.l10n.t('Slower — searches every non-IBM library'), value: 'allusr' },
+    { label: vscode.l10n.t('$(edit) One library…'), value: 'one' },
   ], { title });
   if (!pick) { return undefined; }
   if (pick.value === 'libl') {
-    if (!libs.length) { throw new Error('Your library list is empty – add a library first.'); }
+    if (!libs.length) { throw new Error(vscode.l10n.t('Your library list is empty – add a library first.')); }
     return libs;
   }
   if (pick.value === 'allusr') { return ['*ALLUSR']; }
-  const lib = await vscode.window.showInputBox({ title: 'Library', validateInput: v => isValidSystemName(v.trim()) ? undefined : 'Not a valid library name' });
+  const lib = await vscode.window.showInputBox({ title: vscode.l10n.t('Library'), validateInput: v => isValidSystemName(v.trim()) ? undefined : 'Not a valid library name' });
   return lib ? [lib.trim().toUpperCase()] : undefined;
 }
 
@@ -56,24 +56,24 @@ async function openProgramSource(conn: IbmiConnection, library: string, name: st
       }
     } catch (e) { log(`Source lookup: ${errorMessage(e)}`); }
   }
-  vscode.window.showWarningMessage(`No source information is recorded for ${library}/${name}.`);
+  vscode.window.showWarningMessage(vscode.l10n.t('No source information is recorded for {0}/{1}.', library, name));
 }
 
 async function objectActions(manager: ConnectionManager, state: vscode.Memento, o: FoundObject): Promise<void> {
   type A = vscode.QuickPickItem & { run: () => Promise<unknown> | Thenable<unknown> };
   const conn = manager.require();
-  const actions: A[] = [{ label: '$(references) Where used…', run: () => whereUsed(manager, o.library, o.name, o.type) }];
+  const actions: A[] = [{ label: vscode.l10n.t('$(references) Where used…'), run: () => whereUsed(manager, o.library, o.name, o.type) }];
   if (o.type === '*PGM' || o.type === '*SRVPGM' || o.type === '*MODULE') {
-    actions.unshift({ label: '$(go-to-file) Open source', run: () => openProgramSource(conn, o.library, o.name) });
+    actions.unshift({ label: vscode.l10n.t('$(go-to-file) Open source'), run: () => openProgramSource(conn, o.library, o.name) });
   }
-  if (o.type === '*PGM') { actions.push({ label: '$(play) Call program…', run: () => vscode.commands.executeCommand('vanthrex.objectCall', o) }); }
+  if (o.type === '*PGM') { actions.push({ label: vscode.l10n.t('$(play) Call program…'), run: () => vscode.commands.executeCommand('vanthrex.objectCall', o) }); }
   if (o.type === '*FILE') {
-    actions.unshift({ label: '$(table) Edit data', run: () => vscode.commands.executeCommand('vanthrex.editData', o) });
-    actions.push({ label: '$(preview) Preview first rows', run: () => runSqlAndShow(manager, state, `SELECT * FROM ${o.library}/${o.name} FETCH FIRST 100 ROWS ONLY`) });
+    actions.unshift({ label: vscode.l10n.t('$(table) Edit data'), run: () => vscode.commands.executeCommand('vanthrex.editData', o) });
+    actions.push({ label: vscode.l10n.t('$(preview) Preview first rows'), run: () => runSqlAndShow(manager, state, `SELECT * FROM ${o.library}/${o.name} FETCH FIRST 100 ROWS ONLY`) });
   }
-  actions.push({ label: '$(clippy) Copy qualified name', run: () => vscode.env.clipboard.writeText(`${o.library}/${o.name}`) });
+  actions.push({ label: vscode.l10n.t('$(clippy) Copy qualified name'), run: () => vscode.env.clipboard.writeText(`${o.library}/${o.name}`) });
   if (!(['*LIB'].includes(o.type)) && !libraryScope(conn).includes(o.library)) {
-    actions.push({ label: '$(add) Add library to my list', run: () => manager.updateActiveProfile(p => { p.libraries = [...p.libraries, o.library]; }) });
+    actions.push({ label: vscode.l10n.t('$(add) Add library to my list'), run: () => manager.updateActiveProfile(p => { p.libraries = [...p.libraries, o.library]; }) });
   }
   const pick = await vscode.window.showQuickPick(actions, { title: `${o.library}/${o.name} ${o.type} ${o.attribute}`, placeHolder: o.text });
   if (pick) { await pick.run(); }
@@ -82,11 +82,11 @@ async function objectActions(manager: ConnectionManager, state: vscode.Memento, 
 export async function searchObjects(manager: ConnectionManager, state: vscode.Memento): Promise<void> {
   const conn = manager.require();
   const term = await vscode.window.showInputBox({
-    title: 'Search objects', prompt: 'Name or text to find. Use * as a wildcard (e.g. ORD*, *CUST*). Text descriptions are searched too.',
+    title: vscode.l10n.t('Search objects'), prompt: vscode.l10n.t('Name or text to find. Use * as a wildcard (e.g. ORD*, *CUST*). Text descriptions are searched too.'),
     ignoreFocusOut: true,
   });
   if (!term?.trim()) { return; }
-  const type = await vscode.window.showQuickPick(OBJECT_TYPES, { title: 'Object type' });
+  const type = await vscode.window.showQuickPick(OBJECT_TYPES, { title: vscode.l10n.t('Object type') });
   if (!type) { return; }
   const scope = await pickScope(conn, 'Where to search?');
   if (!scope) { return; }
@@ -98,9 +98,9 @@ export async function searchObjects(manager: ConnectionManager, state: vscode.Me
     `FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(lib)}, ${sqlString(type)})) ` +
     `WHERE OBJNAME LIKE ${sqlString(like)} OR UPPER(COALESCE(OBJTEXT, '')) LIKE ${sqlString(like)}`);
   const rows = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: `Searching ${scope.join(', ')} for "${term}"…` },
+    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Searching {0} for "{1}"…', scope.join(', '), term) },
     () => conn.rows<Record<string, unknown>>(`${parts.join(' UNION ALL ')} ORDER BY OBJNAME, OBJLIB FETCH FIRST 500 ROWS ONLY`, 500));
-  if (!rows.length) { vscode.window.showInformationMessage(`No ${type} objects match "${term}".`); return; }
+  if (!rows.length) { vscode.window.showInformationMessage(vscode.l10n.t('No {0} objects match "{1}".', type, term)); return; }
   const items = rows.map(r => {
     const o: FoundObject = {
       library: String(r.OBJLIB).trim(), name: String(r.OBJNAME).trim(), type: String(r.OBJTYPE).trim(),
@@ -108,7 +108,7 @@ export async function searchObjects(manager: ConnectionManager, state: vscode.Me
     };
     return { label: o.name, description: `${o.library} · ${o.type} ${o.attribute}`, detail: [o.text, o.lastUsed && `last used ${o.lastUsed}`].filter(Boolean).join(' — ') || undefined, o };
   });
-  const pick = await vscode.window.showQuickPick(items, { title: `${rows.length}${rows.length === 500 ? '+' : ''} object(s) found`, matchOnDescription: true, matchOnDetail: true });
+  const pick = await vscode.window.showQuickPick(items, { title: vscode.l10n.t('{0}{1} object(s) found', rows.length, rows.length === 500 ? '+' : ''), matchOnDescription: true, matchOnDetail: true });
   if (pick) { await objectActions(manager, state, pick.o); }
 }
 
@@ -117,13 +117,13 @@ export async function whereUsed(manager: ConnectionManager, library: string, nam
   // Warm up the SQL engine so we know whether it keeps a single job (QTEMP).
   await conn.sql('VALUES 1', 1);
   if (!conn.sqlKeepsJob) {
-    throw new Error('Where-used needs the Mapepire SQL engine (it builds a cross-reference in QTEMP). Change the SQL engine in the connection settings.');
+    throw new Error(vscode.l10n.t('Where-used needs the Mapepire SQL engine (it builds a cross-reference in QTEMP). Change the SQL engine in the connection settings.'));
   }
   const scope = await pickScope(conn, `Find programs that use ${library}/${name} — search which libraries?`);
   if (!scope) { return; }
   const libs = scope[0] === '*ALLUSR' ? ['*ALLUSR'] : scope;
   const rows = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: `Building cross-reference for ${libs.join(', ')}…`, cancellable: false },
+    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Building cross-reference for {0}…', libs.join(', ')), cancellable: false },
     async progress => {
       let first = true;
       for (const lib of libs) {
@@ -132,36 +132,36 @@ export async function whereUsed(manager: ConnectionManager, library: string, nam
         try { await conn.sql(`CALL QSYS2.QCMDEXC(${sqlString(cmd)})`, 1); first = false; }
         catch (e) { log(`DSPPGMREF ${lib}: ${errorMessage(e)}`); }
       }
-      if (first) { throw new Error('Could not build the cross-reference (DSPPGMREF failed for every library). See the log for details.'); }
+      if (first) { throw new Error(vscode.l10n.t('Could not build the cross-reference (DSPPGMREF failed for every library). See the log for details.')); }
       return conn.rows<Record<string, unknown>>(
         `SELECT DISTINCT WHLIB, WHPNAM, COALESCE(WHTEXT, '') AS WHTEXT, WHLNAM, WHOTYP FROM QTEMP/SLKPGMREF ` +
         `WHERE WHFNAM = ${sqlString(name)} AND (WHLNAM = ${sqlString(library)} OR WHLNAM IN ('*LIBL', '')) ` +
         `${type && type !== '*ALL' ? `AND WHOTYP = ${sqlString(type)} ` : ''}ORDER BY WHLIB, WHPNAM`, 5000);
     });
-  if (!rows.length) { vscode.window.showInformationMessage(`No programs in ${libs.join(', ')} reference ${library}/${name}.`); return; }
+  if (!rows.length) { vscode.window.showInformationMessage(vscode.l10n.t('No programs in {0} reference {1}/{2}.', libs.join(', '), library, name)); return; }
   const pick = await vscode.window.showQuickPick(rows.map(r => ({
-    label: `$(gear) ${String(r.WHPNAM).trim()}`,
+    label: vscode.l10n.t('$(gear) {0}', String(r.WHPNAM).trim()),
     description: `${String(r.WHLIB).trim()}${String(r.WHLNAM).trim() === '*LIBL' ? ' · via *LIBL' : ''}`,
     detail: String(r.WHTEXT ?? '').trim() || undefined,
     lib: String(r.WHLIB).trim(), pgm: String(r.WHPNAM).trim(),
-  })), { title: `${rows.length} program(s) use ${library}/${name} — pick one to open its source`, matchOnDescription: true });
+  })), { title: vscode.l10n.t('{0} program(s) use {1}/{2} — pick one to open its source', rows.length, library, name), matchOnDescription: true });
   if (pick) { await openProgramSource(conn, pick.lib, pick.pgm); }
 }
 
 export async function searchSource(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
   const libs = libraryScope(conn);
-  const lib = await vscode.window.showQuickPick([...libs, '$(edit) Other library…'], { title: 'Search source — library' });
+  const lib = await vscode.window.showQuickPick([...libs, '$(edit) Other library…'], { title: vscode.l10n.t('Search source — library') });
   if (!lib) { return; }
-  const library = lib.startsWith('$(') ? (await vscode.window.showInputBox({ title: 'Library' }))?.trim().toUpperCase() : lib;
+  const library = lib.startsWith('$(') ? (await vscode.window.showInputBox({ title: vscode.l10n.t('Library') }))?.trim().toUpperCase() : lib;
   if (!library || !isValidSystemName(library)) { return; }
   const files = (await conn.rows<{ NAME: string }>(
     `SELECT SYSTEM_TABLE_NAME AS NAME FROM QSYS2.SYSTABLES WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(library)} AND FILE_TYPE = 'S' ORDER BY 1`)).map(r => String(r.NAME).trim());
-  if (!files.length) { vscode.window.showInformationMessage(`${library} has no source files.`); return; }
-  const filePick = await vscode.window.showQuickPick(['$(files) All source files', ...files], { title: `Search source in ${library}`, canPickMany: false });
+  if (!files.length) { vscode.window.showInformationMessage(vscode.l10n.t('{0} has no source files.', library)); return; }
+  const filePick = await vscode.window.showQuickPick(['$(files) All source files', ...files], { title: vscode.l10n.t('Search source in {0}', library), canPickMany: false });
   if (!filePick) { return; }
   const targets = filePick.startsWith('$(') ? files : [filePick];
-  const term = await vscode.window.showInputBox({ title: 'Search text', prompt: 'Text to find (not case sensitive). Prefix with re: for a regular expression.', ignoreFocusOut: true });
+  const term = await vscode.window.showInputBox({ title: vscode.l10n.t('Search text'), prompt: vscode.l10n.t('Text to find (not case sensitive). Prefix with re: for a regular expression.'), ignoreFocusOut: true });
   if (!term) { return; }
   const regex = term.startsWith('re:');
   const pattern = regex ? term.substring(3) : term;
@@ -169,7 +169,7 @@ export async function searchSource(manager: ConnectionManager): Promise<void> {
   const paths = targets.map(f => `${shSingleQuote(`/QSYS.LIB/${library}.LIB/${f}.FILE/`)}*.MBR`).join(' ');
   const script = `/usr/bin/grep -inH ${regex ? '-E' : '-F'} -e ${shSingleQuote(pattern)} ${paths} 2>/dev/null | /usr/bin/head -n 2000`;
 
-  const r = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Searching ${library} for "${pattern}"…` },
+  const r = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Searching {0} for "{1}"…', library, pattern) },
     () => conn.qsh(script));
   const hits = r.stdout.split('\n').map(line => {
     const m = line.match(/^\/QSYS\.LIB\/([^.]+)\.LIB\/([^.]+)\.FILE\/([^.]+)\.MBR:(\d+):(.*)$/i);
@@ -177,7 +177,7 @@ export async function searchSource(manager: ConnectionManager): Promise<void> {
   }).filter((h): h is NonNullable<typeof h> => !!h);
   if (!hits.length) {
     if (r.stderr.trim()) { log(r.stderr); }
-    vscode.window.showInformationMessage(`"${pattern}" was not found in ${library}/${targets.length === 1 ? targets[0] : '*ALL source files'}.`);
+    vscode.window.showInformationMessage(vscode.l10n.t('"{0}" was not found in {1}/{2}.', pattern, library, targets.length === 1 ? targets[0] : '*ALL source files'));
     return;
   }
   // Member types, so files open with the right language.
@@ -190,12 +190,12 @@ export async function searchSource(manager: ConnectionManager): Promise<void> {
   } catch (e) { logError(e); }
   const members = new Set(hits.map(h => `${h.file}/${h.member}`));
   const pick = await vscode.window.showQuickPick(hits.map(h => ({
-    label: `$(file-code) ${h.member}:${h.line}`,
+    label: vscode.l10n.t('$(file-code) {0}:{1}', h.member, h.line),
     description: `${h.library}/${h.file}`,
     detail: h.text.trim(),
     h,
   })), {
-    title: `${hits.length}${hits.length >= 2000 ? '+' : ''} match(es) in ${members.size} member(s)`,
+    title: vscode.l10n.t('{0}{1} match(es) in {2} member(s)', hits.length, hits.length >= 2000 ? '+' : '', members.size),
     matchOnDescription: true, matchOnDetail: true,
   });
   if (!pick) { return; }
@@ -212,7 +212,7 @@ export function registerSearch(context: vscode.ExtensionContext, manager: Connec
     try { await fn(...a); }
     catch (e) {
       logError(e);
-      const c = await vscode.window.showErrorMessage(errorMessage(e), 'Show Log');
+      const c = await vscode.window.showErrorMessage(errorMessage(e), vscode.l10n.t('Show Log'));
       if (c) { showLog(); }
     }
   };
@@ -221,7 +221,7 @@ export function registerSearch(context: vscode.ExtensionContext, manager: Connec
     vscode.commands.registerCommand('vanthrex.searchSource', guard(() => searchSource(manager))),
     vscode.commands.registerCommand('vanthrex.whereUsed', guard(async (n?: { library: string; name: string; type: string }) => {
       if (n?.library && n.name) { return whereUsed(manager, n.library, n.name, n.type); }
-      const v = await vscode.window.showInputBox({ title: 'Where used', prompt: 'LIBRARY/OBJECT', placeHolder: 'MYLIB/CUSTMAST' });
+      const v = await vscode.window.showInputBox({ title: vscode.l10n.t('Where used'), prompt: 'LIBRARY/OBJECT', placeHolder: 'MYLIB/CUSTMAST' });
       if (!v?.includes('/')) { return; }
       const [library, name] = v.trim().toUpperCase().split('/');
       return whereUsed(manager, library, name, '*ALL');

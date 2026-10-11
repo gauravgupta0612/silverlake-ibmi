@@ -87,17 +87,17 @@ async function promptSpec(editor: vscode.TextEditor): Promise<void> {
   for (;;) {
     const text = doc.lineAt(lineNo).text;
     if (language === 'rpgle' && /^\s*\*\*free/i.test(doc.lineAt(0).text)) {
-      vscode.window.showInformationMessage('This source is **FREE — the F4 prompter works on fixed-format specs.');
+      vscode.window.showInformationMessage(vscode.l10n.t('This source is **FREE — the F4 prompter works on fixed-format specs.'));
       return;
     }
     let layout: SpecLayout | undefined = text.trim() ? layoutFor(text, language) : undefined;
     if (!layout && text.trim()) {
-      vscode.window.showInformationMessage('This line is not a fixed-format spec (free-format code or a comment).');
+      vscode.window.showInformationMessage(vscode.l10n.t('This line is not a fixed-format spec (free-format code or a comment).'));
       return;
     }
     if (!layout) {
       const options = language === 'dds' ? ['A'] : ['C', 'CX', 'D', 'F', 'H', 'P'];
-      const pick = await vscode.window.showQuickPick(options.map(k => ({ label: LAYOUTS[k].title, k })), { title: 'Create which spec on this blank line?' });
+      const pick = await vscode.window.showQuickPick(options.map(k => ({ label: LAYOUTS[k].title, k })), { title: vscode.l10n.t('Create which spec on this blank line?') });
       if (!pick) { return; }
       layout = LAYOUTS[pick.k];
     }
@@ -128,7 +128,7 @@ const definitions = new Map<string, ClCommandDef>();
 
 async function commandDefinition(manager: ConnectionManager, command: string): Promise<ClCommandDef> {
   const [lib, name] = command.includes('/') ? command.split('/') : ['*LIBL', command];
-  if (!isValidSystemName(name) || (lib !== '*LIBL' && !isValidSystemName(lib))) { throw new Error(`"${command}" is not a valid command name.`); }
+  if (!isValidSystemName(name) || (lib !== '*LIBL' && !isValidSystemName(lib))) { throw new Error(vscode.l10n.t('"{0}" is not a valid command name.', command)); }
   const key = `${lib}/${name}`.toUpperCase();
   const cached = definitions.get(key);
   if (cached) { return cached; }
@@ -137,10 +137,10 @@ async function commandDefinition(manager: ConnectionManager, command: string): P
   const qualified = `${name.toUpperCase().padEnd(10)}${lib.toUpperCase().padEnd(10)}`;
   try {
     const r = await conn.runCL(`CALL PGM(QCDRCMDD) PARM('${qualified}' X'${qlgPathHex(path)}' 'DEST0200' ' ' 'CDML0100' X'00000000')`);
-    if (!r.ok) { throw new Error(`Could not read the definition of ${name}: ${(r.stderr || r.stdout).trim()}`); }
+    if (!r.ok) { throw new Error(vscode.l10n.t('Could not read the definition of {0}: {1}', name, (r.stderr || r.stdout).trim())); }
     const xml = decodeIbmText(await conn.readStreamFile(path));
     const def = parseCommandXml(xml);
-    if (!def.parms.length && !def.name) { throw new Error(`${name} returned an empty definition.`); }
+    if (!def.parms.length && !def.name) { throw new Error(vscode.l10n.t('{0} returned an empty definition.', name)); }
     definitions.set(key, def);
     return def;
   } finally {
@@ -177,10 +177,10 @@ async function promptClInEditor(manager: ConnectionManager, editor: vscode.TextE
   const parsed = parseClCommand(joinClLines(lines));
   let command = parsed.command;
   if (!command) {
-    command = (await vscode.window.showInputBox({ title: 'Prompt which command?', placeHolder: 'e.g. SNDPGMMSG' }))?.trim().toUpperCase() ?? '';
+    command = (await vscode.window.showInputBox({ title: vscode.l10n.t('Prompt which command?'), placeHolder: 'e.g. SNDPGMMSG' }))?.trim().toUpperCase() ?? '';
     if (!command) { return; }
   }
-  const def = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: `Reading ${command} definition…` },
+  const def = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: vscode.l10n.t('Reading {0} definition…', command) },
     () => commandDefinition(manager, command));
   const result = await showForm(`${def.name || command} — ${def.prompt}`, `Fill in the parameters. Leave a field empty to use its default.`,
     fieldsFor(def, currentValues(parsed, def)));
@@ -193,10 +193,10 @@ async function promptClInEditor(manager: ConnectionManager, editor: vscode.TextE
 
 /** Prompt a command, then run it (like F4 on a 5250 command line). */
 async function promptAndRun(manager: ConnectionManager, preset?: string): Promise<void> {
-  const input = preset ?? await vscode.window.showInputBox({ title: 'Prompt and run a CL command', placeHolder: 'Command name, e.g. CRTSRCPF or SNDMSG', ignoreFocusOut: true });
+  const input = preset ?? await vscode.window.showInputBox({ title: vscode.l10n.t('Prompt and run a CL command'), placeHolder: vscode.l10n.t('Command name, e.g. CRTSRCPF or SNDMSG'), ignoreFocusOut: true });
   if (!input?.trim()) { return; }
   const parsed = parseClCommand(input.trim());
-  const def = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Reading ${parsed.command} definition…` },
+  const def = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Reading {0} definition…', parsed.command) },
     () => commandDefinition(manager, parsed.command));
   const result = await showForm(`${def.name || parsed.command} — ${def.prompt}`, 'Fill in the parameters, then Apply to run the command.',
     fieldsFor(def, currentValues(parsed, def)));
@@ -216,7 +216,7 @@ export function registerPrompters(context: vscode.ExtensionContext, manager: Con
       if (!editor) { return; }
       if (editor.document.languageId === 'cl') { return promptClInEditor(manager, editor); }
       if (editor.document.languageId === 'rpgle' || editor.document.languageId === 'dds') { return promptSpec(editor); }
-      vscode.window.showInformationMessage('F4 prompting works in RPG (fixed format), DDS and CL sources.');
+      vscode.window.showInformationMessage(vscode.l10n.t('F4 prompting works in RPG (fixed format), DDS and CL sources.'));
     })),
     vscode.commands.registerCommand('vanthrex.promptCl', guard((preset?: string) => promptAndRun(manager, typeof preset === 'string' ? preset : undefined))),
     manager.onDidChange(() => definitions.clear()),

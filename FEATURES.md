@@ -463,6 +463,12 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 
 **How:** Quick menu → **PTF & system health**, or right-click the active connection. Nothing is changed. The IBM comparison (`SYSTOOLS.GROUP_PTF_CURRENCY`) needs internet access from the IBM i; certificate and default-password checks need *ALLOBJ and *SECADM. Checks that can't run are listed as *not checked*.
 
+### 40. Your language — new in 0.10
+
+**What:** The interface — commands, menus, views, settings, walkthrough, messages, prompts and report titles — in English, French, Spanish, German, Italian, Portuguese (Brazil), Japanese and Simplified Chinese.
+
+**How:** Vanthrex follows the VS Code display language. **Ctrl+Shift+P → Configure Display Language**, choose the language (VS Code offers to install its language pack) and restart. IBM i commands, object types, message IDs and SQL are never translated; IBM's own help text (message help, job logs) comes from the IBM i in the language installed there. Want another language or found a better word? Open an issue — translations live in `l10n/bundle.l10n.<lang>.json` and `package.nls.<lang>.json`.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

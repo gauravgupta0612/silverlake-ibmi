@@ -17,11 +17,11 @@ const ALLOWED = new Set([
 ]);
 
 async function askObject(title: string): Promise<ObjArg | undefined> {
-  const v = await vscode.window.showInputBox({ title, prompt: 'LIBRARY/OBJECT (optionally *TYPE)', placeHolder: 'MYLIB/ORDENTRY *PGM', ignoreFocusOut: true });
+  const v = await vscode.window.showInputBox({ title, prompt: vscode.l10n.t('LIBRARY/OBJECT (optionally *TYPE)'), placeHolder: 'MYLIB/ORDENTRY *PGM', ignoreFocusOut: true });
   if (!v?.trim()) { return undefined; }
   const [path, type] = v.trim().toUpperCase().split(/\s+/);
   const [library, name] = path.split('/');
-  if (!name) { throw new Error('Use LIBRARY/OBJECT, for example MYLIB/ORDENTRY.'); }
+  if (!name) { throw new Error(vscode.l10n.t('Use LIBRARY/OBJECT, for example MYLIB/ORDENTRY.')); }
   return { library: assertSystemName(library, 'library'), name: assertSystemName(name, 'object name'), type: type || '*ALL' };
 }
 
@@ -51,7 +51,7 @@ async function objectInfo(manager: ConnectionManager, o: ObjArg): Promise<void> 
   const conn = manager.require();
   const rows = await conn.rows<Record<string, unknown>>(
     `SELECT * FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(o.library)}, ${sqlString(o.type && o.type !== '*ALL' ? o.type : '*ALL')}, ${sqlString(o.name)}))`, 20);
-  if (!rows.length) { throw new Error(`${o.library}/${o.name} ${o.type ?? ''} was not found.`); }
+  if (!rows.length) { throw new Error(vscode.l10n.t('{0}/{1} {2} was not found.', o.library, o.name, o.type ?? '')); }
   const r = rows[0];
   const type = String(r.OBJTYPE ?? o.type ?? '').trim();
   const srcLib = String(r.SOURCE_LIBRARY ?? '').trim();
@@ -59,20 +59,20 @@ async function objectInfo(manager: ConnectionManager, o: ObjArg): Promise<void> 
   const srcMbr = String(r.SOURCE_MEMBER ?? '').trim();
   const arg = { library: o.library, name: o.name, type };
   const actions: ReportAction[] = [
-    { label: 'Who has it locked?', command: 'vanthrex.objectLocks', args: [arg] },
-    { label: 'Where used', command: 'vanthrex.whereUsed', args: [arg] },
+    { label: vscode.l10n.t('Who has it locked?'), command: 'vanthrex.objectLocks', args: [arg] },
+    { label: vscode.l10n.t('Where used'), command: 'vanthrex.whereUsed', args: [arg] },
   ];
   if (srcLib && srcFile && srcMbr) {
-    actions.unshift({ label: `Open source ${srcLib}/${srcFile}(${srcMbr})`, command: 'vanthrex.openMemberSource', args: [srcLib, srcFile, srcMbr] });
+    actions.unshift({ label: vscode.l10n.t('Open source {0}/{1}({2})', srcLib, srcFile, srcMbr), command: 'vanthrex.openMemberSource', args: [srcLib, srcFile, srcMbr] });
   } else if (type === '*PGM' || type === '*SRVPGM' || type === '*MODULE') {
-    actions.unshift({ label: 'Open program source', command: 'vanthrex.openProgramSource', args: [arg] });
+    actions.unshift({ label: vscode.l10n.t('Open program source'), command: 'vanthrex.openProgramSource', args: [arg] });
   }
-  if (type === '*SRVPGM' || type === '*PGM') { actions.push({ label: 'Modules & exports', command: 'vanthrex.serviceProgramInfo', args: [arg] }); }
-  if (type === '*SRVPGM') { actions.push({ label: 'Who calls each exported procedure?', command: 'vanthrex.procedureCallers', args: [arg] }); }
-  actions.push({ label: 'Run SQL query…', command: 'vanthrex.sqlQuery', args: [arg] });
+  if (type === '*SRVPGM' || type === '*PGM') { actions.push({ label: vscode.l10n.t('Modules & exports'), command: 'vanthrex.serviceProgramInfo', args: [arg] }); }
+  if (type === '*SRVPGM') { actions.push({ label: vscode.l10n.t('Who calls each exported procedure?'), command: 'vanthrex.procedureCallers', args: [arg] }); }
+  actions.push({ label: vscode.l10n.t('Run SQL query…'), command: 'vanthrex.sqlQuery', args: [arg] });
   if (type === '*FILE') {
-    actions.push({ label: 'Edit data', command: 'vanthrex.editData', args: [arg] });
-    actions.push({ label: 'Generate SQL (DDL)', command: 'vanthrex.generateDdl', args: [arg] });
+    actions.push({ label: vscode.l10n.t('Edit data'), command: 'vanthrex.editData', args: [arg] });
+    actions.push({ label: vscode.l10n.t('Generate SQL (DDL)'), command: 'vanthrex.generateDdl', args: [arg] });
   }
   const known = new Set(['OBJNAME', 'OBJTYPE', 'OBJATTRIBUTE', 'OBJTEXT', 'OBJOWNER', 'OBJDEFINER', 'OBJCREATED', 'CHANGE_TIMESTAMP',
     'LAST_USED_TIMESTAMP', 'DAYS_USED_COUNT', 'OBJSIZE', 'SOURCE_LIBRARY', 'SOURCE_FILE', 'SOURCE_MEMBER', 'SOURCE_TIMESTAMP',
@@ -94,7 +94,7 @@ async function objectInfo(manager: ConnectionManager, o: ObjArg): Promise<void> 
       ['Last saved', ts(r.SAVE_TIMESTAMP)],
       ['Long name', String(r.OBJLONGNAME ?? '').trim()],
     ],
-    tables: others.length ? [{ title: 'All attributes', columns: ['Attribute', 'Value'], rows: others, filter: true }] : [],
+    tables: others.length ? [{ title: vscode.l10n.t('All attributes'), columns: ['Attribute', 'Value'], rows: others, filter: true }] : [],
   };
   showReport('objectInfo', report, ALLOWED);
 }
@@ -119,14 +119,14 @@ async function objectLocks(manager: ConnectionManager, o: ObjArg): Promise<void>
     detail = new Map(jobs.map(j => [j, { status: '', fn: '', text: String(u.find(x => String(x.U).trim() === j.split('/')[1])?.T ?? '').trim() }]));
   }
   const report: Report = {
-    title: `Locks on ${o.library}/${o.name} ${type}`,
+    title: vscode.l10n.t('Locks on {0}/{1} {2}', o.library, o.name, type),
     subtitle: jobs.length ? `${jobs.length} job(s) hold a lock. Click a job for its job log, to message the user or to end the job.` : 'No job holds a lock on this object right now.',
-    actions: [{ label: 'Refresh', command: 'vanthrex.objectLocks', args: [{ ...o, type }] }],
+    actions: [{ label: vscode.l10n.t('Refresh'), command: 'vanthrex.objectLocks', args: [{ ...o, type }] }],
     tables: [{
-      title: 'Lock holders', columns: ['Job', 'User', 'Name', 'Lock state'],
+      title: vscode.l10n.t('Lock holders'), columns: ['Job', 'User', 'Name', 'Lock state'],
       rows: holders.map(h => { const j = String(h.JOB).trim(); return [j, j.split('/')[1] ?? '', detail.get(j)?.text ?? '', String(h.ST).trim()]; }),
-      rowActions: holders.map(h => ({ label: 'Job actions', command: 'vanthrex.lockHolderActions', args: [String(h.JOB).trim(), `${o.library}/${o.name}`] })),
-      empty: 'No locks.',
+      rowActions: holders.map(h => ({ label: vscode.l10n.t('Job actions'), command: 'vanthrex.lockHolderActions', args: [String(h.JOB).trim(), `${o.library}/${o.name}`] })),
+      empty: vscode.l10n.t('No locks.'),
     }],
   };
   showReport('objectLocks', report, ALLOWED);
@@ -136,29 +136,29 @@ async function lockHolderActions(manager: ConnectionManager, job: string, object
   const conn = manager.require();
   const [, user = '', name = ''] = job.split('/');
   const pick = await vscode.window.showQuickPick([
-    { label: '$(output) Show job log', id: 'log' },
-    { label: '$(mail) Ask them to release it', id: 'msg' },
-    { label: '$(stop-circle) End the job…', id: 'end', detail: 'Needs *JOBCTL. They lose unsaved work.' },
-  ], { title: `${job} — lock on ${objectLabel}` });
+    { label: vscode.l10n.t('$(output) Show job log'), id: 'log' },
+    { label: vscode.l10n.t('$(mail) Ask them to release it'), id: 'msg' },
+    { label: vscode.l10n.t('$(stop-circle) End the job…'), id: 'end', detail: vscode.l10n.t('Needs *JOBCTL. They lose unsaved work.') },
+  ], { title: vscode.l10n.t('{0} — lock on {1}', job, objectLabel) });
   if (!pick) { return; }
   if (pick.id === 'log') { await vscode.commands.executeCommand('vanthrex.jobLog', { job }); return; }
   if (pick.id === 'msg') {
     const text = await vscode.window.showInputBox({
-      title: `Message ${user}`, ignoreFocusOut: true,
+      title: vscode.l10n.t('Message {0}', user), ignoreFocusOut: true,
       value: `Hi, I need ${objectLabel}. Could you please release it when you can? Thanks — ${conn.user}`,
     });
     if (!text?.trim()) { return; }
     let r = await conn.runCL(`SNDBRKMSG MSG(${clString(text.trim())}) TOMSGQ(${name})`);
     if (!r.ok) { r = await conn.runCL(`SNDMSG MSG(${clString(text.trim())}) TOUSR(${user})`); }
-    if (!r.ok) { throw new Error(`Could not send the message: ${(r.stderr || r.stdout).trim()}`); }
-    vscode.window.showInformationMessage(`Message sent to ${user}.`);
+    if (!r.ok) { throw new Error(vscode.l10n.t('Could not send the message: {0}', (r.stderr || r.stdout).trim())); }
+    vscode.window.showInformationMessage(vscode.l10n.t('Message sent to {0}.', user));
     return;
   }
-  const ok = await vscode.window.showWarningMessage(`End job ${job}? Work in progress in that job is lost.`, { modal: true }, 'End Job');
+  const ok = await vscode.window.showWarningMessage(vscode.l10n.t('End job {0}? Work in progress in that job is lost.', job), { modal: true }, 'End Job');
   if (ok !== 'End Job') { return; }
   const r = await conn.runCL(`ENDJOB JOB(${job}) OPTION(*CNTRLD) DELAY(10)`);
-  if (!r.ok) { throw new Error(`ENDJOB failed: ${(r.stderr || r.stdout).trim()}`); }
-  vscode.window.showInformationMessage(`Ending ${job}.`);
+  if (!r.ok) { throw new Error(vscode.l10n.t('ENDJOB failed: {0}', (r.stderr || r.stdout).trim())); }
+  vscode.window.showInformationMessage(vscode.l10n.t('Ending {0}.', job));
 }
 
 // ---------------------------------------------------------------- service program / program modules & exports
@@ -177,31 +177,31 @@ async function serviceProgramInfo(manager: ConnectionManager, o: ObjArg): Promis
   const usage: Record<string, string> = { '*PROCEXP': 'procedure', '*DATAEXP': 'data' };
   const report: Report = {
     title: `${o.library}/${o.name} ${type}`,
-    subtitle: `${exports.length} export(s), ${modules.length} module(s). Click a module to open its source.`,
+    subtitle: vscode.l10n.t('{0} export(s), {1} module(s). Click a module to open its source.', exports.length, modules.length),
     actions: [
-      { label: 'Object information', command: 'vanthrex.objectInfo', args: [{ ...o, type }] },
-      ...(type === '*SRVPGM' ? [{ label: 'Who calls each exported procedure?', command: 'vanthrex.procedureCallers', args: [{ ...o, type }] }] : []),
+      { label: vscode.l10n.t('Object information'), command: 'vanthrex.objectInfo', args: [{ ...o, type }] },
+      ...(type === '*SRVPGM' ? [{ label: vscode.l10n.t('Who calls each exported procedure?'), command: 'vanthrex.procedureCallers', args: [{ ...o, type }] }] : []),
     ],
     tables: [
       ...(type === '*SRVPGM' ? [{
-        title: 'Exports (signature order)', columns: ['Symbol', 'Kind'], filter: true,
+        title: vscode.l10n.t('Exports (signature order)'), columns: ['Symbol', 'Kind'], filter: true,
         rows: exports.map(r => [s(r, 'SYMBOL_NAME'), usage[s(r, 'SYMBOL_USAGE')] ?? s(r, 'SYMBOL_USAGE')]),
-        empty: 'No exports found.',
+        empty: vscode.l10n.t('No exports found.'),
       }] : []),
       {
-        title: 'Bound modules', columns: ['Module', 'Attribute', 'Source', 'Source changed', 'Module created'], filter: true,
+        title: vscode.l10n.t('Bound modules'), columns: ['Module', 'Attribute', 'Source', 'Source changed', 'Module created'], filter: true,
         rows: modules.map(r => [
           `${s(r, 'BOUND_MODULE_LIBRARY')}/${s(r, 'BOUND_MODULE')}`, s(r, 'MODULE_ATTRIBUTE'),
           s(r, 'SOURCE_FILE') ? `${s(r, 'SOURCE_FILE_LIBRARY')}/${s(r, 'SOURCE_FILE')}(${s(r, 'SOURCE_FILE_MEMBER')})` : s(r, 'SOURCE_STREAM_FILE_PATH'),
           ts(r.SOURCE_CHANGE_TIMESTAMP), ts(r.MODULE_CREATE_TIMESTAMP)]),
         rowActions: modules.map(r => s(r, 'SOURCE_FILE')
-          ? { label: 'Open source', command: 'vanthrex.openMemberSource', args: [s(r, 'SOURCE_FILE_LIBRARY'), s(r, 'SOURCE_FILE'), s(r, 'SOURCE_FILE_MEMBER')] }
+          ? { label: vscode.l10n.t('Open source'), command: 'vanthrex.openMemberSource', args: [s(r, 'SOURCE_FILE_LIBRARY'), s(r, 'SOURCE_FILE'), s(r, 'SOURCE_FILE_MEMBER')] }
           : undefined),
         rowClass: modules.map(r => r.SOURCE_CHANGE_TIMESTAMP && r.MODULE_CREATE_TIMESTAMP && String(r.SOURCE_CHANGE_TIMESTAMP) > String(r.MODULE_CREATE_TIMESTAMP) ? 'different' : undefined),
-        empty: 'No bound module information (OPM programs have none).',
+        empty: vscode.l10n.t('No bound module information (OPM programs have none).'),
       },
     ],
-    note: 'Modules marked on the left have source that changed after the module was created — the object may be out of date.',
+    note: vscode.l10n.t('Modules marked on the left have source that changed after the module was created — the object may be out of date.'),
   };
   showReport('srvpgm', report, ALLOWED);
 }
@@ -246,10 +246,10 @@ async function compareLibraries(manager: ConnectionManager): Promise<void> {
       key: `${String(r.F).trim()}(${String(r.M).trim()})`,
       fingerprint: `${r.N}|${r.CHG ?? ''}`,
       changed: String(r.CHG ?? ''),
-      detail: `${String(r.T).trim()} · ${r.N} lines`,
+      detail: vscode.l10n.t('{0} · {1} lines', String(r.T).trim(), String(r.N)),
     }));
   const [oa, ob, ma, mb] = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: `Comparing ${a} and ${b}…` },
+    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Comparing {0} and {1}…', a, b) },
     () => Promise.all([objects(a), objects(b), members(a), members(b)]));
   const objRows = compareSets(oa, ob);
   const mbrRows = compareSets(ma, mb);
@@ -263,10 +263,10 @@ async function compareLibraries(manager: ConnectionManager): Promise<void> {
     title: `${a} ↔ ${b}`,
     subtitle: `Objects: ${so.different} different, ${so.onlyA} only in ${a}, ${so.onlyB} only in ${b}, ${so.same} same. ` +
       `Source members: ${sm.different} different, ${sm.onlyA} only in ${a}, ${sm.onlyB} only in ${b}, ${sm.same} same.`,
-    actions: [{ label: 'Compare other libraries', command: 'vanthrex.compareLibraries' }],
+    actions: [{ label: vscode.l10n.t('Compare other libraries'), command: 'vanthrex.compareLibraries' }],
     tables: [
       {
-        title: 'Source members', columns: ['Member', 'Status', a, b, 'Newer'], filter: true,
+        title: vscode.l10n.t('Source members'), columns: ['Member', 'Status', a, b, 'Newer'], filter: true,
         rows: mbrShown.map(r => [r.key, label[r.status], r.a ? `${r.a.detail} · ${ts(r.a.changed)}` : null, r.b ? `${r.b.detail} · ${ts(r.b.changed)}` : null, r.newer === 'A' ? a : r.newer === 'B' ? b : '']),
         rowClass: mbrShown.map(r => r.status),
         rowActions: mbrShown.map(r => {
@@ -274,17 +274,17 @@ async function compareLibraries(manager: ConnectionManager): Promise<void> {
           if (!m) { return undefined; }
           const t = types.get(r.key) || 'mbr';
           return r.status === 'different'
-            ? { label: 'Compare side by side', command: 'vanthrex.diffMembers', args: [a, b, m[1], m[2], t] }
-            : { label: 'Open', command: 'vanthrex.openMemberSource', args: [r.a ? a : b, m[1], m[2]] };
+            ? { label: vscode.l10n.t('Compare side by side'), command: 'vanthrex.diffMembers', args: [a, b, m[1], m[2], t] }
+            : { label: vscode.l10n.t('Open'), command: 'vanthrex.openMemberSource', args: [r.a ? a : b, m[1], m[2]] };
         }),
-        empty: 'All source members match.',
+        empty: vscode.l10n.t('All source members match.'),
       },
       {
-        title: 'Objects', columns: ['Object', 'Status', a, b, 'Newer'], filter: true,
+        title: vscode.l10n.t('Objects'), columns: ['Object', 'Status', a, b, 'Newer'], filter: true,
         rows: objShown.map(r => [r.key, label[r.status], r.a ? `${r.a.detail} · ${ts(r.a.changed)}` : null, r.b ? `${r.b.detail} · ${ts(r.b.changed)}` : null, r.newer === 'A' ? a : r.newer === 'B' ? b : '']),
         rowClass: objShown.map(r => r.status),
-        rowActions: objShown.map(r => { const [name, type] = r.key.split(' '); return { label: 'Object information', command: 'vanthrex.objectInfo', args: [{ library: r.a ? a : b, name, type }] }; }),
-        empty: 'All objects match.',
+        rowActions: objShown.map(r => { const [name, type] = r.key.split(' '); return { label: vscode.l10n.t('Object information'), command: 'vanthrex.objectInfo', args: [{ library: r.a ? a : b, name, type }] }; }),
+        empty: vscode.l10n.t('All objects match.'),
       },
     ],
     note: (hideSame ? 'Items that are the same in both libraries are not listed. ' : '') +

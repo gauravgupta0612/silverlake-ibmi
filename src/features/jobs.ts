@@ -57,7 +57,7 @@ export class JobsTreeProvider implements vscode.TreeDataProvider<JobNode | InfoN
       n.status === 'MSGW' ? 'warning' : n.status === 'HLD' ? 'debug-pause' : n.status === 'RUN' ? 'play-circle' : 'circle-outline',
       n.status === 'MSGW' ? new vscode.ThemeColor('editorWarning.foreground') : undefined);
     item.contextValue = n.status === 'HLD' ? 'job.held' : 'job';
-    item.command = { command: 'vanthrex.jobLog', title: 'Job log', arguments: [n] };
+    item.command = { command: 'vanthrex.jobLog', title: vscode.l10n.t('Job log'), arguments: [n] };
     return item;
   }
 
@@ -157,8 +157,8 @@ export class MessagesTreeProvider implements vscode.TreeDataProvider<QueueNode |
     if (!conn) { return []; }
     if (!n) {
       return [
-        { kind: 'queue', lib: 'QSYS', name: 'QSYSOPR', label: 'System operator (QSYSOPR)' },
-        { kind: 'queue', lib: 'QUSRSYS', name: conn.user, label: 'My messages' },
+        { kind: 'queue', lib: 'QSYS', name: 'QSYSOPR', label: vscode.l10n.t('System operator (QSYSOPR)') },
+        { kind: 'queue', lib: 'QUSRSYS', name: conn.user, label: vscode.l10n.t('My messages') },
       ];
     }
     if (n.kind !== 'queue') { return []; }
@@ -230,7 +230,7 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
   };
   const cl = async (cmd: string, success: string) => {
     const r = await manager.require().runCL(cmd);
-    if (!r.ok) { throw new Error(`${cmd.split(' ')[0]} failed: ${(r.stderr || r.stdout).trim()}`); }
+    if (!r.ok) { throw new Error(vscode.l10n.t('{0} failed: {1}', cmd.split(' ')[0], (r.stderr || r.stdout).trim())); }
     vscode.window.setStatusBarMessage(`$(check) ${success}`, 4000);
   };
 
@@ -241,11 +241,11 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
     vscode.commands.registerCommand('vanthrex.refreshMessages', () => messages.refresh()),
     vscode.commands.registerCommand('vanthrex.filterJobs', guard(async () => {
       const pick = await vscode.window.showQuickPick([
-        { label: '$(person) My jobs', mode: 'mine' as const },
-        { label: '$(account) Jobs of a user…', mode: 'user' as const },
-        { label: '$(server-process) Jobs in a subsystem…', mode: 'subsystem' as const },
-        { label: '$(list-flat) All active jobs (first 500)', mode: 'all' as const },
-      ], { title: 'Show which jobs?' });
+        { label: vscode.l10n.t('$(person) My jobs'), mode: 'mine' as const },
+        { label: vscode.l10n.t('$(account) Jobs of a user…'), mode: 'user' as const },
+        { label: vscode.l10n.t('$(server-process) Jobs in a subsystem…'), mode: 'subsystem' as const },
+        { label: vscode.l10n.t('$(list-flat) All active jobs (first 500)'), mode: 'all' as const },
+      ], { title: vscode.l10n.t('Show which jobs?') });
       if (!pick) { return; }
       if (pick.mode === 'user' || pick.mode === 'subsystem') {
         const v = await vscode.window.showInputBox({
@@ -261,7 +261,7 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
     vscode.commands.registerCommand('vanthrex.jobLog', guard(async (n?: JobNode) => {
       let job = n?.job;
       if (!job) {
-        job = await vscode.window.showInputBox({ title: 'Job log', prompt: 'Qualified job name (number/user/name)', placeHolder: '123456/QUSER/QZDASOINIT' });
+        job = await vscode.window.showInputBox({ title: vscode.l10n.t('Job log'), prompt: vscode.l10n.t('Qualified job name (number/user/name)'), placeHolder: '123456/QUSER/QZDASOINIT' });
         if (!job?.trim()) { return; }
       }
       const uri = vscode.Uri.from({ scheme: JOBLOG_SCHEME, path: `/${job.replace(/\//g, '_')}.joblog`, query: new URLSearchParams({ job: job.trim() }).toString() });
@@ -270,12 +270,12 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
     })),
     vscode.commands.registerCommand('vanthrex.endJob', guard(async (n: JobNode) => {
       const how = await vscode.window.showQuickPick([
-        { label: 'Controlled (*CNTRLD)', detail: 'Let the job finish its cleanup (30 s delay)', opt: '*CNTRLD) DELAY(30' },
-        { label: 'Immediately (*IMMED)', detail: 'End now — work in progress may be lost', opt: '*IMMED' },
-      ], { title: `End job ${n.job}?` });
+        { label: vscode.l10n.t('Controlled (*CNTRLD)'), detail: vscode.l10n.t('Let the job finish its cleanup (30 s delay)'), opt: '*CNTRLD) DELAY(30' },
+        { label: vscode.l10n.t('Immediately (*IMMED)'), detail: vscode.l10n.t('End now — work in progress may be lost'), opt: '*IMMED' },
+      ], { title: vscode.l10n.t('End job {0}?', n.job) });
       if (!how) { return; }
-      const ok = await vscode.window.showWarningMessage(`End job ${n.job} ${how.label.toLowerCase()}?`, { modal: true }, 'End job');
-      if (ok !== 'End job') { return; }
+      const ok = await vscode.window.showWarningMessage(vscode.l10n.t('End job {0} {1}?', n.job, how.label.toLowerCase()), { modal: true }, vscode.l10n.t('End job'));
+      if (ok !== vscode.l10n.t('End job')) { return; }
       await cl(`ENDJOB JOB(${n.job}) OPTION(${how.opt})`, `Ending ${n.job}`);
       setTimeout(() => jobs.refresh(), 1500);
     })),
@@ -304,9 +304,9 @@ export function registerJobs(context: vscode.ExtensionContext, manager: Connecti
       await cl(`RMVMSG MSGQ(${n.queueLib}/${n.queue}) MSGKEY(X'${n.key}')`, 'Message removed'); messages.refresh();
     })),
     vscode.commands.registerCommand('vanthrex.sendMessage', guard(async () => {
-      const user = await vscode.window.showInputBox({ title: 'Send message', prompt: 'To user profile (or *SYSOPR)', value: '*SYSOPR' });
+      const user = await vscode.window.showInputBox({ title: vscode.l10n.t('Send message'), prompt: vscode.l10n.t('To user profile (or *SYSOPR)'), value: '*SYSOPR' });
       if (!user?.trim()) { return; }
-      const text = await vscode.window.showInputBox({ title: `Message to ${user}` });
+      const text = await vscode.window.showInputBox({ title: vscode.l10n.t('Message to {0}', user) });
       if (!text?.trim()) { return; }
       const to = user.trim().toUpperCase();
       await cl(to === '*SYSOPR' ? `SNDMSG MSG(${clString(text)}) TOMSGQ(*SYSOPR)` : `SNDMSG MSG(${clString(text)}) TOUSR(${to})`, 'Message sent');

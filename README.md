@@ -47,6 +47,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **Debugger** *(new in 0.5)* | Step-through debugging of RPG, COBOL and CL with breakpoints, variables and call stack (Ctrl+Alt+G), through IBM's IBM i Debug client and Debug Service, with a setup check that fixes the setup for you. |
 | **Insights** *(new in 0.8)* | **Index advisor** with one-click index creation, **table data compare** between DEV and PROD by key, **message help on hover** for any CPF/MCH/RNQ/SQL ID, and a **job log analyzer** that points at the root cause. |
 | **System tools** *(new in 0.9)* | **Journal explorer** (who changed which rows, from which program), **authority checker** that explains *why* a user can't use an object and offers the fix, **data queue & data area** viewer/editor, and a **PTF & system health** report compared with IBM's latest PTF levels. |
+| **Your language** *(new in 0.10)* | The whole interface in **English, French, Spanish, German, Italian, Portuguese (Brazil), Japanese and Simplified Chinese** — it follows the VS Code display language. |
 
 ## Requirements on the IBM i
 

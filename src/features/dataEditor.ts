@@ -51,7 +51,7 @@ export class DataEditor {
       `SELECT COLUMN_NAME, DATA_TYPE, LENGTH, COALESCE(NUMERIC_SCALE, 0) AS SCALE, IS_NULLABLE, COALESCE(COLUMN_TEXT, '') AS TEXT ` +
       `FROM QSYS2.SYSCOLUMNS WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(this.library)} AND SYSTEM_TABLE_NAME = ${sqlString(this.file)} ` +
       `ORDER BY ORDINAL_POSITION`, 2000);
-    if (!rows.length) { throw new Error(`${this.library}/${this.file} was not found or has no columns.`); }
+    if (!rows.length) { throw new Error(vscode.l10n.t('{0}/{1} was not found or has no columns.', this.library, this.file)); }
     this.columns = rows.map(r => ({
       name: String(r.COLUMN_NAME).trim(), type: String(r.DATA_TYPE).trim(), length: Number(r.LENGTH ?? 0),
       scale: Number(r.SCALE ?? 0), nullable: String(r.IS_NULLABLE).trim() === 'Y', text: String(r.TEXT ?? '').trim(),
@@ -114,8 +114,8 @@ export class DataEditor {
     for (const s of statements) { counts[s.change.op]++; }
     const summary = [counts.update && `${counts.update} update(s)`, counts.insert && `${counts.insert} insert(s)`, counts.delete && `${counts.delete} delete(s)`]
       .filter(Boolean).join(', ');
-    const ok = await vscode.window.showWarningMessage(`Write ${summary} to ${table}?`, { modal: true, detail: 'Changes are written immediately (no commitment control).' }, 'Save changes');
-    if (ok !== 'Save changes') { return; }
+    const ok = await vscode.window.showWarningMessage(vscode.l10n.t('Write {0} to {1}?', summary, table), { modal: true, detail: vscode.l10n.t('Changes are written immediately (no commitment control).') }, vscode.l10n.t('Save changes'));
+    if (ok !== vscode.l10n.t('Save changes')) { return; }
 
     const conn = this.manager.require();
     const failed: string[] = [];
@@ -131,7 +131,7 @@ export class DataEditor {
     }
     if (failed.length) {
       this.pendingError = `${done} change(s) saved, ${failed.length} failed (not saved — please redo them):\n${failed.join('\n')}`;
-      vscode.window.showErrorMessage(`${failed.length} change(s) to ${table} failed. See the editor for details.`);
+      vscode.window.showErrorMessage(vscode.l10n.t('{0} change(s) to {1} failed. See the editor for details.', failed.length, table));
     } else {
       vscode.window.setStatusBarMessage(`$(check) ${done} change(s) saved to ${table}`, 4000);
     }
@@ -323,7 +323,7 @@ export function registerDataEditor(context: vscode.ExtensionContext, manager: Co
       let library = n?.library;
       let file = n?.name;
       if (!library || !file) {
-        const v = await vscode.window.showInputBox({ title: 'Edit table data', prompt: 'LIBRARY/FILE', placeHolder: 'MYLIB/CUSTMAST', ignoreFocusOut: true });
+        const v = await vscode.window.showInputBox({ title: vscode.l10n.t('Edit table data'), prompt: 'LIBRARY/FILE', placeHolder: 'MYLIB/CUSTMAST', ignoreFocusOut: true });
         if (!v?.includes('/')) { return; }
         [library, file] = v.trim().toUpperCase().split('/');
       }

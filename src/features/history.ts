@@ -119,14 +119,14 @@ export function registerHistory(context: vscode.ExtensionContext, manager: Conne
 
     vscode.commands.registerCommand('vanthrex.showHistory', guard(async (arg?: TreeArg) => {
       const uri = activeRemoteUri(arg);
-      if (!uri) { vscode.window.showInformationMessage('Open a member or IFS file from Vanthrex to see its local history.'); return; }
+      if (!uri) { vscode.window.showInformationMessage(vscode.l10n.t('Open a member or IFS file from Vanthrex to see its local history.')); return; }
       const versions = await history.versions(uri);
-      if (!versions.length) { vscode.window.showInformationMessage(`No local history yet for ${label(uri)}.`); return; }
+      if (!versions.length) { vscode.window.showInformationMessage(vscode.l10n.t('No local history yet for {0}.', label(uri))); return; }
       const pick = await vscode.window.showQuickPick(versions.map((v, i) => ({
-        label: `$(history) ${v.time.toLocaleString()}`,
+        label: vscode.l10n.t('$(history) {0}', v.time.toLocaleString()),
         description: `${v.kind === 'saved' ? 'saved by you' : v.kind === 'original' ? 'first opened' : 'changed on server'} · ${v.size} bytes${i === 0 ? ' · latest' : ''}`,
         v,
-      })), { title: `Local history of ${label(uri)}`, placeHolder: 'Pick a version to compare with the current file' });
+      })), { title: vscode.l10n.t('Local history of {0}', label(uri)), placeHolder: vscode.l10n.t('Pick a version to compare with the current file') });
       if (!pick) { return; }
       const action = await vscode.window.showQuickPick(['$(diff) Compare with current', '$(discard) Restore this version into the editor'], { title: pick.label });
       if (!action) { return; }
@@ -137,13 +137,13 @@ export function registerHistory(context: vscode.ExtensionContext, manager: Conne
         const text = Buffer.from(await vscode.workspace.fs.readFile(pick.v.uri)).toString('utf8');
         const all = new vscode.Range(0, 0, editor.document.lineCount, 0);
         await editor.edit(e => e.replace(all, text));
-        vscode.window.showInformationMessage('Version restored in the editor. Save (Ctrl+S) to write it to the IBM i.');
+        vscode.window.showInformationMessage(vscode.l10n.t('Version restored in the editor. Save (Ctrl+S) to write it to the IBM i.'));
       }
     })),
 
     vscode.commands.registerCommand('vanthrex.compareWithServer', guard(async (arg?: TreeArg) => {
       const uri = activeRemoteUri(arg);
-      if (!uri) { vscode.window.showInformationMessage('Open a member or IFS file from Vanthrex first.'); return; }
+      if (!uri) { vscode.window.showInformationMessage(vscode.l10n.t('Open a member or IFS file from Vanthrex first.')); return; }
       const server = vscode.Uri.from({ scheme: SERVER_SCHEME, path: `/${uri.scheme}${uri.path}`, query: String(Date.now()) });
       await vscode.commands.executeCommand('vscode.diff', server, uri, `${label(uri)}: on IBM i ↔ your editor`);
     })),
@@ -151,7 +151,7 @@ export function registerHistory(context: vscode.ExtensionContext, manager: Conne
     vscode.commands.registerCommand('vanthrex.compareMembers', guard(async (arg?: TreeArg) => {
       const left = activeRemoteUri(arg);
       const input = await vscode.window.showInputBox({
-        title: `Compare ${left ? label(left) : ''} with…`, prompt: 'Other member as LIBRARY/FILE(MEMBER), or an IFS path',
+        title: vscode.l10n.t('Compare {0} with…', left ? label(left) : ''), prompt: vscode.l10n.t('Other member as LIBRARY/FILE(MEMBER), or an IFS path'),
         placeHolder: 'PRODLIB/QRPGLESRC(ORDENTRY)', ignoreFocusOut: true,
       });
       if (!input?.trim()) { return; }
@@ -164,10 +164,10 @@ export function registerHistory(context: vscode.ExtensionContext, manager: Conne
       } else if (v.startsWith('/')) {
         right = vscode.Uri.from({ scheme: IFS_SCHEME, path: v });
       } else {
-        throw new Error('Use LIBRARY/FILE(MEMBER) or an IFS path starting with /');
+        throw new Error(vscode.l10n.t('Use LIBRARY/FILE(MEMBER) or an IFS path starting with /'));
       }
       if (!left) {
-        const other = await vscode.window.showInputBox({ title: 'Compare with', prompt: 'First member as LIBRARY/FILE(MEMBER)' });
+        const other = await vscode.window.showInputBox({ title: vscode.l10n.t('Compare with'), prompt: vscode.l10n.t('First member as LIBRARY/FILE(MEMBER)') });
         const mm = other?.trim().toUpperCase().match(/^([^/\s]+)\/([^(\s]+)\(([^)\s]+)\)$/);
         if (!mm) { return; }
         await vscode.commands.executeCommand('vscode.diff', memberUri(mm[1], mm[2], mm[3], 'mbr'), right, `${mm[1]}/${mm[2]}(${mm[3]}) ↔ ${v}`);

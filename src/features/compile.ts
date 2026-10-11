@@ -22,11 +22,11 @@ export class Compiler {
   async compile(target?: vscode.Uri | { resourceUri?: vscode.Uri; path?: string; kind?: string }, alwaysAsk = false): Promise<void> {
     const uri = this.resolveUri(target);
     if (!uri) {
-      vscode.window.showWarningMessage('Open a source member or IFS source file to compile.');
+      vscode.window.showWarningMessage(vscode.l10n.t('Open a source member or IFS source file to compile.'));
       return;
     }
     if (uri.scheme !== MEMBER_SCHEME && uri.scheme !== IFS_SCHEME) {
-      vscode.window.showWarningMessage('Compile works on members and IFS files opened from the Vanthrex views.');
+      vscode.window.showWarningMessage(vscode.l10n.t('Compile works on members and IFS files opened from the Vanthrex views.'));
       return;
     }
     const conn = this.manager.require();
@@ -59,7 +59,7 @@ export class Compiler {
     const command = substituteVariables(action.command, vars);
 
     const result = await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: `Compiling ${vars.NAME}…`, cancellable: false },
+      { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Compiling {0}…', String(vars.NAME)), cancellable: false },
       () => conn.runCL(command));
 
     // Collect inline errors from the events file when the compiler wrote one.
@@ -78,15 +78,15 @@ export class Compiler {
     const warnCount = errors.filter(e => e.severity >= 20 && e.severity < 30).length;
     if (result.ok) {
       const extra = warnCount ? ` with ${warnCount} warning(s)` : '';
-      vscode.window.showInformationMessage(`✔ ${vars.NAME} compiled into ${vars.OBJLIB}${extra}.`,
+      vscode.window.showInformationMessage(vscode.l10n.t('✔ {0} compiled into {1}{2}.', String(vars.NAME), String(vars.OBJLIB), extra),
         ...(warnCount ? ['Show Problems'] : []))
         .then(c => { if (c) { vscode.commands.executeCommand('workbench.actions.view.problems'); } });
     } else {
       const summary = errorCount ? `${errorCount} error(s)` : (result.messages.slice(-1)[0] ?? 'see log');
-      const choice = await vscode.window.showErrorMessage(`✖ ${vars.NAME} failed to compile: ${summary}.`,
-        'Show Problems', 'Show Log');
-      if (choice === 'Show Problems') { vscode.commands.executeCommand('workbench.actions.view.problems'); }
-      if (choice === 'Show Log') { showLog(); }
+      const choice = await vscode.window.showErrorMessage(vscode.l10n.t('✖ {0} failed to compile: {1}.', String(vars.NAME), summary),
+        vscode.l10n.t('Show Problems'), vscode.l10n.t('Show Log'));
+      if (choice === vscode.l10n.t('Show Problems')) { vscode.commands.executeCommand('workbench.actions.view.problems'); }
+      if (choice === vscode.l10n.t('Show Log')) { showLog(); }
     }
   }
 
@@ -109,7 +109,7 @@ export class Compiler {
       ((a.source ?? 'member') === source || a.source === 'both'));
     if (!candidates.length) {
       const choice = await vscode.window.showWarningMessage(
-        `No compile action is defined for ".${ext}" ${source === 'ifs' ? 'IFS files' : 'members'}.`, 'Open Settings');
+        vscode.l10n.t('No compile action is defined for ".{0}" {1}.', ext, source === 'ifs' ? 'IFS files' : 'members'), vscode.l10n.t('Open Settings'));
       if (choice) { vscode.commands.executeCommand('workbench.action.openSettings', 'vanthrex.compileActions'); }
       return undefined;
     }
@@ -122,7 +122,7 @@ export class Compiler {
     }
     const pick = await vscode.window.showQuickPick(
       candidates.map(a => ({ label: a.name, detail: a.command, action: a })),
-      { title: `Compile .${ext}`, placeHolder: 'Choose how to compile (your choice is remembered)' });
+      { title: vscode.l10n.t('Compile .{0}', ext), placeHolder: vscode.l10n.t('Choose how to compile (your choice is remembered)') });
     if (!pick) { return undefined; }
     await this.state.update(LAST_ACTION_KEY, { ...lastMap, [key]: pick.action.name });
     return pick.action;

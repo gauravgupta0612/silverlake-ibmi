@@ -162,9 +162,9 @@ async function handle(manager: ConnectionManager, request: vscode.ChatRequest, c
 
   const sql = firstCodeBlock(answer, ['sql']);
   if (sql && (command === 'sql' || !command)) {
-    stream.button({ command: 'vanthrex.ai.openSql', title: '$(database) Open in SQL scratchpad', arguments: [sql] });
+    stream.button({ command: 'vanthrex.ai.openSql', title: vscode.l10n.t('$(database) Open in SQL scratchpad'), arguments: [sql] });
     if (/^\s*(select|with|values)\b/i.test(sql)) {
-      stream.button({ command: 'vanthrex.explainSql', title: '$(pulse) Explain performance', arguments: [sql] });
+      stream.button({ command: 'vanthrex.explainSql', title: vscode.l10n.t('$(pulse) Explain performance'), arguments: [sql] });
     }
   }
   return { metadata: { command } };
@@ -174,7 +174,7 @@ function openChat(query: string, partial = false): Thenable<unknown> {
   return vscode.commands.executeCommand('workbench.action.chat.open', { query, isPartialQuery: partial })
     .then(undefined, async () => {
       const c = await vscode.window.showWarningMessage(
-        'The AI assistant needs a chat provider in VS Code, such as GitHub Copilot Chat.', 'Install GitHub Copilot Chat');
+        vscode.l10n.t('The AI assistant needs a chat provider in VS Code, such as GitHub Copilot Chat.'), vscode.l10n.t('Install GitHub Copilot Chat'));
       if (c) { await vscode.commands.executeCommand('workbench.extensions.search', 'GitHub.copilot-chat'); }
     });
 }
@@ -196,7 +196,7 @@ class FixWithAi implements vscode.CodeActionProvider {
     const ibmi = ctx.diagnostics.filter(d => String(d.source ?? '').startsWith('IBM i'));
     if (!ibmi.length) { return []; }
     const a = new vscode.CodeAction('$(sparkle) Ask AI to explain and fix this compile error', vscode.CodeActionKind.QuickFix);
-    a.command = { command: 'vanthrex.ai.fix', title: 'Ask AI to fix', arguments: [doc.uri] };
+    a.command = { command: 'vanthrex.ai.fix', title: vscode.l10n.t('Ask AI to fix'), arguments: [doc.uri] };
     a.diagnostics = ibmi;
     return [a];
   }
@@ -221,10 +221,10 @@ export function registerAi(context: vscode.ExtensionContext, manager: Connection
     provideFollowups(result: vscode.ChatResult) {
       const cmd = (result.metadata as { command?: AiCommand } | undefined)?.command;
       const f: vscode.ChatFollowup[] = [];
-      if (cmd === 'explain') { f.push({ prompt: 'Document this code', command: 'document', label: 'Write documentation comments' }, { prompt: '', command: 'review', label: 'Review it for problems' }); }
-      if (cmd === 'review') { f.push({ prompt: '', command: 'modernize', label: 'Modernize to free-form RPG' }); }
-      if (cmd === 'modernize' || cmd === 'document') { f.push({ prompt: '', command: 'test', label: 'Write unit tests' }); }
-      if (cmd === 'sql') { f.push({ prompt: 'Make it faster and explain which index would help', label: 'Tune this query' }); }
+      if (cmd === 'explain') { f.push({ prompt: vscode.l10n.t('Document this code'), command: 'document', label: vscode.l10n.t('Write documentation comments') }, { prompt: '', command: 'review', label: vscode.l10n.t('Review it for problems') }); }
+      if (cmd === 'review') { f.push({ prompt: '', command: 'modernize', label: vscode.l10n.t('Modernize to free-form RPG') }); }
+      if (cmd === 'modernize' || cmd === 'document') { f.push({ prompt: '', command: 'test', label: vscode.l10n.t('Write unit tests') }); }
+      if (cmd === 'sql') { f.push({ prompt: vscode.l10n.t('Make it faster and explain which index would help'), label: vscode.l10n.t('Tune this query') }); }
       return f;
     },
   };
@@ -245,7 +245,7 @@ export function registerAi(context: vscode.ExtensionContext, manager: Connection
       return openChat('@vanthrex /fix ');
     }),
     vscode.commands.registerCommand('vanthrex.ai.sql', async () => {
-      const what = await vscode.window.showInputBox({ title: 'Describe the data you want', prompt: 'For example: customers in Paris with orders over 1000 last month', ignoreFocusOut: true });
+      const what = await vscode.window.showInputBox({ title: vscode.l10n.t('Describe the data you want'), prompt: vscode.l10n.t('For example: customers in Paris with orders over 1000 last month'), ignoreFocusOut: true });
       if (what?.trim()) { pending = undefined; return openChat(`@vanthrex /sql ${what.trim()}`); }
     }),
     vscode.commands.registerCommand('vanthrex.ai.explainObject', (n?: { library: string; name: string; type?: string }) =>

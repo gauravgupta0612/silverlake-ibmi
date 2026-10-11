@@ -64,7 +64,7 @@ class SqlQueryPanel {
       await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
     } else if (m.type === 'csv' && this.last) {
       await vscode.env.clipboard.writeText(toCsv(this.last.columns, this.last.rows));
-      vscode.window.showInformationMessage(`${this.last.rows.length} row(s) copied as CSV — paste them into Excel or a file.`);
+      vscode.window.showInformationMessage(vscode.l10n.t('{0} row(s) copied as CSV — paste them into Excel or a file.', this.last.rows.length));
     }
   }
 
@@ -72,7 +72,7 @@ class SqlQueryPanel {
     const conn = this.manager.require();
     const cfg = vscode.workspace.getConfiguration('vanthrex');
     if (cfg.get<boolean>('sql.confirmDestructive', true) && isDestructiveSql(sql)) {
-      const ok = await vscode.window.showWarningMessage('This statement can change or remove a lot of data. Run it?', { modal: true }, 'Run');
+      const ok = await vscode.window.showWarningMessage(vscode.l10n.t('This statement can change or remove a lot of data. Run it?'), { modal: true }, 'Run');
       if (ok !== 'Run') { this.post({ type: 'error', message: 'Not run.' }); return; }
     }
     this.post({ type: 'running' });

@@ -38,7 +38,7 @@ export class SpoolTreeProvider implements vscode.TreeDataProvider<SpoolNode> {
       `Output queue: ${n.outq}  \nCreated: ${n.created}`);
     item.iconPath = new vscode.ThemeIcon(n.status === 'HELD' ? 'debug-pause' : 'file-text');
     item.contextValue = 'spool';
-    item.command = { command: 'vanthrex.spoolOpen', title: 'Open', arguments: [n] };
+    item.command = { command: 'vanthrex.spoolOpen', title: vscode.l10n.t('Open'), arguments: [n] };
     return item;
   }
 

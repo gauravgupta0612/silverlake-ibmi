@@ -1,8 +1,8 @@
 {
   "name": "vanthrex-ibmi",
-  "displayName": "Vanthrex for IBM i",
-  "description": "A friendly, all-in-one IBM i workbench for VS Code with an AI assistant (@vanthrex): connection wizard for several systems, library & IFS browser, edit and compile with inline errors, call graph & impact analysis, Db2 for i SQL with autocomplete and explain, table data editor, debugger, system dashboard, jobs & messages, RPG navigation, fixed-to-free conversion and code checks.",
-  "version": "0.9.0",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "0.10.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -32,6 +32,7 @@
     "Free-form RPG"
   ],
   "main": "./dist/extension.js",
+  "l10n": "./l10n",
   "activationEvents": [
     "onFileSystem:vanthrex-member",
     "onFileSystem:vanthrex-ifs",
@@ -42,7 +43,7 @@
       "activitybar": [
         {
           "id": "vanthrex",
-          "title": "Vanthrex for IBM i",
+          "title": "%viewsContainers.vanthrex.title%",
           "icon": "media/activity.svg"
         }
       ]
@@ -51,32 +52,32 @@
       "vanthrex": [
         {
           "id": "vanthrex.connections",
-          "name": "Connections"
+          "name": "%views.vanthrex.connections.name%"
         },
         {
           "id": "vanthrex.libraries",
-          "name": "Libraries & Source",
+          "name": "%views.vanthrex.libraries.name%",
           "when": "vanthrex.connected"
         },
         {
           "id": "vanthrex.ifs",
-          "name": "IFS Browser",
+          "name": "%views.vanthrex.ifs.name%",
           "when": "vanthrex.connected"
         },
         {
           "id": "vanthrex.spool",
-          "name": "My Spooled Files",
+          "name": "%views.vanthrex.spool.name%",
           "when": "vanthrex.connected"
         },
         {
           "id": "vanthrex.jobs",
-          "name": "Active Jobs",
+          "name": "%views.vanthrex.jobs.name%",
           "when": "vanthrex.connected",
           "visibility": "collapsed"
         },
         {
           "id": "vanthrex.messages",
-          "name": "Messages",
+          "name": "%views.vanthrex.messages.name%",
           "when": "vanthrex.connected",
           "visibility": "collapsed"
         }
@@ -85,71 +86,71 @@
     "viewsWelcome": [
       {
         "view": "vanthrex.connections",
-        "contents": "No IBM i systems yet. Add one in a few seconds with the guided form.\n[$(add) Add IBM i Connection](command:vanthrex.addConnection)\n[Open the Getting Started guide](command:vanthrex.openWalkthrough)"
+        "contents": "%viewsWelcome.vanthrex.connections.0%"
       },
       {
         "view": "vanthrex.libraries",
-        "contents": "Your library list is empty.\n[$(add) Add Library](command:vanthrex.addLibrary)"
+        "contents": "%viewsWelcome.vanthrex.libraries.1%"
       }
     ],
     "walkthroughs": [
       {
         "id": "vanthrex.gettingStarted",
-        "title": "Get started with Vanthrex for IBM i",
-        "description": "Connect to your IBM i, browse source, compile and run SQL.",
+        "title": "%walkthrough.vanthrex.gettingStarted.title%",
+        "description": "%walkthrough.vanthrex.gettingStarted.description%",
         "steps": [
           {
             "id": "connect",
-            "title": "Add your IBM i connection",
-            "description": "Use the guided form to enter host, user and library list. Passwords are stored in the VS Code secret store.\n[Add Connection](command:vanthrex.addConnection)",
+            "title": "%walkthrough.vanthrex.gettingStarted.connect.title%",
+            "description": "%walkthrough.vanthrex.gettingStarted.connect.description%",
             "media": {
               "markdown": "media/walkthrough/connect.md"
             }
           },
           {
             "id": "browse",
-            "title": "Browse libraries and open members",
-            "description": "Open the Vanthrex view, expand a library, then a source file, and click a member to edit it like a local file.",
+            "title": "%walkthrough.vanthrex.gettingStarted.browse.title%",
+            "description": "%walkthrough.vanthrex.gettingStarted.browse.description%",
             "media": {
               "markdown": "media/walkthrough/browse.md"
             }
           },
           {
             "id": "compile",
-            "title": "Compile with one key",
-            "description": "Press Ctrl+Alt+C (Cmd+Alt+C on Mac) in a member. Errors appear inline and in the Problems panel.",
+            "title": "%walkthrough.vanthrex.gettingStarted.compile.title%",
+            "description": "%walkthrough.vanthrex.gettingStarted.compile.description%",
             "media": {
               "markdown": "media/walkthrough/compile.md"
             }
           },
           {
             "id": "sql",
-            "title": "Run SQL",
-            "description": "Open an SQL scratchpad and press Ctrl+Enter to run the statement under the cursor. Results open in a filterable grid you can export to CSV.\n[Open SQL Scratchpad](command:vanthrex.newSqlScratchpad)",
+            "title": "%walkthrough.vanthrex.gettingStarted.sql.title%",
+            "description": "%walkthrough.vanthrex.gettingStarted.sql.description%",
             "media": {
               "markdown": "media/walkthrough/sql.md"
             }
           },
           {
             "id": "more",
-            "title": "Monitor and explore your system",
-            "description": "Open the System Dashboard, check active jobs and answer QSYSOPR messages, search objects (Ctrl+Alt+O) or source code (Ctrl+Alt+F), and edit table data in a grid.\n[Open System Dashboard](command:vanthrex.openDashboard)",
+            "title": "%walkthrough.vanthrex.gettingStarted.more.title%",
+            "description": "%walkthrough.vanthrex.gettingStarted.more.description%",
             "media": {
               "markdown": "media/walkthrough/more.md"
             }
           },
           {
             "id": "ai",
-            "title": "Ask the AI assistant",
-            "description": "Type **@vanthrex** in the chat to explain RPG, write SQL against your real tables, fix compile errors or modernize code. Right-click in a source → **Vanthrex AI**.\n[Ask @vanthrex](command:vanthrex.ai.open)",
+            "title": "%walkthrough.vanthrex.gettingStarted.ai.title%",
+            "description": "%walkthrough.vanthrex.gettingStarted.ai.description%",
             "media": {
               "markdown": "media/walkthrough/ai.md"
             }
           },
           {
             "id": "git",
-            "title": "Put your source in Git",
-            "description": "Right-click a library → **Git: Export Source to a Git Repository**, then use **Get Changes from IBM i** / **Upload Changed Files** to keep both sides in step. See every version of a member with **Git: History of This Member**.\n[Export a library](command:vanthrex.git.export)",
+            "title": "%walkthrough.vanthrex.gettingStarted.git.title%",
+            "description": "%walkthrough.vanthrex.gettingStarted.git.description%",
             "media": {
               "markdown": "media/walkthrough/git.md"
             },
@@ -161,723 +162,723 @@
     "commands": [
       {
         "command": "vanthrex.openDocs",
-        "title": "Open Documentation",
+        "title": "%command.openDocs%",
         "category": "Vanthrex",
         "icon": "$(book)"
       },
       {
         "command": "vanthrex.addConnection",
-        "title": "Add IBM i Connection…",
+        "title": "%command.addConnection%",
         "category": "Vanthrex",
         "icon": "$(add)"
       },
       {
         "command": "vanthrex.editConnection",
-        "title": "Edit Connection…",
+        "title": "%command.editConnection%",
         "category": "Vanthrex",
         "icon": "$(edit)"
       },
       {
         "command": "vanthrex.deleteConnection",
-        "title": "Remove Connection",
+        "title": "%command.deleteConnection%",
         "category": "Vanthrex",
         "icon": "$(trash)"
       },
       {
         "command": "vanthrex.connect",
-        "title": "Connect",
+        "title": "%command.connect%",
         "category": "Vanthrex",
         "icon": "$(plug)"
       },
       {
         "command": "vanthrex.disconnect",
-        "title": "Disconnect",
+        "title": "%command.disconnect%",
         "category": "Vanthrex",
         "icon": "$(debug-disconnect)"
       },
       {
         "command": "vanthrex.showMenu",
-        "title": "Show IBM i Quick Menu",
+        "title": "%command.showMenu%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.openWalkthrough",
-        "title": "Getting Started",
+        "title": "%command.openWalkthrough%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.refreshLibraries",
-        "title": "Refresh",
+        "title": "%command.refreshLibraries%",
         "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
         "command": "vanthrex.addLibrary",
-        "title": "Add Library…",
+        "title": "%command.addLibrary%",
         "category": "Vanthrex",
         "icon": "$(add)"
       },
       {
         "command": "vanthrex.removeLibrary",
-        "title": "Remove Library from List",
+        "title": "%command.removeLibrary%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.setCurrentLibrary",
-        "title": "Set as Current Library",
+        "title": "%command.setCurrentLibrary%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.newSourceFile",
-        "title": "New Source File…",
+        "title": "%command.newSourceFile%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.newMember",
-        "title": "New Member…",
+        "title": "%command.newMember%",
         "category": "Vanthrex",
         "icon": "$(new-file)"
       },
       {
         "command": "vanthrex.deleteMember",
-        "title": "Delete Member",
+        "title": "%command.deleteMember%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.findMember",
-        "title": "Find & Open Member…",
+        "title": "%command.findMember%",
         "category": "Vanthrex",
         "icon": "$(search)"
       },
       {
         "command": "vanthrex.objectCall",
-        "title": "Call Program",
+        "title": "%command.objectCall%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.objectQuery",
-        "title": "Preview Data (first rows)",
+        "title": "%command.objectQuery%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.objectDelete",
-        "title": "Delete Object",
+        "title": "%command.objectDelete%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.refreshIfs",
-        "title": "Refresh",
+        "title": "%command.refreshIfs%",
         "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
         "command": "vanthrex.ifsChangeRoot",
-        "title": "Go to IFS Directory…",
+        "title": "%command.ifsChangeRoot%",
         "category": "Vanthrex",
         "icon": "$(folder-opened)"
       },
       {
         "command": "vanthrex.ifsNewFile",
-        "title": "New File…",
+        "title": "%command.ifsNewFile%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.ifsNewFolder",
-        "title": "New Folder…",
+        "title": "%command.ifsNewFolder%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.ifsDelete",
-        "title": "Delete",
+        "title": "%command.ifsDelete%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.compile",
-        "title": "Compile Current Source",
+        "title": "%command.compile%",
         "category": "Vanthrex",
         "icon": "$(rocket)"
       },
       {
         "command": "vanthrex.compileWith",
-        "title": "Compile With…",
+        "title": "%command.compileWith%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.runSql",
-        "title": "Run SQL Statement",
+        "title": "%command.runSql%",
         "category": "Vanthrex",
         "icon": "$(play)"
       },
       {
         "command": "vanthrex.sqlQuery",
-        "title": "Run SQL Query…",
+        "title": "%command.sqlQuery%",
         "category": "Vanthrex",
         "icon": "$(database)"
       },
       {
         "command": "vanthrex.newSqlScratchpad",
-        "title": "New SQL Scratchpad",
+        "title": "%command.newSqlScratchpad%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.runCl",
-        "title": "Run CL Command…",
+        "title": "%command.runCl%",
         "category": "Vanthrex",
         "icon": "$(terminal)"
       },
       {
         "command": "vanthrex.refreshSpool",
-        "title": "Refresh",
+        "title": "%command.refreshSpool%",
         "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
         "command": "vanthrex.spoolOpen",
-        "title": "Open Spooled File",
+        "title": "%command.spoolOpen%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.spoolDownload",
-        "title": "Save Spooled File As…",
+        "title": "%command.spoolDownload%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.spoolDelete",
-        "title": "Delete Spooled File",
+        "title": "%command.spoolDelete%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.convertToFree",
-        "title": "Convert Fixed Format to Free (H, F, D, P and C Specs)",
+        "title": "%command.convertToFree%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.showOutput",
-        "title": "Show Output Log",
+        "title": "%command.showOutput%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.openDashboard",
-        "title": "Open System Dashboard",
+        "title": "%command.openDashboard%",
         "category": "Vanthrex",
         "icon": "$(dashboard)"
       },
       {
         "command": "vanthrex.refreshJobs",
-        "title": "Refresh",
+        "title": "%command.refreshJobs%",
         "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
         "command": "vanthrex.filterJobs",
-        "title": "Choose Which Jobs to Show…",
+        "title": "%command.filterJobs%",
         "category": "Vanthrex",
         "icon": "$(filter)"
       },
       {
         "command": "vanthrex.jobLog",
-        "title": "Show Job Log",
+        "title": "%command.jobLog%",
         "category": "Vanthrex",
         "icon": "$(output)"
       },
       {
         "command": "vanthrex.endJob",
-        "title": "End Job…",
+        "title": "%command.endJob%",
         "category": "Vanthrex",
         "icon": "$(stop-circle)"
       },
       {
         "command": "vanthrex.holdJob",
-        "title": "Hold Job",
+        "title": "%command.holdJob%",
         "category": "Vanthrex",
         "icon": "$(debug-pause)"
       },
       {
         "command": "vanthrex.releaseJob",
-        "title": "Release Job",
+        "title": "%command.releaseJob%",
         "category": "Vanthrex",
         "icon": "$(debug-continue)"
       },
       {
         "command": "vanthrex.refreshMessages",
-        "title": "Refresh",
+        "title": "%command.refreshMessages%",
         "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
         "command": "vanthrex.replyMessage",
-        "title": "Reply…",
+        "title": "%command.replyMessage%",
         "category": "Vanthrex",
         "icon": "$(reply)"
       },
       {
         "command": "vanthrex.removeMessage",
-        "title": "Remove Message",
+        "title": "%command.removeMessage%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.sendMessage",
-        "title": "Send Message…",
+        "title": "%command.sendMessage%",
         "category": "Vanthrex",
         "icon": "$(mail)"
       },
       {
         "command": "vanthrex.editData",
-        "title": "Edit Table Data…",
+        "title": "%command.editData%",
         "category": "Vanthrex",
         "icon": "$(table)"
       },
       {
         "command": "vanthrex.searchObjects",
-        "title": "Search Objects…",
+        "title": "%command.searchObjects%",
         "category": "Vanthrex",
         "icon": "$(search)"
       },
       {
         "command": "vanthrex.searchSource",
-        "title": "Search Source Code…",
+        "title": "%command.searchSource%",
         "category": "Vanthrex",
         "icon": "$(search-fuzzy)"
       },
       {
         "command": "vanthrex.whereUsed",
-        "title": "Where Used…",
+        "title": "%command.whereUsed%",
         "category": "Vanthrex",
         "icon": "$(references)"
       },
       {
         "command": "vanthrex.openProgramSource",
-        "title": "Open Program Source",
+        "title": "%command.openProgramSource%",
         "category": "Vanthrex",
         "icon": "$(go-to-file)"
       },
       {
         "command": "vanthrex.showHistory",
-        "title": "Show Local History…",
+        "title": "%command.showHistory%",
         "category": "Vanthrex",
         "icon": "$(history)"
       },
       {
         "command": "vanthrex.compareWithServer",
-        "title": "Compare with Copy on IBM i",
+        "title": "%command.compareWithServer%",
         "category": "Vanthrex",
         "icon": "$(diff)"
       },
       {
         "command": "vanthrex.compareMembers",
-        "title": "Compare with Another Member…",
+        "title": "%command.compareMembers%",
         "category": "Vanthrex",
         "icon": "$(diff)"
       },
       {
         "command": "vanthrex.selectForCompare",
-        "title": "Select for Compare",
+        "title": "%command.selectForCompare%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.compareWithSelected",
-        "title": "Compare with Selected",
+        "title": "%command.compareWithSelected%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.openHistoryFolder",
-        "title": "Open Local History Folder",
+        "title": "%command.openHistoryFolder%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.refreshSqlCache",
-        "title": "Refresh SQL Table & Column Cache",
+        "title": "%command.refreshSqlCache%",
         "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
         "command": "vanthrex.lintCurrent",
-        "title": "Run RPG Code Checks",
+        "title": "%command.lintCurrent%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.disableLintRule",
-        "title": "Turn Off a Code Check",
+        "title": "%command.disableLintRule%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.toggleSourceDates",
-        "title": "Toggle Source Dates (SEU)",
+        "title": "%command.toggleSourceDates%",
         "category": "Vanthrex",
         "icon": "$(calendar)"
       },
       {
         "command": "vanthrex.changedSince",
-        "title": "Highlight Lines Changed Since…",
+        "title": "%command.changedSince%",
         "category": "Vanthrex",
         "icon": "$(history)"
       },
       {
         "command": "vanthrex.prompt",
-        "title": "Prompt (F4)",
+        "title": "%command.prompt%",
         "category": "Vanthrex",
         "icon": "$(list-selection)"
       },
       {
         "command": "vanthrex.promptCl",
-        "title": "Prompt and Run CL Command (F4)…",
+        "title": "%command.promptCl%",
         "category": "Vanthrex",
         "icon": "$(list-selection)"
       },
       {
         "command": "vanthrex.filterMembersByDate",
-        "title": "Filter Members by Last Change…",
+        "title": "%command.filterMembersByDate%",
         "category": "Vanthrex",
         "icon": "$(filter)"
       },
       {
         "command": "vanthrex.sortMembers",
-        "title": "Sort Members by Name / Date",
+        "title": "%command.sortMembers%",
         "category": "Vanthrex",
         "icon": "$(list-ordered)"
       },
       {
         "command": "vanthrex.lockActions",
-        "title": "Member Lock: Options…",
+        "title": "%command.lockActions%",
         "category": "Vanthrex",
         "icon": "$(lock)"
       },
       {
         "command": "vanthrex.lockAskRelease",
-        "title": "Member Lock: Ask Holder to Release…",
+        "title": "%command.lockAskRelease%",
         "category": "Vanthrex",
         "icon": "$(mail)"
       },
       {
         "command": "vanthrex.lockWatch",
-        "title": "Member Lock: Notify Me When Free",
+        "title": "%command.lockWatch%",
         "category": "Vanthrex",
         "icon": "$(bell)"
       },
       {
         "command": "vanthrex.lockRefresh",
-        "title": "Member Lock: Check Again",
+        "title": "%command.lockRefresh%",
         "category": "Vanthrex",
         "icon": "$(refresh)"
       },
       {
         "command": "vanthrex.lockEndJob",
-        "title": "Member Lock: End Holder's Job…",
+        "title": "%command.lockEndJob%",
         "category": "Vanthrex",
         "icon": "$(stop-circle)"
       },
       {
         "command": "vanthrex.objectInfo",
-        "title": "Object Information",
+        "title": "%command.objectInfo%",
         "category": "Vanthrex",
         "icon": "$(info)"
       },
       {
         "command": "vanthrex.objectLocks",
-        "title": "Who Has This Object Locked?",
+        "title": "%command.objectLocks%",
         "category": "Vanthrex",
         "icon": "$(lock)"
       },
       {
         "command": "vanthrex.serviceProgramInfo",
-        "title": "Show Modules & Exports",
+        "title": "%command.serviceProgramInfo%",
         "category": "Vanthrex",
         "icon": "$(package)"
       },
       {
         "command": "vanthrex.compareLibraries",
-        "title": "Compare Two Libraries…",
+        "title": "%command.compareLibraries%",
         "category": "Vanthrex",
         "icon": "$(diff)"
       },
       {
         "command": "vanthrex.generateDdl",
-        "title": "Generate SQL (DDL)",
+        "title": "%command.generateDdl%",
         "category": "Vanthrex",
         "icon": "$(file-code)"
       },
       {
         "command": "vanthrex.runSqlScript",
-        "title": "Run SQL Script (All Statements)",
+        "title": "%command.runSqlScript%",
         "category": "Vanthrex",
         "icon": "$(run-all)"
       },
       {
         "command": "vanthrex.sqlHistory",
-        "title": "SQL History…",
+        "title": "%command.sqlHistory%",
         "category": "Vanthrex",
         "icon": "$(history)"
       },
       {
         "command": "vanthrex.clearSqlHistory",
-        "title": "Clear SQL History",
+        "title": "%command.clearSqlHistory%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.saveQuery",
-        "title": "Save Query…",
+        "title": "%command.saveQuery%",
         "category": "Vanthrex",
         "icon": "$(star-empty)"
       },
       {
         "command": "vanthrex.savedQueries",
-        "title": "Saved Queries…",
+        "title": "%command.savedQueries%",
         "category": "Vanthrex",
         "icon": "$(star-full)"
       },
       {
         "command": "vanthrex.generatePrototype",
-        "title": "Generate Prototype from Procedure",
+        "title": "%command.generatePrototype%",
         "category": "Vanthrex",
         "icon": "$(symbol-interface)"
       },
       {
         "command": "vanthrex.extractProcedure",
-        "title": "Extract to Procedure…",
+        "title": "%command.extractProcedure%",
         "category": "Vanthrex",
         "icon": "$(symbol-method)"
       },
       {
         "command": "vanthrex.checkCopybooks",
-        "title": "Check /COPY Usage (Find Unused Copybooks)",
+        "title": "%command.checkCopybooks%",
         "category": "Vanthrex",
         "icon": "$(references)"
       },
       {
         "command": "vanthrex.debugProgram",
-        "title": "Debug Program",
+        "title": "%command.debugProgram%",
         "category": "Vanthrex",
         "icon": "$(debug-alt)"
       },
       {
         "command": "vanthrex.debugSetup",
-        "title": "Debugger Setup Check",
+        "title": "%command.debugSetup%",
         "category": "Vanthrex",
         "icon": "$(checklist)"
       },
       {
         "command": "vanthrex.switchConnection",
-        "title": "Switch IBM i System…",
+        "title": "%command.switchConnection%",
         "category": "Vanthrex",
         "icon": "$(arrow-swap)"
       },
       {
         "command": "vanthrex.disconnectAll",
-        "title": "Disconnect All Systems",
+        "title": "%command.disconnectAll%",
         "category": "Vanthrex",
         "icon": "$(debug-disconnect)"
       },
       {
         "command": "vanthrex.explainSql",
-        "title": "Explain SQL (Performance)",
+        "title": "%command.explainSql%",
         "category": "Vanthrex",
         "icon": "$(pulse)"
       },
       {
         "command": "vanthrex.explain.createIndexSql",
-        "title": "Write CREATE INDEX for Advised Index",
+        "title": "%command.explain.createIndexSql%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.callGraph",
-        "title": "Call Graph…",
+        "title": "%command.callGraph%",
         "category": "Vanthrex",
         "icon": "$(type-hierarchy)"
       },
       {
         "command": "vanthrex.impactAnalysis",
-        "title": "Impact Analysis (Who Uses This?)…",
+        "title": "%command.impactAnalysis%",
         "category": "Vanthrex",
         "icon": "$(references)"
       },
       {
         "command": "vanthrex.procedureCallers",
-        "title": "Who Calls Each Exported Procedure?…",
+        "title": "%command.procedureCallers%",
         "category": "Vanthrex",
         "icon": "$(symbol-method)"
       },
       {
         "command": "vanthrex.openSourceAtLine",
-        "title": "Open Source at Line",
+        "title": "%command.openSourceAtLine%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.git.export",
-        "title": "Git: Export Source to a Git Repository…",
+        "title": "%command.git.export%",
         "category": "Vanthrex",
         "icon": "$(repo-push)"
       },
       {
         "command": "vanthrex.git.download",
-        "title": "Git: Get Changes from IBM i",
+        "title": "%command.git.download%",
         "category": "Vanthrex",
         "icon": "$(cloud-download)"
       },
       {
         "command": "vanthrex.git.upload",
-        "title": "Git: Upload Changed Files to IBM i",
+        "title": "%command.git.upload%",
         "category": "Vanthrex",
         "icon": "$(cloud-upload)"
       },
       {
         "command": "vanthrex.git.commitPush",
-        "title": "Git: Commit & Push IBM i Source…",
+        "title": "%command.git.commitPush%",
         "category": "Vanthrex",
         "icon": "$(git-commit)"
       },
       {
         "command": "vanthrex.git.memberHistory",
-        "title": "Git: History of This Member…",
+        "title": "%command.git.memberHistory%",
         "category": "Vanthrex",
         "icon": "$(git-commit)"
       },
       {
         "command": "vanthrex.ai.open",
-        "title": "AI: Ask the IBM i Assistant…",
+        "title": "%command.ai.open%",
         "category": "Vanthrex",
         "icon": "$(sparkle)"
       },
       {
         "command": "vanthrex.ai.explain",
-        "title": "AI: Explain This Code",
+        "title": "%command.ai.explain%",
         "category": "Vanthrex",
         "icon": "$(sparkle)"
       },
       {
         "command": "vanthrex.ai.document",
-        "title": "AI: Document This Code",
+        "title": "%command.ai.document%",
         "category": "Vanthrex",
         "icon": "$(book)"
       },
       {
         "command": "vanthrex.ai.review",
-        "title": "AI: Review This Code",
+        "title": "%command.ai.review%",
         "category": "Vanthrex",
         "icon": "$(checklist)"
       },
       {
         "command": "vanthrex.ai.modernize",
-        "title": "AI: Modernize to Free-Form RPG",
+        "title": "%command.ai.modernize%",
         "category": "Vanthrex",
         "icon": "$(wand)"
       },
       {
         "command": "vanthrex.ai.test",
-        "title": "AI: Generate Unit Tests (RPGUnit)",
+        "title": "%command.ai.test%",
         "category": "Vanthrex",
         "icon": "$(beaker)"
       },
       {
         "command": "vanthrex.ai.fix",
-        "title": "AI: Explain & Fix Compile Errors",
+        "title": "%command.ai.fix%",
         "category": "Vanthrex",
         "icon": "$(lightbulb-autofix)"
       },
       {
         "command": "vanthrex.ai.sql",
-        "title": "AI: Write SQL from a Description…",
+        "title": "%command.ai.sql%",
         "category": "Vanthrex",
         "icon": "$(database)"
       },
       {
         "command": "vanthrex.ai.explainObject",
-        "title": "AI: Explain This Object",
+        "title": "%command.ai.explainObject%",
         "category": "Vanthrex",
         "icon": "$(sparkle)"
       },
       {
         "command": "vanthrex.ai.openSql",
-        "title": "AI: Open SQL in Scratchpad",
+        "title": "%command.ai.openSql%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.indexAdvisor",
-        "title": "Index Advisor",
+        "title": "%command.indexAdvisor%",
         "category": "Vanthrex",
         "icon": "$(rocket)"
       },
       {
         "command": "vanthrex.createAdvisedIndex",
-        "title": "Create Advised Index",
+        "title": "%command.createAdvisedIndex%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.activeQueries",
-        "title": "Show Queries Running Now",
+        "title": "%command.activeQueries%",
         "category": "Vanthrex",
         "icon": "$(pulse)"
       },
       {
         "command": "vanthrex.compareData",
-        "title": "Compare Table Data (DEV ↔ PROD)…",
+        "title": "%command.compareData%",
         "category": "Vanthrex",
         "icon": "$(table)"
       },
       {
         "command": "vanthrex.exportDataCompare",
-        "title": "Export Data Differences (CSV)…",
+        "title": "%command.exportDataCompare%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.explainMessage",
-        "title": "Explain Message ID…",
+        "title": "%command.explainMessage%",
         "category": "Vanthrex",
         "icon": "$(question)"
       },
       {
         "command": "vanthrex.analyzeJobLog",
-        "title": "Analyze Job Log",
+        "title": "%command.analyzeJobLog%",
         "category": "Vanthrex",
         "icon": "$(search-fuzzy)"
       },
       {
         "command": "vanthrex.journalExplorer",
-        "title": "Journal Explorer: Who Changed This Table?",
+        "title": "%command.journalExplorer%",
         "category": "Vanthrex",
         "icon": "$(history)"
       },
       {
         "command": "vanthrex.checkAuthority",
-        "title": "Check Authority (Can a User Use This?)…",
+        "title": "%command.checkAuthority%",
         "category": "Vanthrex",
         "icon": "$(shield)"
       },
       {
         "command": "vanthrex.grantAuthority",
-        "title": "Grant Missing Authority",
+        "title": "%command.grantAuthority%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.dataQueue",
-        "title": "View Data Queue Entries",
+        "title": "%command.dataQueue%",
         "category": "Vanthrex",
         "icon": "$(list-ordered)"
       },
       {
         "command": "vanthrex.sendDataQueue",
-        "title": "Send Data Queue Entry…",
+        "title": "%command.sendDataQueue%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.clearDataQueue",
-        "title": "Clear Data Queue…",
+        "title": "%command.clearDataQueue%",
         "category": "Vanthrex"
       },
       {
         "command": "vanthrex.dataArea",
-        "title": "View Data Area",
+        "title": "%command.dataArea%",
         "category": "Vanthrex",
         "icon": "$(symbol-variable)"
       },
       {
         "command": "vanthrex.editDataArea",
-        "title": "Change Data Area Value…",
+        "title": "%command.editDataArea%",
         "category": "Vanthrex",
         "icon": "$(edit)"
       },
       {
         "command": "vanthrex.systemHealth",
-        "title": "PTF & System Health",
+        "title": "%command.systemHealth%",
         "category": "Vanthrex",
         "icon": "$(pulse)"
       }
@@ -1785,11 +1786,11 @@
       }
     ],
     "configuration": {
-      "title": "Vanthrex for IBM i",
+      "title": "%config.title.0%",
       "properties": {
         "vanthrex.compileActions": {
           "type": "array",
-          "markdownDescription": "Compile actions. Variables: `&LIB` (source library), `&OBJLIB` (target library), `&SRCFILE`, `&NAME`, `&EXT`, `&FULLPATH` (IFS path), `&CURLIB`, `&USER`. Add `OPTION(*EVENTF)` to get inline errors.",
+          "markdownDescription": "%config.compileActions.md%",
           "items": {
             "type": "object",
             "required": [
@@ -1948,116 +1949,116 @@
           "type": "number",
           "default": 500,
           "minimum": 1,
-          "description": "Maximum number of rows fetched into the SQL result grid."
+          "description": "%config.sql.maxRows%"
         },
         "vanthrex.sql.confirmDestructive": {
           "type": "boolean",
           "default": true,
-          "description": "Ask for confirmation before running DELETE, DROP, TRUNCATE or UPDATE without WHERE."
+          "description": "%config.sql.confirmDestructive%"
         },
         "vanthrex.tempDirectory": {
           "type": "string",
           "default": "/tmp",
-          "description": "IFS directory used for temporary files during member transfer."
+          "description": "%config.tempDirectory%"
         },
         "vanthrex.spool.maxEntries": {
           "type": "number",
           "default": 200,
-          "description": "Maximum number of spooled files listed."
+          "description": "%config.spool.maxEntries%"
         },
         "vanthrex.autoConnectLast": {
           "type": "boolean",
           "default": false,
-          "description": "Reconnect automatically to the last used system when VS Code starts."
+          "description": "%config.autoConnectLast%"
         },
         "vanthrex.objects.showAll": {
           "type": "boolean",
           "default": true,
-          "description": "Show an 'Objects' folder (programs, files, service programs…) under each library."
+          "description": "%config.objects.showAll%"
         },
         "vanthrex.dashboard.refreshSeconds": {
           "type": "number",
           "default": 30,
           "minimum": 0,
-          "description": "How often the System Dashboard refreshes (seconds). 0 = only when you click Refresh."
+          "description": "%config.dashboard.refreshSeconds%"
         },
         "vanthrex.dataEditor.pageSize": {
           "type": "number",
           "default": 100,
           "minimum": 10,
           "maximum": 2000,
-          "description": "Rows per page in the table data editor."
+          "description": "%config.dataEditor.pageSize%"
         },
         "vanthrex.history.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Keep a local copy of every member and IFS file you open or save, so you can compare and restore."
+          "description": "%config.history.enabled%"
         },
         "vanthrex.history.maxVersions": {
           "type": "number",
           "default": 50,
           "minimum": 1,
-          "description": "Local history versions kept per member / file."
+          "description": "%config.history.maxVersions%"
         },
         "vanthrex.lint.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Check RPG sources as you type."
+          "description": "%config.lint.enabled%"
         },
         "vanthrex.lint.maxProcedureLines": {
           "type": "number",
           "default": 200,
-          "description": "Report procedures longer than this many lines."
+          "description": "%config.lint.maxProcedureLines%"
         },
         "vanthrex.lint.rules": {
           "type": "object",
-          "markdownDescription": "Turn individual RPG checks on or off.",
+          "markdownDescription": "%config.lint.rules.md%",
           "default": {},
           "properties": {
             "unused-definition": {
               "type": "boolean",
               "default": true,
-              "description": "Variables, constants and subroutines that are declared but never used"
+              "description": "%config.lint.rules.unused-definition%"
             },
             "goto": {
               "type": "boolean",
               "default": true,
-              "description": "GOTO usage"
+              "description": "%config.lint.rules.goto%"
             },
             "tag": {
               "type": "boolean",
               "default": true,
-              "description": "TAG labels"
+              "description": "%config.lint.rules.tag%"
             },
             "program-end": {
               "type": "boolean",
               "default": true,
-              "description": "Main program without *INLR = *ON or RETURN"
+              "description": "%config.lint.rules.program-end%"
             },
             "long-procedure": {
               "type": "boolean",
               "default": true,
-              "description": "Procedures longer than the configured number of lines"
+              "description": "%config.lint.rules.long-procedure%"
             },
             "numbered-indicator": {
               "type": "boolean",
               "default": true,
-              "description": "Numbered indicators (*IN01-*IN99)"
+              "description": "%config.lint.rules.numbered-indicator%"
             },
             "empty-on-error": {
               "type": "boolean",
               "default": true,
-              "description": "ON-ERROR blocks that silently swallow errors"
+              "description": "%config.lint.rules.empty-on-error%"
             },
             "select-star": {
               "type": "boolean",
               "default": true,
-              "description": "SELECT * in embedded SQL"
+              "description": "%config.lint.rules.select-star%"
             },
             "mixed-format": {
               "type": "boolean",
               "default": true,
-              "description": "Fixed-format calculation specs in a free-format source"
+              "description": "%config.lint.rules.mixed-format%"
             }
           },
           "additionalProperties": false
@@ -2065,7 +2066,7 @@
         "vanthrex.sourceDates.enabled": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Read and save members **with** their sequence numbers and change dates (SRCSEQ/SRCDAT), like SEU. Unchanged lines keep their date; changed lines get today's date. Needs a Mapepire SQL engine; otherwise members are copied as plain text."
+          "markdownDescription": "%config.sourceDates.enabled.md%"
         },
         "vanthrex.sourceDates.display": {
           "type": "string",
@@ -2075,12 +2076,12 @@
             "off"
           ],
           "enumDescriptions": [
-            "Show the change date in front of each line",
-            "Show sequence number and change date",
-            "Hide"
+            "%config.sourceDates.display.enum.0%",
+            "%config.sourceDates.display.enum.1%",
+            "%config.sourceDates.display.enum.2%"
           ],
           "default": "date",
-          "description": "What to show in front of each member line (Ctrl+Alt+D cycles)."
+          "description": "%config.sourceDates.display%"
         },
         "vanthrex.sourceDates.format": {
           "type": "string",
@@ -2089,12 +2090,12 @@
             "iso"
           ],
           "default": "yymmdd",
-          "description": "Date format: SEU-style YYMMDD or ISO YYYY-MM-DD."
+          "description": "%config.sourceDates.format%"
         },
         "vanthrex.conflictCheck": {
           "type": "boolean",
           "default": true,
-          "description": "Warn when a member is locked by another job, or changed on the IBM i after you opened it, before your save overwrites it."
+          "description": "%config.conflictCheck%"
         },
         "vanthrex.members.sortBy": {
           "type": "string",
@@ -2103,89 +2104,89 @@
             "date"
           ],
           "default": "name",
-          "description": "Order of members in the Libraries view."
+          "description": "%config.members.sortBy%"
         },
         "vanthrex.sql.scriptStopOnError": {
           "type": "boolean",
           "default": true,
-          "description": "Run SQL Script: stop at the first statement that fails (off = run every statement and report failures)."
+          "description": "%config.sql.scriptStopOnError%"
         },
         "vanthrex.debug.port": {
           "type": "number",
           "default": 0,
-          "description": "IBM i Debug Service secured port. 0 = read it from the service configuration (usually 8005)."
+          "description": "%config.debug.port%"
         },
         "vanthrex.debug.ignoreCertificateErrors": {
           "type": "boolean",
           "default": false,
-          "description": "Connect to the Debug Service even when its certificate cannot be verified. Only for test systems."
+          "description": "%config.debug.ignoreCertificateErrors%"
         },
         "vanthrex.debug.updateProductionFiles": {
           "type": "boolean",
           "default": false,
-          "description": "Allow the debugged program to update files in production libraries (UPDPROD)."
+          "description": "%config.debug.updateProductionFiles%"
         },
         "vanthrex.debug.trace": {
           "type": "boolean",
           "default": false,
-          "description": "Write a trace of the debug protocol to the IBM i Debug output (for support)."
+          "description": "%config.debug.trace%"
         },
         "vanthrex.connections.keepOthersOpen": {
           "type": "boolean",
           "default": true,
-          "description": "Keep other systems connected when you connect to another one, so you can switch between them instantly (Ctrl+Alt+S)."
+          "description": "%config.connections.keepOthersOpen%"
         },
         "vanthrex.callGraph.depth": {
           "type": "number",
           "default": 2,
           "minimum": 1,
           "maximum": 8,
-          "description": "How many levels of callers / callees the call graph shows at first."
+          "description": "%config.callGraph.depth%"
         },
         "vanthrex.callGraph.maxNodes": {
           "type": "number",
           "default": 200,
           "minimum": 20,
           "maximum": 2000,
-          "description": "Largest number of objects drawn in a call graph."
+          "description": "%config.callGraph.maxNodes%"
         },
         "vanthrex.callGraph.hideSystemObjects": {
           "type": "boolean",
           "default": true,
-          "description": "Leave IBM-supplied objects (QCMDEXC, QSYSPRT…) out of the call graph."
+          "description": "%config.callGraph.hideSystemObjects%"
         },
         "vanthrex.ai.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable the @vanthrex AI assistant and the AI commands. Code you ask about is sent to the language model you selected in VS Code chat."
+          "description": "%config.ai.enabled%"
         },
         "vanthrex.ai.useTools": {
           "type": "boolean",
           "default": true,
-          "description": "Let the AI assistant look things up on the connected IBM i (object descriptions, table columns, source, read-only queries)."
+          "description": "%config.ai.useTools%"
         },
         "vanthrex.ai.allowQueries": {
           "type": "boolean",
           "default": true,
-          "description": "Let the AI run read-only SQL queries (SELECT / WITH / VALUES only; anything that changes data is refused)."
+          "description": "%config.ai.allowQueries%"
         },
         "vanthrex.ai.confirmQueries": {
           "type": "boolean",
           "default": true,
-          "description": "Ask before the AI runs a query on the IBM i."
+          "description": "%config.ai.confirmQueries%"
         },
         "vanthrex.ai.maxSourceChars": {
           "type": "number",
           "default": 60000,
           "minimum": 2000,
-          "description": "Largest amount of source text sent to the language model in one request."
+          "description": "%config.ai.maxSourceChars%"
         }
       }
     },
     "submenus": [
       {
         "id": "vanthrex.ai",
-        "label": "Vanthrex AI",
+        "label": "%submenu.vanthrex.ai%",
         "icon": "$(sparkle)"
       }
     ],
@@ -2195,39 +2196,39 @@
         "name": "vanthrex",
         "fullName": "Vanthrex IBM i",
         "isSticky": true,
-        "description": "Ask about IBM i: explain RPG/CL, write Db2 SQL, fix compile errors, modernize code…",
+        "description": "%chat.vanthrex.description%",
         "commands": [
           {
             "name": "explain",
-            "description": "Explain the selected code or the open source"
+            "description": "%chat.vanthrex.explain%"
           },
           {
             "name": "document",
-            "description": "Write documentation comments"
+            "description": "%chat.vanthrex.document%"
           },
           {
             "name": "review",
-            "description": "Review the code for bugs, performance and maintainability"
+            "description": "%chat.vanthrex.review%"
           },
           {
             "name": "modernize",
-            "description": "Rewrite as modern free-form RPG"
+            "description": "%chat.vanthrex.modernize%"
           },
           {
             "name": "test",
-            "description": "Generate RPGUnit unit tests"
+            "description": "%chat.vanthrex.test%"
           },
           {
             "name": "fix",
-            "description": "Explain and fix the compile errors"
+            "description": "%chat.vanthrex.fix%"
           },
           {
             "name": "sql",
-            "description": "Write Db2 for i SQL from a description"
+            "description": "%chat.vanthrex.sql%"
           },
           {
             "name": "object",
-            "description": "Explain an object: LIB/NAME *TYPE"
+            "description": "%chat.vanthrex.object%"
           }
         ]
       }
@@ -2235,7 +2236,7 @@
     "languageModelTools": [
       {
         "name": "vanthrex_runQuery",
-        "displayName": "IBM i: Run read-only SQL",
+        "displayName": "%tool.vanthrex_runQuery.displayName%",
         "toolReferenceName": "ibmiQuery",
         "canBeReferencedInPrompt": true,
         "icon": "$(database)",
@@ -2244,7 +2245,7 @@
           "db2",
           "sql"
         ],
-        "userDescription": "Run a read-only Db2 for i query on the connected IBM i.",
+        "userDescription": "%tool.vanthrex_runQuery.userDescription%",
         "modelDescription": "Runs ONE read-only Db2 for i SQL statement (SELECT, WITH or VALUES) on the IBM i connected in Vanthrex and returns up to 200 rows as text. Statements that change data are refused. Use it to look at data, catalog views (QSYS2.SYSTABLES, QSYS2.SYSCOLUMNS) and IBM i services (QSYS2.ACTIVE_JOB_INFO, QSYS2.OBJECT_STATISTICS, …). System naming LIB/FILE works.",
         "inputSchema": {
           "type": "object",
@@ -2265,7 +2266,7 @@
       },
       {
         "name": "vanthrex_readSource",
-        "displayName": "IBM i: Read source member",
+        "displayName": "%tool.vanthrex_readSource.displayName%",
         "toolReferenceName": "ibmiSource",
         "canBeReferencedInPrompt": true,
         "icon": "$(file-code)",
@@ -2273,7 +2274,7 @@
           "ibmi",
           "source"
         ],
-        "userDescription": "Read a source member or IFS stream file from the connected IBM i.",
+        "userDescription": "%tool.vanthrex_readSource.userDescription%",
         "modelDescription": "Returns the text of a source member given as LIBRARY/FILE(MEMBER), e.g. MYLIB/QRPGLESRC(ORDENTRY), or of an IFS stream file given as an absolute path, from the IBM i connected in Vanthrex. Use it to read copybooks, called programs or prototypes.",
         "inputSchema": {
           "type": "object",
@@ -2290,14 +2291,14 @@
       },
       {
         "name": "vanthrex_describeObject",
-        "displayName": "IBM i: Describe object",
+        "displayName": "%tool.vanthrex_describeObject.displayName%",
         "toolReferenceName": "ibmiObject",
         "canBeReferencedInPrompt": true,
         "icon": "$(info)",
         "tags": [
           "ibmi"
         ],
-        "userDescription": "Describe an IBM i object: attributes, source, columns of a file, modules of a program.",
+        "userDescription": "%tool.vanthrex_describeObject.userDescription%",
         "modelDescription": "Describes an IBM i object given as LIBRARY/NAME (optionally with a type such as *PGM, *SRVPGM, *FILE): type, attribute, text, owner, size, dates, source member; for files also the columns (name, type, length, text) and indexes; for programs the bound modules and their source.",
         "inputSchema": {
           "type": "object",
@@ -2318,14 +2319,14 @@
       },
       {
         "name": "vanthrex_searchObjects",
-        "displayName": "IBM i: Search objects",
+        "displayName": "%tool.vanthrex_searchObjects.displayName%",
         "toolReferenceName": "ibmiSearch",
         "canBeReferencedInPrompt": true,
         "icon": "$(search)",
         "tags": [
           "ibmi"
         ],
-        "userDescription": "Find IBM i objects by name or description.",
+        "userDescription": "%tool.vanthrex_searchObjects.userDescription%",
         "modelDescription": "Finds objects on the connected IBM i whose name or text description matches a pattern (* is a wildcard), in the user's library list or in one library. Returns library, name, type, attribute and text. Use it to find the real table or program names before writing SQL or code.",
         "inputSchema": {
           "type": "object",
@@ -2350,7 +2351,7 @@
       },
       {
         "name": "vanthrex_systemStatus",
-        "displayName": "IBM i: System status",
+        "displayName": "%tool.vanthrex_systemStatus.displayName%",
         "toolReferenceName": "ibmiStatus",
         "canBeReferencedInPrompt": true,
         "icon": "$(pulse)",
@@ -2358,7 +2359,7 @@
           "ibmi",
           "operations"
         ],
-        "userDescription": "CPU, disk, jobs waiting for a reply and the latest QSYSOPR messages.",
+        "userDescription": "%tool.vanthrex_systemStatus.userDescription%",
         "modelDescription": "Returns the connected IBM i's CPU and system ASP use, job counts, jobs in MSGW (waiting for a reply) and the latest QSYSOPR messages. Use it to answer questions about system health or stuck jobs.",
         "inputSchema": {
           "type": "object",
@@ -2384,6 +2385,7 @@
     "@types/node": "^20.0.0",
     "@types/ssh2": "^1.15.6",
     "@types/vscode": "1.95.0",
+    "@vscode/l10n-dev": "^0.0.35",
     "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.0",
     "typescript": "^5.4.0"

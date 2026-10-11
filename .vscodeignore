@@ -7,5 +7,7 @@
 !README.md
 !CHANGELOG.md
 !LICENSE
+!l10n/**
+!package.nls*.json
 !language-configuration*.json
 dist/**/*.map

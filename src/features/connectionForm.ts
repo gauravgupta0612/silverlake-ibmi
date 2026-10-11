@@ -47,11 +47,11 @@ export class ConnectionForm {
     this.panel.onDidDispose(() => { if (ConnectionForm.current === this) { ConnectionForm.current = undefined; } });
     this.panel.webview.onDidReceiveMessage(m => this.onMessage(m).catch(e => {
       logError(e);
-      vscode.window.showErrorMessage(`Connection form error: ${errorMessage(e)}`);
+      vscode.window.showErrorMessage(vscode.l10n.t('Connection form error: {0}', errorMessage(e)));
     }));
     this.render().catch(e => {
       logError(e);
-      vscode.window.showErrorMessage(`Could not open the connection form: ${errorMessage(e)}`);
+      vscode.window.showErrorMessage(vscode.l10n.t('Could not open the connection form: {0}', errorMessage(e)));
     });
   }
 
@@ -104,7 +104,7 @@ export class ConnectionForm {
   private async onMessage(m: { type: string; data?: FormData }): Promise<void> {
     const post = (msg: object) => this.panel.webview.postMessage(msg);
     if (m.type === 'browseKey') {
-      const pick = await vscode.window.showOpenDialog({ canSelectMany: false, title: 'Select SSH private key' });
+      const pick = await vscode.window.showOpenDialog({ canSelectMany: false, title: vscode.l10n.t('Select SSH private key') });
       if (pick?.[0]) { post({ type: 'keyPath', path: pick[0].fsPath }); }
       return;
     }
@@ -148,7 +148,7 @@ export class ConnectionForm {
           await this.store.setPassword(profile.id, undefined);
         }
       }
-      vscode.window.showInformationMessage(`Saved connection "${profile.name}".`, 'Connect now')
+      vscode.window.showInformationMessage(vscode.l10n.t('Saved connection "{0}".', profile.name), vscode.l10n.t('Connect now'))
         .then(c => { if (c) { vscode.commands.executeCommand('vanthrex.connect', profile); } });
       this.onSaved?.(profile);
       this.panel.dispose();

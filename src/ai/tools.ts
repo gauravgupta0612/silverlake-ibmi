@@ -14,7 +14,7 @@ function cfg() { return vscode.workspace.getConfiguration('vanthrex'); }
 
 function requireConn(manager: ConnectionManager) {
   const c = manager.connection;
-  if (!c) { throw new Error('No IBM i system is connected in Vanthrex. Ask the user to connect first (Vanthrex view → click a connection).'); }
+  if (!c) { throw new Error(vscode.l10n.t('No IBM i system is connected in Vanthrex. Ask the user to connect first (Vanthrex view → click a connection).')); }
   return c;
 }
 
@@ -35,7 +35,7 @@ export function registerAiTools(context: vscode.ExtensionContext, manager: Conne
       return {
         invocationMessage: 'Querying Db2 for i…',
         confirmationMessages: {
-          title: 'Run this read-only query on the IBM i?',
+          title: vscode.l10n.t('Run this read-only query on the IBM i?'),
           message: new vscode.MarkdownString('```sql\n' + sql + '\n```\nOnly SELECT / WITH / VALUES statements are allowed. Turn off confirmations with `vanthrex.ai.confirmQueries`.'),
         },
       };
@@ -60,7 +60,7 @@ export function registerAiTools(context: vscode.ExtensionContext, manager: Conne
       if (!ref.startsWith('/')) { return { invocationMessage: `Reading ${ref || 'source'}…` }; }
       return {
         invocationMessage: `Reading ${ref}…`,
-        confirmationMessages: { title: 'Let the AI read this IFS file?', message: new vscode.MarkdownString(`\`${ref}\` will be read from the IBM i and sent to the language model.`) },
+        confirmationMessages: { title: vscode.l10n.t('Let the AI read this IFS file?'), message: new vscode.MarkdownString(`\`${ref}\` will be read from the IBM i and sent to the language model.`) },
       };
     },
     async invoke(options) {

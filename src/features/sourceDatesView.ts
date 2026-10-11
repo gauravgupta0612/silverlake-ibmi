@@ -109,13 +109,13 @@ export function registerSourceDates(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('vanthrex.changedSince', async () => {
       const editor = vscode.window.activeTextEditor;
       if (!editor || editor.document.uri.scheme !== MEMBER_SCHEME || !sourceRecords.has(editor.document.uri.toString())) {
-        vscode.window.showInformationMessage('Open a source member (with source dates available) first.');
+        vscode.window.showInformationMessage(vscode.l10n.t('Open a source member (with source dates available) first.'));
         return;
       }
       const pick = await vscode.window.showQuickPick([
-        { label: 'Last 7 days', days: 7 }, { label: 'Last 30 days', days: 30 }, { label: 'Last 90 days', days: 90 },
-        { label: 'Since a date…', days: -1 }, { label: 'Clear highlight', days: 0 },
-      ], { title: 'Highlight lines changed since…' });
+        { label: vscode.l10n.t('Last 7 days'), days: 7 }, { label: vscode.l10n.t('Last 30 days'), days: 30 }, { label: vscode.l10n.t('Last 90 days'), days: 90 },
+        { label: vscode.l10n.t('Since a date…'), days: -1 }, { label: vscode.l10n.t('Clear highlight'), days: 0 },
+      ], { title: vscode.l10n.t('Highlight lines changed since…') });
       if (!pick) { return; }
       const key = editor.document.uri.toString();
       if (pick.days === 0) { since.delete(key); render(editor); return; }
@@ -124,7 +124,7 @@ export function registerSourceDates(context: vscode.ExtensionContext): void {
         from = new Date(Date.now() - pick.days * 86_400_000);
       } else {
         const v = await vscode.window.showInputBox({
-          title: 'Since date', placeHolder: 'YYYY-MM-DD',
+          title: vscode.l10n.t('Since date'), placeHolder: 'YYYY-MM-DD',
           validateInput: s => /^\d{4}-\d{2}-\d{2}$/.test(s.trim()) ? undefined : 'Use YYYY-MM-DD',
         });
         if (!v) { return; }
@@ -135,11 +135,11 @@ export function registerSourceDates(context: vscode.ExtensionContext): void {
       const recs = currentRecords(editor.document) ?? [];
       const lines = recs.map((r, i) => ({ r, i })).filter(x => !x.r || dateKey(x.r.date) >= dateKey(dateToSrcDate(from)));
       const go = await vscode.window.showQuickPick(lines.map(x => ({
-        label: `$(diff-modified) Line ${x.i + 1}`,
+        label: vscode.l10n.t('$(diff-modified) Line {0}', x.i + 1),
         description: x.r ? formatSrcDate(x.r.date, 'iso') : 'unsaved change',
         detail: editor.document.lineAt(x.i).text.trim() || '(blank)',
         line: x.i,
-      })), { title: `${lines.length} line(s) changed since ${from.toISOString().slice(0, 10)} — pick one to jump to it`, matchOnDetail: true });
+      })), { title: vscode.l10n.t('{0} line(s) changed since {1} — pick one to jump to it', lines.length, from.toISOString().slice(0, 10)), matchOnDetail: true });
       if (go) {
         const pos = new vscode.Position(go.line, 0);
         editor.selection = new vscode.Selection(pos, pos);

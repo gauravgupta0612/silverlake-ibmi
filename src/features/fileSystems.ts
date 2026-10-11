@@ -143,26 +143,26 @@ export class MemberFileSystem extends BaseFs {
     const opened = this.openedAt.get(uri.toString());
     if (opened && state.changed && state.changed !== opened) {
       const choice = await vscode.window.showWarningMessage(
-        `${library}/${file}(${member}) was changed on the IBM i after you opened it (at ${state.changed.replace(/\.\d+$/, '')}).`,
-        { modal: true, detail: 'Saving now would overwrite those changes.' }, 'Compare First', 'Overwrite');
-      if (choice === 'Compare First') {
+        vscode.l10n.t('{0}/{1}({2}) was changed on the IBM i after you opened it (at {3}).', library, file, member, state.changed.replace(/\.\d+$/, '')),
+        { modal: true, detail: vscode.l10n.t('Saving now would overwrite those changes.') }, vscode.l10n.t('Compare First'), vscode.l10n.t('Overwrite'));
+      if (choice === vscode.l10n.t('Compare First')) {
         vscode.commands.executeCommand('vanthrex.compareWithServer', uri);
         throw new SaveCancelled('Save cancelled — compare the versions, then save again.');
       }
-      if (choice !== 'Overwrite') { throw new SaveCancelled('Save cancelled.'); }
+      if (choice !== vscode.l10n.t('Overwrite')) { throw new SaveCancelled('Save cancelled.'); }
     }
     memberLocks.set(uri.toString(), state.locks);
     memberLocksChanged.fire({ uri, onOpen: false });
     if (state.locks.length) {
       const choice = await vscode.window.showWarningMessage(
-        `🔒 ${library}/${file}(${member}) is locked by ${state.locks.map(describeLock).join(', ')}.`,
-        { modal: true, detail: 'They may be editing it (for example in SEU). If you save now, the save can fail or one of you can lose changes.' },
-        'Ask Them to Release It', 'Save Anyway');
-      if (choice === 'Ask Them to Release It') {
+        vscode.l10n.t('🔒 {0}/{1}({2}) is locked by {3}.', library, file, member, state.locks.map(describeLock).join(', ')),
+        { modal: true, detail: vscode.l10n.t('They may be editing it (for example in SEU). If you save now, the save can fail or one of you can lose changes.') },
+        vscode.l10n.t('Ask Them to Release It'), vscode.l10n.t('Save Anyway'));
+      if (choice === vscode.l10n.t('Ask Them to Release It')) {
         vscode.commands.executeCommand('vanthrex.lockAskRelease', uri, state.locks[0]);
         throw new SaveCancelled('Save postponed — waiting for the lock to be released.');
       }
-      if (choice !== 'Save Anyway') { throw new SaveCancelled('Save cancelled.'); }
+      if (choice !== vscode.l10n.t('Save Anyway')) { throw new SaveCancelled('Save cancelled.'); }
     }
   }
 
@@ -187,7 +187,7 @@ export class MemberFileSystem extends BaseFs {
         // Today's date as the IBM i sees it (YYMMDD), for changed lines.
         const today = Number((await conn.rows<{ D: string }>(
           `SELECT VARCHAR_FORMAT(CURRENT TIMESTAMP, 'YYMMDD') AS D FROM SYSIBM.SYSDUMMY1`, 1))[0]?.D);
-        if (!today) { throw new Error('Could not read the IBM i date.'); }
+        if (!today) { throw new Error(vscode.l10n.t('Could not read the IBM i date.')); }
         const merged = mergeRecords(original, lines, today);
         await conn.writeMemberRecords(library, file, member, merged);
         sourceRecords.set(uri.toString(), merged);

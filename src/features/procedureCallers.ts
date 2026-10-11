@@ -50,7 +50,7 @@ export async function procedureCallers(manager: ConnectionManager, o: ObjArg): P
     `SELECT SYMBOL_NAME FROM QSYS2.PROGRAM_EXPORT_IMPORT_INFO WHERE PROGRAM_LIBRARY = ${sqlString(lib)} ` +
     `AND PROGRAM_NAME = ${sqlString(name)} AND OBJECT_TYPE = '*SRVPGM' AND SYMBOL_USAGE = '*PROCEXP'`, 10000))
     .map(r => String(r.SYMBOL_NAME ?? '').trim()).filter(Boolean);
-  if (!exports.length) { throw new Error(`${lib}/${name} exports no procedures (or it is not a service program).`); }
+  if (!exports.length) { throw new Error(vscode.l10n.t('{0}/{1} exports no procedures (or it is not a service program).', lib, name)); }
 
   const libs = await pickLibraries(conn, { library: lib, name, type: '*SRVPGM' });
   if (!libs) { return; }
@@ -62,7 +62,7 @@ export async function procedureCallers(manager: ConnectionManager, o: ObjArg): P
   let programs: { lib: string; name: string; type: string }[] = [];
 
   const cancelled = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: `Who calls the procedures of ${lib}/${name}?`, cancellable: true },
+    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Who calls the procedures of {0}/{1}?', lib, name), cancellable: true },
     async (progress, token) => {
       progress.report({ message: 'finding bound programs…' });
       programs = await boundPrograms(conn, lib, name, libs);
@@ -98,7 +98,7 @@ export async function procedureCallers(manager: ConnectionManager, o: ObjArg): P
       }, token);
       return token.isCancellationRequested;
     });
-  if (cancelled) { vscode.window.showInformationMessage('Stopped — the results below cover the sources scanned so far.'); }
+  if (cancelled) { vscode.window.showInformationMessage(vscode.l10n.t('Stopped — the results below cover the sources scanned so far.')); }
 
   // ---- report
   found.sort((a, b) => a.symbol.localeCompare(b.symbol) || a.program.localeCompare(b.program) || a.line - b.line);
@@ -107,17 +107,17 @@ export async function procedureCallers(manager: ConnectionManager, o: ObjArg): P
   const withCalls = new Set(found.map(f => f.program));
   const unused = exports.filter(e => !byExport.get(e)!.length);
   const report: Report = {
-    title: `Who calls ${name}?`,
+    title: vscode.l10n.t('Who calls {0}?', name),
     subtitle: `${exports.length} exported procedure(s) of ${lib}/${name} · ${programs.length} bound program(s) in ${libs.join(', ')} · ` +
       `${scanned} source(s) scanned · ${found.length} call(s) found.`,
     actions: [
-      { label: 'Modules & exports', command: 'vanthrex.serviceProgramInfo', args: [{ library: lib, name, type: '*SRVPGM' }] },
-      { label: 'Call graph', command: 'vanthrex.callGraph', args: [{ library: lib, name, type: '*SRVPGM' }] },
-      { label: 'Run SQL query…', command: 'vanthrex.sqlQuery', args: [{ library: lib, name, type: '*SRVPGM' }] },
+      { label: vscode.l10n.t('Modules & exports'), command: 'vanthrex.serviceProgramInfo', args: [{ library: lib, name, type: '*SRVPGM' }] },
+      { label: vscode.l10n.t('Call graph'), command: 'vanthrex.callGraph', args: [{ library: lib, name, type: '*SRVPGM' }] },
+      { label: vscode.l10n.t('Run SQL query…'), command: 'vanthrex.sqlQuery', args: [{ library: lib, name, type: '*SRVPGM' }] },
     ],
     tables: [
       {
-        title: 'Exported procedures', columns: ['Procedure', 'Calls', 'Programs'], filter: true,
+        title: vscode.l10n.t('Exported procedures'), columns: ['Procedure', 'Calls', 'Programs'], filter: true,
         rows: exports.map(e => {
           const calls = byExport.get(e)!;
           return [e, calls.length, [...new Set(calls.map(c => c.program))].sort().join(', ') || 'no caller found'];
@@ -125,23 +125,23 @@ export async function procedureCallers(manager: ConnectionManager, o: ObjArg): P
         rowClass: exports.map(e => byExport.get(e)!.length ? undefined : 'different'),
       },
       {
-        title: 'Calls', columns: ['Procedure', 'Program', 'Source', 'Line', 'Code', 'Found by'], filter: true,
+        title: vscode.l10n.t('Calls'), columns: ['Procedure', 'Program', 'Source', 'Line', 'Code', 'Found by'], filter: true,
         rows: found.map(f => [f.symbol, f.program, sourceLabel(f.source), f.line, f.code.substring(0, 120),
             f.guessed ? 'name only (prototype not found)' : f.via === f.symbol ? 'symbol' : `prototype ${f.via}`]),
-        rowActions: found.map(f => ({ label: 'Open the source at this line', command: 'vanthrex.openSourceAtLine', args: [f.source, f.line] })),
+        rowActions: found.map(f => ({ label: vscode.l10n.t('Open the source at this line'), command: 'vanthrex.openSourceAtLine', args: [f.source, f.line] })),
         rowClass: found.map(f => f.guessed ? 'different' : undefined),
-        empty: 'No calls found.',
+        empty: vscode.l10n.t('No calls found.'),
       },
       {
-        title: 'Bound, but no call found', columns: ['Program', 'Type'],
+        title: vscode.l10n.t('Bound, but no call found'), columns: ['Program', 'Type'],
         rows: programs.filter(p => !withCalls.has(`${p.lib}/${p.name}`) && !notScanned.some(n => n.program === `${p.lib}/${p.name}` && !n.module))
           .map(p => [`${p.lib}/${p.name}`, p.type]),
-        empty: 'Every scanned program calls at least one exported procedure.',
+        empty: vscode.l10n.t('Every scanned program calls at least one exported procedure.'),
       },
       {
-        title: 'Not scanned', columns: ['Program', 'Module', 'Reason'], filter: true,
+        title: vscode.l10n.t('Not scanned'), columns: ['Program', 'Module', 'Reason'], filter: true,
         rows: notScanned.map(n => [n.program, n.module, n.reason]),
-        empty: 'Every bound module was scanned.',
+        empty: vscode.l10n.t('Every bound module was scanned.'),
       },
     ],
     note: [
@@ -157,7 +157,7 @@ export function registerProcedureCallers(context: vscode.ExtensionContext, manag
   const guard = (fn: (...a: any[]) => Promise<unknown>) => async (...a: any[]) => {
     try { await fn(...a); } catch (e) {
       logError(e);
-      const c = await vscode.window.showErrorMessage(errorMessage(e), 'Show Log');
+      const c = await vscode.window.showErrorMessage(errorMessage(e), vscode.l10n.t('Show Log'));
       if (c) { showLog(); }
     }
   };
@@ -165,10 +165,10 @@ export function registerProcedureCallers(context: vscode.ExtensionContext, manag
     vscode.commands.registerCommand('vanthrex.procedureCallers', guard(async (n?: ObjArg) => {
       let o = n?.library && n.name ? n : undefined;
       if (!o) {
-        const s = await vscode.window.showInputBox({ title: 'Who calls each exported procedure?', prompt: 'Service program: LIBRARY/NAME', placeHolder: 'MYLIB/CUSTSRV', ignoreFocusOut: true });
+        const s = await vscode.window.showInputBox({ title: vscode.l10n.t('Who calls each exported procedure?'), prompt: vscode.l10n.t('Service program: LIBRARY/NAME'), placeHolder: 'MYLIB/CUSTSRV', ignoreFocusOut: true });
         if (!s?.trim()) { return; }
         const [library, name] = s.trim().toUpperCase().split('/');
-        if (!name) { throw new Error('Use LIBRARY/NAME, for example MYLIB/CUSTSRV.'); }
+        if (!name) { throw new Error(vscode.l10n.t('Use LIBRARY/NAME, for example MYLIB/CUSTSRV.')); }
         o = { library, name, type: '*SRVPGM' };
       }
       await procedureCallers(manager, o);

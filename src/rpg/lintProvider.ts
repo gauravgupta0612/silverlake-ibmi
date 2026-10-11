@@ -68,11 +68,11 @@ export function registerRpgLint(context: vscode.ExtensionContext): void {
           }
           if (rule === 'mixed-format') {
             const conv = new vscode.CodeAction('Convert fixed-format C-specs to free…', vscode.CodeActionKind.RefactorRewrite);
-            conv.command = { command: 'vanthrex.convertToFree', title: 'Convert' };
+            conv.command = { command: 'vanthrex.convertToFree', title: vscode.l10n.t('Convert') };
             actions.push(conv);
           }
           const off = new vscode.CodeAction(`Turn off the "${rule}" check (${LINT_RULES[rule] ?? rule})`, vscode.CodeActionKind.QuickFix);
-          off.command = { command: 'vanthrex.disableLintRule', title: 'Turn off', arguments: [rule] };
+          off.command = { command: 'vanthrex.disableLintRule', title: vscode.l10n.t('Turn off'), arguments: [rule] };
           off.diagnostics = [d];
           actions.push(off);
         }
@@ -82,7 +82,7 @@ export function registerRpgLint(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('vanthrex.disableLintRule', async (rule: LintRule) => {
       const rules = { ...config().get<Record<string, boolean>>('lint.rules', {}), [rule]: false };
       await config().update('lint.rules', rules, vscode.ConfigurationTarget.Global);
-      vscode.window.showInformationMessage(`The "${rule}" check is off. Turn it back on in Settings → Vanthrex: Lint Rules.`);
+      vscode.window.showInformationMessage(vscode.l10n.t('The "{0}" check is off. Turn it back on in Settings → Vanthrex: Lint Rules.', rule));
     }),
   );
   vscode.window.visibleTextEditors.forEach(e => run(e.document));

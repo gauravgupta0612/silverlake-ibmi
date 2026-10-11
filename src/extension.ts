@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('system tools', () => registerAdmin(context, m));
 
   if (failures.length) {
-    vscode.window.showErrorMessage(`Vanthrex started with problems: ${failures.join(' | ')}`, 'Show Log')
+    vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))
       .then(c => { if (c) { showLog(); } });
   } else {
     log('Vanthrex ready');

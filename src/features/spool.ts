@@ -37,7 +37,7 @@ export function registerSpool(context: vscode.ExtensionContext, manager: Connect
         const doc = await vscode.workspace.openTextDocument(spoolUri(n));
         await vscode.window.showTextDocument(doc, { preview: true });
       } catch (e) {
-        vscode.window.showErrorMessage(`Could not open spooled file: ${errorMessage(e)}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('Could not open spooled file: {0}', errorMessage(e)));
       }
     }),
     vscode.commands.registerCommand('vanthrex.spoolDownload', async (n: SpoolNode) => {
@@ -47,17 +47,17 @@ export function registerSpool(context: vscode.ExtensionContext, manager: Connect
       try {
         const text = await readSpool(manager, n.job, n.name, n.number);
         await vscode.workspace.fs.writeFile(target, Buffer.from(text, 'utf8'));
-        vscode.window.showInformationMessage(`Saved ${n.name} to ${target.fsPath}`);
+        vscode.window.showInformationMessage(vscode.l10n.t('Saved {0} to {1}', n.name, target.fsPath));
       } catch (e) {
         vscode.window.showErrorMessage(errorMessage(e));
       }
     }),
     vscode.commands.registerCommand('vanthrex.spoolDelete', async (n: SpoolNode) => {
-      const ok = await vscode.window.showWarningMessage(`Delete spooled file ${n.name} (#${n.number}) of job ${n.job}?`,
-        { modal: true }, 'Delete');
-      if (ok !== 'Delete') { return; }
+      const ok = await vscode.window.showWarningMessage(vscode.l10n.t('Delete spooled file {0} (#{1}) of job {2}?', n.name, n.number, n.job),
+        { modal: true }, vscode.l10n.t('Delete'));
+      if (ok !== vscode.l10n.t('Delete')) { return; }
       const r = await manager.require().runCL(`DLTSPLF FILE(${n.name}) JOB(${n.job}) SPLNBR(${n.number})`);
-      if (!r.ok) { vscode.window.showErrorMessage(`Could not delete: ${(r.stderr || r.stdout).trim()}`); }
+      if (!r.ok) { vscode.window.showErrorMessage(vscode.l10n.t('Could not delete: {0}', (r.stderr || r.stdout).trim())); }
       tree.refresh();
     }),
   );

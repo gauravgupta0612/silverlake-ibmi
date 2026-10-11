@@ -7,7 +7,7 @@ import { copybookUsage, extractProcedure, hasProcedureFriendlyControl, prototype
 
 function rpgEditor(): vscode.TextEditor {
   const editor = vscode.window.activeTextEditor;
-  if (!editor || editor.document.languageId !== 'rpgle') { throw new Error('Open an RPG source first.'); }
+  if (!editor || editor.document.languageId !== 'rpgle') { throw new Error(vscode.l10n.t('Open an RPG source first.')); }
   return editor;
 }
 
@@ -24,7 +24,7 @@ export function registerProcedureTools(context: vscode.ExtensionContext, manager
       const r = prototypeFromProcedure(editor.document.getText(), editor.selection.active.line);
       await vscode.env.clipboard.writeText(r.text);
       const c = await vscode.window.showInformationMessage(
-        `Prototype for ${r.name} copied to the clipboard — paste it into your prototype copybook.`, 'Open in Editor');
+        vscode.l10n.t('Prototype for {0} copied to the clipboard — paste it into your prototype copybook.', r.name), vscode.l10n.t('Open in Editor'));
       if (c) {
         const doc = await vscode.workspace.openTextDocument({ language: 'rpgle', content: r.text + '\n' });
         await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
@@ -35,12 +35,12 @@ export function registerProcedureTools(context: vscode.ExtensionContext, manager
     vscode.commands.registerCommand('vanthrex.extractProcedure', guard(async () => {
       const editor = rpgEditor();
       const doc = editor.document;
-      if (editor.selection.isEmpty) { throw new Error('Select the lines to move into a new procedure.'); }
+      if (editor.selection.isEmpty) { throw new Error(vscode.l10n.t('Select the lines to move into a new procedure.')); }
       const start = editor.selection.start.line;
       const end = editor.selection.end.character === 0 && editor.selection.end.line > start
         ? editor.selection.end.line - 1 : editor.selection.end.line;
       const name = await vscode.window.showInputBox({
-        title: 'Extract to procedure', prompt: 'Name of the new procedure', value: 'newProcedure', ignoreFocusOut: true,
+        title: vscode.l10n.t('Extract to procedure'), prompt: vscode.l10n.t('Name of the new procedure'), value: 'newProcedure', ignoreFocusOut: true,
         validateInput: v => /^[A-Za-z$#@_][\w$#@]*$/.test(v.trim()) ? undefined : 'Not a valid RPG name',
       });
       if (!name) { return; }
@@ -52,7 +52,7 @@ export function registerProcedureTools(context: vscode.ExtensionContext, manager
       edit.replace(doc.uri, new vscode.Range(start, 0, end, doc.lineAt(end).text.length), r.call);
       await vscode.workspace.applyEdit(edit);
       if (!hasProcedureFriendlyControl(doc.getText())) {
-        vscode.window.showWarningMessage(`${name} was extracted. Programs with sub-procedures need CTL-OPT DFTACTGRP(*NO) (or NOMAIN) to compile.`);
+        vscode.window.showWarningMessage(vscode.l10n.t('{0} was extracted. Programs with sub-procedures need CTL-OPT DFTACTGRP(*NO) (or NOMAIN) to compile.', name));
       } else {
         vscode.window.setStatusBarMessage(`$(check) Extracted ${name}`, 4000);
       }
@@ -63,10 +63,10 @@ export function registerProcedureTools(context: vscode.ExtensionContext, manager
       const editor = rpgEditor();
       const doc = editor.document;
       const parse = parseRpg(doc.getText());
-      if (!parse.copies.length) { vscode.window.showInformationMessage('This source has no /COPY or /INCLUDE.'); return; }
+      if (!parse.copies.length) { vscode.window.showInformationMessage(vscode.l10n.t('This source has no /COPY or /INCLUDE.')); return; }
       const texts = new Map<number, string>();
       const missing: string[] = [];
-      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Reading copybooks…' }, async () => {
+      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Reading copybooks…') }, async () => {
         for (const c of parse.copies) {
           try {
             const uri = await resolver.resolve(doc, c);
@@ -85,7 +85,7 @@ export function registerProcedureTools(context: vscode.ExtensionContext, manager
           : `unused — none of its ${u.declared} declarations is referenced`,
         line: u.line,
       }));
-      for (const m of missing) { items.push({ label: `$(error) ${m}`, description: 'not found on the library list', line: parse.copies.find(c => c.target === m)!.line }); }
+      for (const m of missing) { items.push({ label: vscode.l10n.t('$(error) {0}', m), description: 'not found on the library list', line: parse.copies.find(c => c.target === m)!.line }); }
       const qp = vscode.window.createQuickPick<Item>();
       qp.title = `Copybooks: ${unused.length} unused of ${parse.copies.length}`;
       qp.items = items;

@@ -51,7 +51,7 @@ async function guard(fn: () => Promise<unknown>): Promise<void> {
   try { await fn(); }
   catch (e) {
     logError(e);
-    const c = await vscode.window.showErrorMessage(errorMessage(e), 'Show Log');
+    const c = await vscode.window.showErrorMessage(errorMessage(e), vscode.l10n.t('Show Log'));
     if (c) { showLog(); }
   }
 }
@@ -76,12 +76,12 @@ export function registerBrowseCommands(
   reg('vanthrex.addConnection', () => ConnectionForm.open(manager.profiles));
   reg('vanthrex.editConnection', (p?: ConnectionProfile) => {
     const profile = p ?? manager.connection?.profile;
-    if (!profile) { return vscode.window.showInformationMessage('Right-click a connection to edit it.'); }
+    if (!profile) { return vscode.window.showInformationMessage(vscode.l10n.t('Right-click a connection to edit it.')); }
     ConnectionForm.open(manager.profiles, manager.profiles.get(profile.id) ?? profile);
   });
   reg('vanthrex.deleteConnection', async (p: ConnectionProfile) => {
-    const ok = await vscode.window.showWarningMessage(`Remove connection "${p.name}" and its saved password?`, { modal: true }, 'Remove');
-    if (ok !== 'Remove') { return; }
+    const ok = await vscode.window.showWarningMessage(vscode.l10n.t('Remove connection "{0}" and its saved password?', p.name), { modal: true }, vscode.l10n.t('Remove'));
+    if (ok !== vscode.l10n.t('Remove')) { return; }
     if (manager.isOpen(p.id)) { await manager.disconnect(p.id); }
     await manager.profiles.remove(p.id);
   });
@@ -91,7 +91,7 @@ export function registerBrowseCommands(
       const all = manager.profiles.list();
       if (!all.length) { return vscode.commands.executeCommand('vanthrex.addConnection'); }
       const pick = await vscode.window.showQuickPick(all.map(x => ({ label: x.name, description: `${x.user}@${x.host}`, x })),
-        { title: 'Connect to IBM i' });
+        { title: vscode.l10n.t('Connect to IBM i') });
       profile = pick?.x;
     }
     if (profile) { await manager.connect(profile); }
@@ -113,7 +113,7 @@ export function registerBrowseCommands(
       })),
     ];
     if (!items.length) { return vscode.commands.executeCommand('vanthrex.addConnection'); }
-    const pick = await vscode.window.showQuickPick(items, { title: 'Switch IBM i system', placeHolder: 'Open systems switch instantly; others connect and stay open' });
+    const pick = await vscode.window.showQuickPick(items, { title: vscode.l10n.t('Switch IBM i system'), placeHolder: vscode.l10n.t('Open systems switch instantly; others connect and stay open') });
     if (!pick?.id) { return; }
     if (manager.isOpen(pick.id)) { return manager.switchTo(pick.id); }
     const profile = manager.profiles.get(pick.id);
@@ -126,53 +126,53 @@ export function registerBrowseCommands(
     const c = manager.connection;
     type Item = vscode.QuickPickItem & { cmd?: string };
     const items: Item[] = c ? [
-      { label: '$(sparkle) Ask the IBM i AI assistant…', cmd: 'vanthrex.ai.open' },
-      { label: '$(dashboard) System dashboard', cmd: 'vanthrex.openDashboard' },
-      { label: '$(arrow-swap) Switch / add IBM i system…', cmd: 'vanthrex.switchConnection' },
-      { label: '$(type-hierarchy) Call graph & impact analysis…', cmd: 'vanthrex.callGraph' },
+      { label: vscode.l10n.t('$(sparkle) Ask the IBM i AI assistant…'), cmd: 'vanthrex.ai.open' },
+      { label: vscode.l10n.t('$(dashboard) System dashboard'), cmd: 'vanthrex.openDashboard' },
+      { label: vscode.l10n.t('$(arrow-swap) Switch / add IBM i system…'), cmd: 'vanthrex.switchConnection' },
+      { label: vscode.l10n.t('$(type-hierarchy) Call graph & impact analysis…'), cmd: 'vanthrex.callGraph' },
       // Git for IBM i is hidden for now (condition forced to false). Change to true to show it again.
       ...(GIT_FOR_IBMI_ENABLED ? [
-        { label: '$(source-control) Export source to a Git repository…', cmd: 'vanthrex.git.export' },
-        { label: '$(cloud-upload) Git: upload changed files to IBM i', cmd: 'vanthrex.git.upload' },
-        { label: '$(cloud-download) Git: get changes from IBM i', cmd: 'vanthrex.git.download' },
+        { label: vscode.l10n.t('$(source-control) Export source to a Git repository…'), cmd: 'vanthrex.git.export' },
+        { label: vscode.l10n.t('$(cloud-upload) Git: upload changed files to IBM i'), cmd: 'vanthrex.git.upload' },
+        { label: vscode.l10n.t('$(cloud-download) Git: get changes from IBM i'), cmd: 'vanthrex.git.download' },
       ] : []),
-      { label: '$(debug-alt) Debug a program…', cmd: 'vanthrex.debugProgram' },
-      { label: '$(checklist) Debugger setup check', cmd: 'vanthrex.debugSetup' },
-      { label: '$(terminal) Run CL command…', cmd: 'vanthrex.runCl' },
-      { label: '$(list-selection) Prompt and run a CL command (F4)…', cmd: 'vanthrex.promptCl' },
-      { label: '$(search) Search objects…', cmd: 'vanthrex.searchObjects' },
-      { label: '$(search-fuzzy) Search source code…', cmd: 'vanthrex.searchSource' },
-      { label: '$(table) Edit table data…', cmd: 'vanthrex.editData' },
-      { label: '$(mail) Send a message…', cmd: 'vanthrex.sendMessage' },
-      { label: '$(database) SQL editor with results…', cmd: 'vanthrex.sqlQuery' },
-      { label: '$(database) New SQL scratchpad', cmd: 'vanthrex.newSqlScratchpad' },
-      { label: '$(history) SQL history…', cmd: 'vanthrex.sqlHistory' },
-      { label: '$(star-full) Saved queries…', cmd: 'vanthrex.savedQueries' },
-      { label: '$(info) Object information…', cmd: 'vanthrex.objectInfo' },
-      { label: '$(lock) Who has an object locked?…', cmd: 'vanthrex.objectLocks' },
-      { label: '$(diff) Compare two libraries…', cmd: 'vanthrex.compareLibraries' },
-      { label: '$(table) Compare table data (DEV ↔ PROD)…', cmd: 'vanthrex.compareData' },
-      { label: '$(rocket) Index advisor…', cmd: 'vanthrex.indexAdvisor' },
-      { label: '$(question) Explain a message ID…', cmd: 'vanthrex.explainMessage' },
-      { label: '$(search-fuzzy) Analyze a job log…', cmd: 'vanthrex.analyzeJobLog' },
-      { label: '$(history) Journal explorer: who changed a table…', cmd: 'vanthrex.journalExplorer' },
-      { label: '$(shield) Check authority: can a user use an object?…', cmd: 'vanthrex.checkAuthority' },
-      { label: '$(list-ordered) Data queue…', cmd: 'vanthrex.dataQueue' },
-      { label: '$(symbol-variable) Data area…', cmd: 'vanthrex.dataArea' },
-      { label: '$(pulse) PTF & system health…', cmd: 'vanthrex.systemHealth' },
-      { label: '$(search) Find & open member…', cmd: 'vanthrex.findMember' },
-      { label: '$(library) Add library to list…', cmd: 'vanthrex.addLibrary' },
-      { label: '$(folder-opened) Go to IFS directory…', cmd: 'vanthrex.ifsChangeRoot' },
-      { label: '$(output) Show output log', cmd: 'vanthrex.showOutput' },
-      { label: '$(book) Open documentation', cmd: 'vanthrex.openDocs' },
-      { label: '$(edit) Edit this connection…', cmd: 'vanthrex.editConnection' },
-      { label: '$(debug-disconnect) Disconnect', cmd: 'vanthrex.disconnect' },
-      ...(manager.openConnections.length > 1 ? [{ label: '$(debug-disconnect) Disconnect all systems', cmd: 'vanthrex.disconnectAll' }] : []),
+      { label: vscode.l10n.t('$(debug-alt) Debug a program…'), cmd: 'vanthrex.debugProgram' },
+      { label: vscode.l10n.t('$(checklist) Debugger setup check'), cmd: 'vanthrex.debugSetup' },
+      { label: vscode.l10n.t('$(terminal) Run CL command…'), cmd: 'vanthrex.runCl' },
+      { label: vscode.l10n.t('$(list-selection) Prompt and run a CL command (F4)…'), cmd: 'vanthrex.promptCl' },
+      { label: vscode.l10n.t('$(search) Search objects…'), cmd: 'vanthrex.searchObjects' },
+      { label: vscode.l10n.t('$(search-fuzzy) Search source code…'), cmd: 'vanthrex.searchSource' },
+      { label: vscode.l10n.t('$(table) Edit table data…'), cmd: 'vanthrex.editData' },
+      { label: vscode.l10n.t('$(mail) Send a message…'), cmd: 'vanthrex.sendMessage' },
+      { label: vscode.l10n.t('$(database) SQL editor with results…'), cmd: 'vanthrex.sqlQuery' },
+      { label: vscode.l10n.t('$(database) New SQL scratchpad'), cmd: 'vanthrex.newSqlScratchpad' },
+      { label: vscode.l10n.t('$(history) SQL history…'), cmd: 'vanthrex.sqlHistory' },
+      { label: vscode.l10n.t('$(star-full) Saved queries…'), cmd: 'vanthrex.savedQueries' },
+      { label: vscode.l10n.t('$(info) Object information…'), cmd: 'vanthrex.objectInfo' },
+      { label: vscode.l10n.t('$(lock) Who has an object locked?…'), cmd: 'vanthrex.objectLocks' },
+      { label: vscode.l10n.t('$(diff) Compare two libraries…'), cmd: 'vanthrex.compareLibraries' },
+      { label: vscode.l10n.t('$(table) Compare table data (DEV ↔ PROD)…'), cmd: 'vanthrex.compareData' },
+      { label: vscode.l10n.t('$(rocket) Index advisor…'), cmd: 'vanthrex.indexAdvisor' },
+      { label: vscode.l10n.t('$(question) Explain a message ID…'), cmd: 'vanthrex.explainMessage' },
+      { label: vscode.l10n.t('$(search-fuzzy) Analyze a job log…'), cmd: 'vanthrex.analyzeJobLog' },
+      { label: vscode.l10n.t('$(history) Journal explorer: who changed a table…'), cmd: 'vanthrex.journalExplorer' },
+      { label: vscode.l10n.t('$(shield) Check authority: can a user use an object?…'), cmd: 'vanthrex.checkAuthority' },
+      { label: vscode.l10n.t('$(list-ordered) Data queue…'), cmd: 'vanthrex.dataQueue' },
+      { label: vscode.l10n.t('$(symbol-variable) Data area…'), cmd: 'vanthrex.dataArea' },
+      { label: vscode.l10n.t('$(pulse) PTF & system health…'), cmd: 'vanthrex.systemHealth' },
+      { label: vscode.l10n.t('$(search) Find & open member…'), cmd: 'vanthrex.findMember' },
+      { label: vscode.l10n.t('$(library) Add library to list…'), cmd: 'vanthrex.addLibrary' },
+      { label: vscode.l10n.t('$(folder-opened) Go to IFS directory…'), cmd: 'vanthrex.ifsChangeRoot' },
+      { label: vscode.l10n.t('$(output) Show output log'), cmd: 'vanthrex.showOutput' },
+      { label: vscode.l10n.t('$(book) Open documentation'), cmd: 'vanthrex.openDocs' },
+      { label: vscode.l10n.t('$(edit) Edit this connection…'), cmd: 'vanthrex.editConnection' },
+      { label: vscode.l10n.t('$(debug-disconnect) Disconnect'), cmd: 'vanthrex.disconnect' },
+      ...(manager.openConnections.length > 1 ? [{ label: vscode.l10n.t('$(debug-disconnect) Disconnect all systems'), cmd: 'vanthrex.disconnectAll' }] : []),
     ] : [
-      { label: '$(plug) Connect…', cmd: 'vanthrex.connect' },
-      { label: '$(add) Add connection…', cmd: 'vanthrex.addConnection' },
-      { label: '$(book) Getting started', cmd: 'vanthrex.openWalkthrough' },
-      { label: '$(globe) Open documentation', cmd: 'vanthrex.openDocs' },
+      { label: vscode.l10n.t('$(plug) Connect…'), cmd: 'vanthrex.connect' },
+      { label: vscode.l10n.t('$(add) Add connection…'), cmd: 'vanthrex.addConnection' },
+      { label: vscode.l10n.t('$(book) Getting started'), cmd: 'vanthrex.openWalkthrough' },
+      { label: vscode.l10n.t('$(globe) Open documentation'), cmd: 'vanthrex.openDocs' },
     ];
     const pick = await vscode.window.showQuickPick(items, {
       title: c ? `IBM i — ${c.profile.name} (${c.user})` : 'IBM i — not connected',
@@ -191,7 +191,7 @@ export function registerBrowseCommands(
     const exists = await conn.rows(`SELECT 1 AS X FROM TABLE(QSYS2.OBJECT_STATISTICS('QSYS', '*LIB', ${sqlString(lib)})) FETCH FIRST 1 ROW ONLY`)
       .catch(() => [{}]);
     if (!exists.length) {
-      const go = await vscode.window.showWarningMessage(`Library ${lib} was not found. Add it anyway?`, 'Add', 'Cancel');
+      const go = await vscode.window.showWarningMessage(vscode.l10n.t('Library {0} was not found. Add it anyway?', lib), 'Add', vscode.l10n.t('Cancel'));
       if (go !== 'Add') { return; }
     }
     await manager.updateActiveProfile(p => { p.libraries = [lib, ...p.libraries.filter(l => l !== lib)]; });
@@ -207,15 +207,15 @@ export function registerBrowseCommands(
   reg('vanthrex.newSourceFile', async (n: Library) => {
     const conn = manager.require();
     const pick = await vscode.window.showQuickPick(
-      [...SOURCE_FILES, { label: '$(edit) Other name…', description: '', rcdlen: 112 }],
-      { title: `New source file in ${n.library}` });
+      [...SOURCE_FILES, { label: vscode.l10n.t('$(edit) Other name…'), description: '', rcdlen: 112 }],
+      { title: vscode.l10n.t('New source file in {0}', n.library) });
     if (!pick) { return; }
     const name = pick.label.startsWith('$(') ? await askName('Source file name', 'Name of the new source file') : pick.label;
     if (!name) { return; }
     const r = await conn.runCL(`CRTSRCPF FILE(${n.library}/${name}) RCDLEN(${pick.rcdlen}) TEXT(${clString(pick.description || 'Source file')})`);
-    if (!r.ok) { throw new Error(`Could not create ${n.library}/${name}: ${(r.stderr || r.stdout).trim()}`); }
+    if (!r.ok) { throw new Error(vscode.l10n.t('Could not create {0}/{1}: {2}', n.library, name, (r.stderr || r.stdout).trim())); }
     libraries.refresh();
-    vscode.window.showInformationMessage(`Created source file ${n.library}/${name}.`);
+    vscode.window.showInformationMessage(vscode.l10n.t('Created source file {0}/{1}.', n.library, name));
   });
 
   reg('vanthrex.newMember', async (n: SrcFile) => {
@@ -223,14 +223,14 @@ export function registerBrowseCommands(
     const guess = n.file.includes('CL') ? 'CLLE' : n.file.includes('DDS') ? 'PF' : n.file.includes('SQL') ? 'SQL' : 'RPGLE';
     const typePick = await vscode.window.showQuickPick(
       [...MEMBER_TYPES].sort((a, b) => (a.label === guess ? -1 : b.label === guess ? 1 : 0)),
-      { title: `New member in ${n.library}/${n.file}`, placeHolder: 'Source type' });
+      { title: vscode.l10n.t('New member in {0}/{1}', n.library, n.file), placeHolder: vscode.l10n.t('Source type') });
     if (!typePick) { return; }
     const name = await askName('Member name', `Name of the new ${typePick.label} member`);
     if (!name) { return; }
-    const text = await vscode.window.showInputBox({ title: 'Description (optional)', prompt: 'Member text', ignoreFocusOut: true });
+    const text = await vscode.window.showInputBox({ title: vscode.l10n.t('Description (optional)'), prompt: vscode.l10n.t('Member text'), ignoreFocusOut: true });
     if (text === undefined) { return; }
     const r = await conn.runCL(`ADDPFM FILE(${n.library}/${n.file}) MBR(${name}) SRCTYPE(${typePick.label}) TEXT(${clString(text || ' ')})`);
-    if (!r.ok) { throw new Error(`Could not add member ${name}: ${(r.stderr || r.stdout).trim()}`); }
+    if (!r.ok) { throw new Error(vscode.l10n.t('Could not add member {0}: {1}', name, (r.stderr || r.stdout).trim())); }
     libraries.refresh(n);
     const uri = memberUri(n.library, n.file, name, typePick.label);
     const editor = await vscode.window.showTextDocument(uri);
@@ -243,14 +243,14 @@ export function registerBrowseCommands(
   reg('vanthrex.filterMembersByDate', async (n: SrcFile) => {
     const key = `${n.library}/${n.file}`;
     const pick = await vscode.window.showQuickPick([
-      { label: 'Changed today', days: 1 }, { label: 'Changed in the last 7 days', days: 7 },
-      { label: 'Changed in the last 30 days', days: 30 }, { label: 'Changed in the last 90 days', days: 90 },
-      { label: 'Other number of days…', days: -1 }, { label: '$(clear-all) Show all members', days: 0 },
-    ], { title: `Filter ${key} by last change` });
+      { label: vscode.l10n.t('Changed today'), days: 1 }, { label: vscode.l10n.t('Changed in the last 7 days'), days: 7 },
+      { label: vscode.l10n.t('Changed in the last 30 days'), days: 30 }, { label: vscode.l10n.t('Changed in the last 90 days'), days: 90 },
+      { label: vscode.l10n.t('Other number of days…'), days: -1 }, { label: vscode.l10n.t('$(clear-all) Show all members'), days: 0 },
+    ], { title: vscode.l10n.t('Filter {0} by last change', key) });
     if (!pick) { return; }
     let days = pick.days;
     if (days < 0) {
-      const v = await vscode.window.showInputBox({ title: 'Days', validateInput: x => /^\d+$/.test(x.trim()) && Number(x) > 0 ? undefined : 'Enter a number of days' });
+      const v = await vscode.window.showInputBox({ title: vscode.l10n.t('Days'), validateInput: x => /^\d+$/.test(x.trim()) && Number(x) > 0 ? undefined : 'Enter a number of days' });
       if (!v) { return; }
       days = Number(v);
     }
@@ -266,9 +266,9 @@ export function registerBrowseCommands(
   });
 
   reg('vanthrex.deleteMember', async (n: Member) => {
-    const ok = await vscode.window.showWarningMessage(`Delete member ${n.library}/${n.file}(${n.member})? This cannot be undone.`,
-      { modal: true }, 'Delete');
-    if (ok !== 'Delete') { return; }
+    const ok = await vscode.window.showWarningMessage(vscode.l10n.t('Delete member {0}/{1}({2})? This cannot be undone.', n.library, n.file, n.member),
+      { modal: true }, vscode.l10n.t('Delete'));
+    if (ok !== vscode.l10n.t('Delete')) { return; }
     const r = await manager.require().runCL(`RMVM FILE(${n.library}/${n.file}) MBR(${n.member})`);
     if (!r.ok) { throw new Error((r.stderr || r.stdout).trim()); }
     libraries.refresh();
@@ -277,25 +277,25 @@ export function registerBrowseCommands(
   reg('vanthrex.findMember', async () => {
     const conn = manager.require();
     const pattern = await vscode.window.showInputBox({
-      title: 'Find member', prompt: 'Member name or pattern (use * as a wildcard), searched across your library list',
+      title: vscode.l10n.t('Find member'), prompt: vscode.l10n.t('Member name or pattern (use * as a wildcard), searched across your library list'),
       placeHolder: 'ORD*', ignoreFocusOut: true,
     });
     if (!pattern?.trim()) { return; }
     const libs = [...new Set([conn.profile.currentLibrary, ...conn.profile.libraries].filter(Boolean) as string[])];
-    if (!libs.length) { throw new Error('Your library list is empty – add a library first.'); }
+    if (!libs.length) { throw new Error(vscode.l10n.t('Your library list is empty – add a library first.')); }
     const like = pattern.trim().toUpperCase().replace(/\*/g, '%');
-    const rows = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: 'Searching members…' }, () =>
+    const rows = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: vscode.l10n.t('Searching members…') }, () =>
       conn.rows<{ LIB: string; FILE: string; MBR: string; TYPE: string; TEXT: string }>(
         `SELECT SYSTEM_TABLE_SCHEMA AS LIB, SYSTEM_TABLE_NAME AS FILE, SYSTEM_TABLE_MEMBER AS MBR, ` +
         `COALESCE(SOURCE_TYPE, '') AS TYPE, COALESCE(PARTITION_TEXT, '') AS TEXT FROM QSYS2.SYSPARTITIONSTAT ` +
         `WHERE SYSTEM_TABLE_SCHEMA IN (${libs.map(sqlString).join(', ')}) AND SOURCE_TYPE IS NOT NULL ` +
         `AND SYSTEM_TABLE_MEMBER LIKE ${sqlString(like)} ORDER BY 3, 1, 2 FETCH FIRST 500 ROWS ONLY`, 500));
-    if (!rows.length) { return vscode.window.showInformationMessage(`No members matching "${pattern}" in ${libs.join(', ')}.`); }
+    if (!rows.length) { return vscode.window.showInformationMessage(vscode.l10n.t('No members matching "{0}" in {1}.', pattern, libs.join(', '))); }
     const pick = await vscode.window.showQuickPick(rows.map(r => ({
-      label: `$(file-code) ${String(r.MBR).trim()}.${String(r.TYPE).trim().toLowerCase()}`,
+      label: vscode.l10n.t('$(file-code) {0}.{1}', String(r.MBR).trim(), String(r.TYPE).trim().toLowerCase()),
       description: `${String(r.LIB).trim()}/${String(r.FILE).trim()}`,
       detail: String(r.TEXT ?? '').trim() || undefined, r,
-    })), { title: `${rows.length} member(s) found`, matchOnDescription: true, matchOnDetail: true });
+    })), { title: vscode.l10n.t('{0} member(s) found', rows.length), matchOnDescription: true, matchOnDetail: true });
     if (pick) {
       const r = pick.r;
       await vscode.window.showTextDocument(memberUri(String(r.LIB).trim(), String(r.FILE).trim(), String(r.MBR).trim(), String(r.TYPE).trim()));
@@ -305,7 +305,7 @@ export function registerBrowseCommands(
   // ------------------------------------------------------------ objects
   reg('vanthrex.objectCall', async (n: ObjectNode) => {
     const parms = await vscode.window.showInputBox({
-      title: `Call ${n.library}/${n.name}`, prompt: "Parameters (optional), e.g. 'ABC' 'X'", ignoreFocusOut: true });
+      title: vscode.l10n.t('Call {0}/{1}', n.library, n.name), prompt: vscode.l10n.t('Parameters (optional), e.g. \'ABC\' \'X\''), ignoreFocusOut: true });
     if (parms === undefined) { return; }
     await vscode.commands.executeCommand('vanthrex.runCl',
       `CALL PGM(${n.library}/${n.name})${parms.trim() ? ` PARM(${parms.trim()})` : ''}`);
@@ -313,9 +313,9 @@ export function registerBrowseCommands(
   reg('vanthrex.objectQuery', (n: ObjectNode) =>
     runSqlAndShow(manager, context.globalState, `SELECT * FROM ${n.library}/${n.name} FETCH FIRST 100 ROWS ONLY`));
   reg('vanthrex.objectDelete', async (n: ObjectNode) => {
-    const ok = await vscode.window.showWarningMessage(`Delete ${n.type} ${n.library}/${n.name}? This cannot be undone.`,
-      { modal: true }, 'Delete');
-    if (ok !== 'Delete') { return; }
+    const ok = await vscode.window.showWarningMessage(vscode.l10n.t('Delete {0} {1}/{2}? This cannot be undone.', n.type, n.library, n.name),
+      { modal: true }, vscode.l10n.t('Delete'));
+    if (ok !== vscode.l10n.t('Delete')) { return; }
     const lib = assertSystemName(n.library, 'library');
     const cmds: Record<string, string> = {
       '*PGM': `DLTPGM PGM(${lib}/${n.name})`, '*SRVPGM': `DLTSRVPGM SRVPGM(${lib}/${n.name})`,
@@ -333,11 +333,11 @@ export function registerBrowseCommands(
   reg('vanthrex.refreshIfs', () => ifs.refresh());
   reg('vanthrex.ifsChangeRoot', async () => {
     manager.require();
-    const path = await vscode.window.showInputBox({ title: 'Go to IFS directory', value: ifs.rootPath ?? '/home', ignoreFocusOut: true });
+    const path = await vscode.window.showInputBox({ title: vscode.l10n.t('Go to IFS directory'), value: ifs.rootPath ?? '/home', ignoreFocusOut: true });
     if (path?.trim()) { ifs.setRoot(path.trim()); }
   });
   reg('vanthrex.ifsNewFile', async (n: IfsNode) => {
-    const name = await vscode.window.showInputBox({ title: `New file in ${n.path}`, placeHolder: 'hello.rpgle', ignoreFocusOut: true });
+    const name = await vscode.window.showInputBox({ title: vscode.l10n.t('New file in {0}', n.path), placeHolder: vscode.l10n.t('hello.rpgle'), ignoreFocusOut: true });
     if (!name?.trim()) { return; }
     const uri = ifsUri(`${n.path.replace(/\/$/, '')}/${name.trim()}`);
     await vscode.workspace.fs.writeFile(uri, new Uint8Array());
@@ -345,15 +345,15 @@ export function registerBrowseCommands(
     await vscode.window.showTextDocument(uri);
   });
   reg('vanthrex.ifsNewFolder', async (n: IfsNode) => {
-    const name = await vscode.window.showInputBox({ title: `New folder in ${n.path}`, ignoreFocusOut: true });
+    const name = await vscode.window.showInputBox({ title: vscode.l10n.t('New folder in {0}', n.path), ignoreFocusOut: true });
     if (!name?.trim()) { return; }
     await manager.require().mkdir(`${n.path.replace(/\/$/, '')}/${name.trim()}`);
     ifs.refresh(n);
   });
   reg('vanthrex.ifsDelete', async (n: IfsNode) => {
     const ok = await vscode.window.showWarningMessage(
-      `Delete ${n.isDirectory ? 'folder (and everything in it)' : 'file'} ${n.path}?`, { modal: true }, 'Delete');
-    if (ok !== 'Delete') { return; }
+      vscode.l10n.t('Delete {0} {1}?', n.isDirectory ? 'folder (and everything in it)' : 'file', n.path), { modal: true }, vscode.l10n.t('Delete'));
+    if (ok !== vscode.l10n.t('Delete')) { return; }
     await manager.require().removePath(n.path, n.isDirectory);
     ifs.refresh();
   });

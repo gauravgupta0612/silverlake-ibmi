@@ -46,7 +46,7 @@ export class IfsTreeProvider implements vscode.TreeDataProvider<IfsNode> {
     item.tooltip = n.path + (n.size !== undefined && !n.isDirectory ? `\n${formatSize(n.size)}` : '') +
       (n.mtime ? `\nModified ${new Date(n.mtime * 1000).toLocaleString()}` : '');
     if (!n.isDirectory) {
-      item.command = { command: 'vscode.open', title: 'Open', arguments: [item.resourceUri] };
+      item.command = { command: 'vscode.open', title: vscode.l10n.t('Open'), arguments: [item.resourceUri] };
       item.description = n.size !== undefined ? formatSize(n.size) : undefined;
     }
     return item;

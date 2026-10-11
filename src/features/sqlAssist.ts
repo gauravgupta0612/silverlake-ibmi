@@ -133,7 +133,7 @@ export function registerSqlAssist(context: vscode.ExtensionContext, manager: Con
             const items: vscode.CompletionItem[] = libs.map(l => {
               const i = new vscode.CompletionItem({ label: l, description: 'library' }, vscode.CompletionItemKind.Module);
               i.sortText = `2${l}`;
-              i.command = { command: 'editor.action.triggerSuggest', title: 'Suggest' };
+              i.command = { command: 'editor.action.triggerSuggest', title: vscode.l10n.t('Suggest') };
               i.insertText = `${l}.`;
               return i;
             });

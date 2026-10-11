@@ -26,7 +26,7 @@ class ResultsPanel {
           const target = await vscode.window.showSaveDialog({ filters: { CSV: ['csv'] }, saveLabel: 'Export' });
           if (target) {
             await vscode.workspace.fs.writeFile(target, Buffer.from('﻿' + toCsv(r.columns, r.rows), 'utf8'));
-            vscode.window.showInformationMessage(`Exported ${r.rows.length} rows to ${target.fsPath}`);
+            vscode.window.showInformationMessage(vscode.l10n.t('Exported {0} rows to {1}', r.rows.length, target.fsPath));
           }
         }
         if (m.type === 'copyCsv') {
@@ -124,20 +124,20 @@ export async function runSqlAndShow(manager: ConnectionManager, state: vscode.Me
   const cfg = vscode.workspace.getConfiguration('vanthrex');
   if (cfg.get<boolean>('sql.confirmDestructive', true) && isDestructiveSql(sql)) {
     const ok = await vscode.window.showWarningMessage(
-      'This statement can change or remove a lot of data. Run it?', { modal: true }, 'Run');
+      vscode.l10n.t('This statement can change or remove a lot of data. Run it?'), { modal: true }, 'Run');
     if (ok !== 'Run') { return; }
   }
   const maxRows = cfg.get<number>('sql.maxRows', 500);
   try {
     const result = await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Window, title: 'Running SQL…' },
+      { location: vscode.ProgressLocation.Window, title: vscode.l10n.t('Running SQL…') },
       () => conn.sql(sql, maxRows));
     ResultsPanel.show(sql, result);
     const history = state.get<string[]>(HISTORY_KEY, []).filter(s => s !== sql);
     await state.update(HISTORY_KEY, [sql, ...history].slice(0, 50));
   } catch (e) {
     logError(e);
-    const choice = await vscode.window.showErrorMessage(`SQL error: ${errorMessage(e)}`, 'Show Log');
+    const choice = await vscode.window.showErrorMessage(vscode.l10n.t('SQL error: {0}', errorMessage(e)), vscode.l10n.t('Show Log'));
     if (choice) { showLog(); }
   }
 }
@@ -156,10 +156,10 @@ export function registerSql(context: vscode.ExtensionContext, manager: Connectio
         } else {
           const history = state.get<string[]>(HISTORY_KEY, []);
           const pick = await vscode.window.showQuickPick(
-            [{ label: '$(edit) Type a new statement…', sql: '' }, ...history.map(h => ({ label: h.replace(/\s+/g, ' '), sql: h }))],
-            { title: 'Run SQL', placeHolder: 'Pick a recent statement or type a new one' });
+            [{ label: vscode.l10n.t('$(edit) Type a new statement…'), sql: '' }, ...history.map(h => ({ label: h.replace(/\s+/g, ' '), sql: h }))],
+            { title: 'Run SQL', placeHolder: vscode.l10n.t('Pick a recent statement or type a new one') });
           if (!pick) { return; }
-          sql = pick.sql || await vscode.window.showInputBox({ title: 'Run SQL', prompt: 'SQL statement', ignoreFocusOut: true });
+          sql = pick.sql || await vscode.window.showInputBox({ title: 'Run SQL', prompt: vscode.l10n.t('SQL statement'), ignoreFocusOut: true });
         }
         sql = sql?.trim().replace(/;\s*$/, '');
         if (!sql) { return; }
@@ -208,17 +208,17 @@ export function registerSql(context: vscode.ExtensionContext, manager: Connectio
         cmd = cmd?.trim();
         if (!cmd) { return; }
         const r = await vscode.window.withProgress(
-          { location: vscode.ProgressLocation.Notification, title: `Running ${cmd.split(/\s|\(/)[0]}…` },
+          { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Running {0}…', cmd.split(/\s|\(/)[0]) },
           () => conn.runCL(cmd!));
         const history = state.get<string[]>(CL_HISTORY_KEY, []).filter(h => h !== cmd);
         await state.update(CL_HISTORY_KEY, [cmd, ...history].slice(0, 50));
         const output = (r.stdout + '\n' + r.stderr).trim();
         const firstLine = output.split('\n').filter(Boolean).slice(-1)[0] ?? '';
         if (r.ok) {
-          const c = await vscode.window.showInformationMessage(`✔ ${cmd}${firstLine ? ` — ${firstLine}` : ''}`, 'Show Output');
+          const c = await vscode.window.showInformationMessage(`✔ ${cmd}${firstLine ? ` — ${firstLine}` : ''}`, vscode.l10n.t('Show Output'));
           if (c) { showLog(); }
         } else {
-          const c = await vscode.window.showErrorMessage(`✖ ${cmd} — ${firstLine || 'failed'}`, 'Show Output');
+          const c = await vscode.window.showErrorMessage(`✖ ${cmd} — ${firstLine || 'failed'}`, vscode.l10n.t('Show Output'));
           if (c) { showLog(); }
         }
       } catch (e) {

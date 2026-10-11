@@ -75,14 +75,14 @@ async function pickSyncRoot(): Promise<vscode.Uri | undefined> {
   const roots = await syncRoots();
   if (!roots.length) {
     const c = await vscode.window.showInformationMessage(
-      'No IBM i source repository is open. Export a library to a Git repository first (or open the folder of an earlier export).',
-      'Export a Library…', 'Open Folder…');
-    if (c === 'Export a Library…') { await vscode.commands.executeCommand('vanthrex.git.export'); }
-    if (c === 'Open Folder…') { await vscode.commands.executeCommand('vscode.openFolder'); }
+      vscode.l10n.t('No IBM i source repository is open. Export a library to a Git repository first (or open the folder of an earlier export).'),
+      vscode.l10n.t('Export a Library…'), vscode.l10n.t('Open Folder…'));
+    if (c === vscode.l10n.t('Export a Library…')) { await vscode.commands.executeCommand('vanthrex.git.export'); }
+    if (c === vscode.l10n.t('Open Folder…')) { await vscode.commands.executeCommand('vscode.openFolder'); }
     return undefined;
   }
   if (roots.length === 1) { return roots[0]; }
-  const pick = await vscode.window.showQuickPick(roots.map(r => ({ label: path.basename(r.fsPath), description: r.fsPath, r })), { title: 'Which repository?' });
+  const pick = await vscode.window.showQuickPick(roots.map(r => ({ label: path.basename(r.fsPath), description: r.fsPath, r })), { title: vscode.l10n.t('Which repository?') });
   return pick?.r;
 }
 
@@ -114,7 +114,7 @@ async function downloadMembers(conn: IbmiConnection, members: RemoteMember[], pr
   const batch = 40;
   try {
     for (let i = 0; i < members.length; i += batch) {
-      if (token.isCancellationRequested) { throw new Error('Cancelled.'); }
+      if (token.isCancellationRequested) { throw new Error(vscode.l10n.t('Cancelled.')); }
       const part = members.slice(i, i + batch);
       const script = part.map((m, j) =>
         `system ${shDoubleQuote(`CPYTOSTMF FROMMBR(${clString(memberPath(m.lib, m.file, m.member))}) TOSTMF(${clString(`${dir}/${i + j}.txt`)}) ` +
@@ -144,10 +144,10 @@ async function ensureMember(conn: IbmiConnection, m: MemberRef): Promise<void> {
   const file = await conn.rows(`SELECT 1 AS X FROM QSYS2.SYSTABLES WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(m.lib)} AND SYSTEM_TABLE_NAME = ${sqlString(m.file)}`, 1);
   if (!file.length) {
     const r = await conn.runCL(`CRTSRCPF FILE(${m.lib}/${m.file}) RCDLEN(112)`);
-    if (!r.ok) { throw new Error(`Could not create source file ${m.lib}/${m.file}: ${(r.stderr || r.stdout).trim()}`); }
+    if (!r.ok) { throw new Error(vscode.l10n.t('Could not create source file {0}/{1}: {2}', m.lib, m.file, (r.stderr || r.stdout).trim())); }
   }
   const r = await conn.runCL(`ADDPFM FILE(${m.lib}/${m.file}) MBR(${m.member}) SRCTYPE(${m.type === 'MBR' ? '*NONE' : m.type})`);
-  if (!r.ok) { throw new Error(`Could not add member ${m.lib}/${m.file}(${m.member}): ${(r.stderr || r.stdout).trim()}`); }
+  if (!r.ok) { throw new Error(vscode.l10n.t('Could not add member {0}/{1}({2}): {3}', m.lib, m.file, m.member, (r.stderr || r.stdout).trim())); }
 }
 
 async function memberChanged(conn: IbmiConnection, m: MemberRef): Promise<string> {
@@ -184,14 +184,14 @@ async function localFiles(root: vscode.Uri, libs: string[]): Promise<Map<string,
 async function exportToGit(manager: ConnectionManager, arg?: { library?: string; file?: string }): Promise<void> {
   const conn = manager.require();
   if (!(await hasGit())) {
-    throw new Error('Git is not installed (or not on the PATH). Install Git from https://git-scm.com and try again.');
+    throw new Error(vscode.l10n.t('Git is not installed (or not on the PATH). Install Git from https://git-scm.com and try again.'));
   }
   let lib = arg?.library;
   if (!lib) {
     const libs = [...new Set([conn.profile.currentLibrary, ...conn.profile.libraries].filter(Boolean) as string[])];
-    const pick = await vscode.window.showQuickPick([...libs, '$(edit) Other library…'], { title: 'Export which library to Git?' });
+    const pick = await vscode.window.showQuickPick([...libs, '$(edit) Other library…'], { title: vscode.l10n.t('Export which library to Git?') });
     if (!pick) { return; }
-    lib = pick.startsWith('$(') ? await vscode.window.showInputBox({ title: 'Library' }) : pick;
+    lib = pick.startsWith('$(') ? await vscode.window.showInputBox({ title: vscode.l10n.t('Library') }) : pick;
   }
   if (!lib) { return; }
   lib = assertSystemName(lib, 'library');
@@ -200,9 +200,9 @@ async function exportToGit(manager: ConnectionManager, arg?: { library?: string;
   if (!files) {
     const all = (await conn.rows<{ F: string; T: string }>(
       `SELECT SYSTEM_TABLE_NAME AS F, COALESCE(TABLE_TEXT, '') AS T FROM QSYS2.SYSTABLES WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND FILE_TYPE = 'S' ORDER BY 1`, 1000));
-    if (!all.length) { throw new Error(`${lib} has no source files.`); }
+    if (!all.length) { throw new Error(vscode.l10n.t('{0} has no source files.', lib)); }
     const picks = await vscode.window.showQuickPick(all.map(f => ({ label: String(f.F).trim(), description: String(f.T).trim(), picked: true })),
-      { title: `Source files of ${lib} to export`, canPickMany: true });
+      { title: vscode.l10n.t('Source files of {0} to export', lib), canPickMany: true });
     if (!picks?.length) { return; }
     files = picks.map(p => p.label);
   }
@@ -210,22 +210,22 @@ async function exportToGit(manager: ConnectionManager, arg?: { library?: string;
   // Where: an open workspace folder or a folder the user picks.
   const folders = vscode.workspace.workspaceFolders ?? [];
   type Dest = vscode.QuickPickItem & { uri?: vscode.Uri };
-  const dests: Dest[] = [...folders.map(f => ({ label: `$(folder) ${f.name}`, description: f.uri.fsPath, uri: f.uri })), { label: '$(folder-opened) Choose a folder…' }];
-  const dest = dests.length === 1 ? dests[0] : await vscode.window.showQuickPick(dests, { title: 'Export into which folder (Git repository)?' });
+  const dests: Dest[] = [...folders.map(f => ({ label: vscode.l10n.t('$(folder) {0}', f.name), description: f.uri.fsPath, uri: f.uri })), { label: vscode.l10n.t('$(folder-opened) Choose a folder…') }];
+  const dest = dests.length === 1 ? dests[0] : await vscode.window.showQuickPick(dests, { title: vscode.l10n.t('Export into which folder (Git repository)?') });
   if (!dest) { return; }
   let root = dest.uri;
   if (!root) {
-    const chosen = await vscode.window.showOpenDialog({ canSelectFolders: true, canSelectFiles: false, openLabel: 'Export here', title: 'Folder for the Git repository' });
+    const chosen = await vscode.window.showOpenDialog({ canSelectFolders: true, canSelectFiles: false, openLabel: 'Export here', title: vscode.l10n.t('Folder for the Git repository') });
     root = chosen?.[0];
   }
   if (!root) { return; }
 
   const members = await listMembers(conn, lib, files);
-  if (!members.length) { throw new Error(`No members found in ${lib} (${files.join(', ')}).`); }
+  if (!members.length) { throw new Error(vscode.l10n.t('No members found in {0} ({1}).', lib, files.join(', '))); }
 
   const state = (await readState(root)) ?? emptyState(conn.profile.host, conn.profile.name);
   const fetched = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: `Exporting ${lib} to Git`, cancellable: true },
+    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Exporting {0} to Git', lib), cancellable: true },
     (progress, token) => downloadMembers(conn, members, progress, token));
   for (const m of fetched) {
     const rel = repoPath(m);
@@ -239,20 +239,20 @@ async function exportToGit(manager: ConnectionManager, arg?: { library?: string;
 
   const repo = await isRepo(root.fsPath);
   const choice = await vscode.window.showInformationMessage(
-    `Exported ${fetched.length} of ${members.length} member(s) from ${lib} to ${path.basename(root.fsPath)}.`,
-    ...(repo ? ['Commit…', 'Open Source Control'] : ['Create Git Repository & Commit']),
-    ...(folders.some(f => f.uri.toString() === root!.toString()) ? [] : ['Open Folder']));
-  if (choice === 'Create Git Repository & Commit') {
+    vscode.l10n.t('Exported {0} of {1} member(s) from {2} to {3}.', fetched.length, members.length, lib, path.basename(root.fsPath)),
+    ...(repo ? [vscode.l10n.t('Commit…'), vscode.l10n.t('Open Source Control')] : [vscode.l10n.t('Create Git Repository & Commit')]),
+    ...(folders.some(f => f.uri.toString() === root!.toString()) ? [] : [vscode.l10n.t('Open Folder')]));
+  if (choice === vscode.l10n.t('Create Git Repository & Commit')) {
     await git(root.fsPath, ['init', '-b', 'main']).catch(() => git(root!.fsPath, ['init']));
     await commitAll(root.fsPath, `Import ${lib} from ${conn.profile.name}`);
-    const next = await vscode.window.showInformationMessage('Git repository created with a first commit.', 'Publish to GitHub…', 'Open Folder');
-    if (next === 'Publish to GitHub…') { await publish(root); }
-    if (next === 'Open Folder') { await vscode.commands.executeCommand('vscode.openFolder', root, { forceNewWindow: false }); }
-  } else if (choice === 'Commit…') {
+    const next = await vscode.window.showInformationMessage(vscode.l10n.t('Git repository created with a first commit.'), vscode.l10n.t('Publish to GitHub…'), vscode.l10n.t('Open Folder'));
+    if (next === vscode.l10n.t('Publish to GitHub…')) { await publish(root); }
+    if (next === vscode.l10n.t('Open Folder')) { await vscode.commands.executeCommand('vscode.openFolder', root, { forceNewWindow: false }); }
+  } else if (choice === vscode.l10n.t('Commit…')) {
     await commitAndPush(root);
-  } else if (choice === 'Open Source Control') {
+  } else if (choice === vscode.l10n.t('Open Source Control')) {
     await vscode.commands.executeCommand('workbench.view.scm');
-  } else if (choice === 'Open Folder') {
+  } else if (choice === vscode.l10n.t('Open Folder')) {
     await vscode.commands.executeCommand('vscode.openFolder', root, { forceNewWindow: false });
   }
 }
@@ -280,14 +280,14 @@ async function commitAll(cwd: string, message: string): Promise<boolean> {
 async function publish(root: vscode.Uri): Promise<void> {
   const remotes = (await git(root.fsPath, ['remote']).catch(() => '')).trim();
   if (remotes) {
-    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Pushing to the remote repository…' },
+    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Pushing to the remote repository…') },
       () => git(root.fsPath, ['push', '-u', remotes.split('\n')[0], 'HEAD']));
-    vscode.window.showInformationMessage('Pushed.');
+    vscode.window.showInformationMessage(vscode.l10n.t('Pushed.'));
     return;
   }
   const url = await vscode.window.showInputBox({
-    title: 'Publish to a remote repository', prompt: 'URL of an empty repository (GitHub, GitLab, Azure DevOps…). Leave empty to use VS Code\'s "Publish to GitHub".',
-    placeHolder: 'https://github.com/you/ibmi-source.git', ignoreFocusOut: true,
+    title: vscode.l10n.t('Publish to a remote repository'), prompt: vscode.l10n.t('URL of an empty repository (GitHub, GitLab, Azure DevOps…). Leave empty to use VS Code\'s "Publish to GitHub".'),
+    placeHolder: vscode.l10n.t('https://github.com/you/ibmi-source.git'), ignoreFocusOut: true,
   });
   if (url === undefined) { return; }
   if (!url.trim()) {
@@ -296,33 +296,33 @@ async function publish(root: vscode.Uri): Promise<void> {
     return;
   }
   await git(root.fsPath, ['remote', 'add', 'origin', url.trim()]);
-  await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Pushing to the remote repository…' },
+  await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Pushing to the remote repository…') },
     () => git(root.fsPath, ['push', '-u', 'origin', 'HEAD']));
-  vscode.window.showInformationMessage(`Published to ${url.trim()}.`);
+  vscode.window.showInformationMessage(vscode.l10n.t('Published to {0}.', url.trim()));
 }
 
 async function commitAndPush(root?: vscode.Uri): Promise<void> {
   root ??= await pickSyncRoot();
   if (!root) { return; }
   if (!(await isRepo(root.fsPath))) {
-    const c = await vscode.window.showInformationMessage(`${path.basename(root.fsPath)} is not a Git repository yet.`, 'Create It');
-    if (c !== 'Create It') { return; }
+    const c = await vscode.window.showInformationMessage(vscode.l10n.t('{0} is not a Git repository yet.', path.basename(root.fsPath)), vscode.l10n.t('Create It'));
+    if (c !== vscode.l10n.t('Create It')) { return; }
     await git(root.fsPath, ['init', '-b', 'main']).catch(() => git(root!.fsPath, ['init']));
   }
   const status = (await git(root.fsPath, ['status', '--porcelain'])).trim();
   if (!status) {
-    const c = await vscode.window.showInformationMessage('Nothing to commit — the repository is up to date.', 'Push Anyway');
+    const c = await vscode.window.showInformationMessage(vscode.l10n.t('Nothing to commit — the repository is up to date.'), vscode.l10n.t('Push Anyway'));
     if (c) { await publish(root); }
     return;
   }
   const count = status.split('\n').length;
-  const message = await vscode.window.showInputBox({ title: `Commit ${count} changed file(s)`, prompt: 'Commit message', ignoreFocusOut: true,
+  const message = await vscode.window.showInputBox({ title: vscode.l10n.t('Commit {0} changed file(s)', count), prompt: vscode.l10n.t('Commit message'), ignoreFocusOut: true,
     validateInput: v => v.trim() ? undefined : 'Enter a message' });
   if (!message) { return; }
   await commitAll(root.fsPath, message.trim());
-  const c = await vscode.window.showInformationMessage(`Committed ${count} file(s).`, 'Push', 'Open Source Control');
-  if (c === 'Push') { await publish(root); }
-  if (c === 'Open Source Control') { await vscode.commands.executeCommand('workbench.view.scm'); }
+  const c = await vscode.window.showInformationMessage(vscode.l10n.t('Committed {0} file(s).', count), vscode.l10n.t('Push'), vscode.l10n.t('Open Source Control'));
+  if (c === vscode.l10n.t('Push')) { await publish(root); }
+  if (c === vscode.l10n.t('Open Source Control')) { await vscode.commands.executeCommand('workbench.view.scm'); }
 }
 
 async function downloadChanges(manager: ConnectionManager): Promise<void> {
@@ -331,9 +331,9 @@ async function downloadChanges(manager: ConnectionManager): Promise<void> {
   if (!root) { return; }
   const state = (await readState(root))!;
   if (state.host !== conn.profile.host) {
-    const c = await vscode.window.showWarningMessage(`This repository was exported from ${state.system} (${state.host}), but you are connected to ${conn.profile.name}.`,
-      { modal: true }, 'Continue');
-    if (c !== 'Continue') { return; }
+    const c = await vscode.window.showWarningMessage(vscode.l10n.t('This repository was exported from {0} ({1}), but you are connected to {2}.', state.system, state.host, conn.profile.name),
+      { modal: true }, vscode.l10n.t('Continue'));
+    if (c !== vscode.l10n.t('Continue')) { return; }
   }
   const remote = new Map<string, RemoteMember>();
   for (const lib of state.libraries) {
@@ -345,7 +345,7 @@ async function downloadChanges(manager: ConnectionManager): Promise<void> {
   const todo = [...plan.added, ...plan.changed];
   if (plan.conflicts.length) {
     const pick = await vscode.window.showQuickPick(plan.conflicts.map(rel => ({ label: rel, picked: false })), {
-      title: `${plan.conflicts.length} file(s) changed both here and on the IBM i — tick the ones to overwrite with the IBM i version`, canPickMany: true,
+      title: vscode.l10n.t('{0} file(s) changed both here and on the IBM i — tick the ones to overwrite with the IBM i version', plan.conflicts.length), canPickMany: true,
     });
     if (pick) { todo.push(...pick.map(p => p.label)); }
   }
@@ -355,7 +355,7 @@ async function downloadChanges(manager: ConnectionManager): Promise<void> {
     return;
   }
   const fetched = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: 'Getting changes from IBM i', cancellable: true },
+    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Getting changes from IBM i'), cancellable: true },
     (progress, token) => downloadMembers(conn, todo.map(rel => remote.get(rel)!).filter(Boolean), progress, token));
   for (const m of fetched) {
     const rel = repoPath(m);
@@ -366,9 +366,9 @@ async function downloadChanges(manager: ConnectionManager): Promise<void> {
   const c = await vscode.window.showInformationMessage(
     `Brought ${fetched.length} member(s) from ${conn.profile.name} into ${path.basename(root.fsPath)}` +
     (plan.removed.length ? `; ${plan.removed.length} member(s) were deleted on the IBM i (kept here).` : '.'),
-    'Commit…', 'Open Source Control');
-  if (c === 'Commit…') { await commitAndPush(root); }
-  if (c === 'Open Source Control') { await vscode.commands.executeCommand('workbench.view.scm'); }
+    vscode.l10n.t('Commit…'), vscode.l10n.t('Open Source Control'));
+  if (c === vscode.l10n.t('Commit…')) { await commitAndPush(root); }
+  if (c === vscode.l10n.t('Open Source Control')) { await vscode.commands.executeCommand('workbench.view.scm'); }
 }
 
 async function uploadChanges(manager: ConnectionManager): Promise<void> {
@@ -378,8 +378,8 @@ async function uploadChanges(manager: ConnectionManager): Promise<void> {
   const state = (await readState(root))!;
   if (state.host !== conn.profile.host) {
     const c = await vscode.window.showWarningMessage(
-      `This repository was exported from ${state.system} (${state.host}), but the active system is ${conn.profile.name} (${conn.profile.host}).`,
-      { modal: true, detail: 'Uploading would write these members to the active system.' }, `Upload to ${conn.profile.name}`);
+      vscode.l10n.t('This repository was exported from {0} ({1}), but the active system is {2} ({3}).', state.system, state.host, conn.profile.name, conn.profile.host),
+      { modal: true, detail: vscode.l10n.t('Uploading would write these members to the active system.') }, `Upload to ${conn.profile.name}`);
     if (!c) { return; }
   }
   // Libraries present as folders, also ones added by hand.
@@ -394,28 +394,28 @@ async function uploadChanges(manager: ConnectionManager): Promise<void> {
   const plan = planUpload(state, local, remoteChanged);
   type Item = vscode.QuickPickItem & { rel: string };
   const items: Item[] = [
-    ...plan.changed.map(rel => ({ label: `$(edit) ${rel}`, description: 'changed', picked: true, rel })),
-    ...plan.added.map(rel => ({ label: `$(add) ${rel}`, description: 'new member', picked: true, rel })),
-    ...plan.conflicts.map(rel => ({ label: `$(warning) ${rel}`, description: 'also changed on the IBM i — will overwrite', picked: false, rel })),
+    ...plan.changed.map(rel => ({ label: vscode.l10n.t('$(edit) {0}', rel), description: 'changed', picked: true, rel })),
+    ...plan.added.map(rel => ({ label: vscode.l10n.t('$(add) {0}', rel), description: 'new member', picked: true, rel })),
+    ...plan.conflicts.map(rel => ({ label: vscode.l10n.t('$(warning) {0}', rel), description: 'also changed on the IBM i — will overwrite', picked: false, rel })),
   ];
-  if (!items.length) { vscode.window.showInformationMessage('Nothing to upload — no file changed since the last sync.'); return; }
-  const picks = await vscode.window.showQuickPick(items, { title: `Upload to ${conn.profile.name}`, canPickMany: true, placeHolder: 'Untick files you do not want to send' });
+  if (!items.length) { vscode.window.showInformationMessage(vscode.l10n.t('Nothing to upload — no file changed since the last sync.')); return; }
+  const picks = await vscode.window.showQuickPick(items, { title: vscode.l10n.t('Upload to {0}', conn.profile.name), canPickMany: true, placeHolder: vscode.l10n.t('Untick files you do not want to send') });
   if (!picks?.length) { return; }
 
   // Same libraries, or redirect everything into one (e.g. a development library).
   const target = await vscode.window.showQuickPick([
-    { label: '$(arrow-right) Into the libraries they came from', value: '' },
-    { label: '$(library) Into another library…', description: 'for example your development library', value: 'other' },
-  ], { title: 'Where should the members go?' });
+    { label: vscode.l10n.t('$(arrow-right) Into the libraries they came from'), value: '' },
+    { label: vscode.l10n.t('$(library) Into another library…'), description: 'for example your development library', value: 'other' },
+  ], { title: vscode.l10n.t('Where should the members go?') });
   if (!target) { return; }
   let intoLib = '';
   if (target.value) {
-    intoLib = assertSystemName((await vscode.window.showInputBox({ title: 'Target library', value: conn.profile.currentLibrary ?? '' })) ?? '', 'library');
+    intoLib = assertSystemName((await vscode.window.showInputBox({ title: vscode.l10n.t('Target library'), value: conn.profile.currentLibrary ?? '' })) ?? '', 'library');
   }
 
   let done = 0;
   const failures: string[] = [];
-  await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Uploading to IBM i' }, async progress => {
+  await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Uploading to IBM i') }, async progress => {
     for (const p of picks) {
       const ref = parseRepoPath(p.rel)!;
       const m = { ...ref, lib: intoLib || ref.lib };
@@ -431,10 +431,10 @@ async function uploadChanges(manager: ConnectionManager): Promise<void> {
   });
   if (!intoLib) { await writeState(root, state); }
   if (failures.length) {
-    const c = await vscode.window.showErrorMessage(`Uploaded ${done} file(s); ${failures.length} failed: ${failures[0]}`, 'Show Log');
+    const c = await vscode.window.showErrorMessage(vscode.l10n.t('Uploaded {0} file(s); {1} failed: {2}', done, failures.length, failures[0]), vscode.l10n.t('Show Log'));
     if (c) { showLog(); }
   } else {
-    vscode.window.showInformationMessage(`Uploaded ${done} file(s) to ${intoLib || 'their libraries'} on ${conn.profile.name}.`);
+    vscode.window.showInformationMessage(vscode.l10n.t('Uploaded {0} file(s) to {1} on {2}.', done, intoLib || 'their libraries', conn.profile.name));
   }
 }
 
@@ -473,15 +473,15 @@ async function memberHistory(manager: ConnectionManager, arg?: vscode.Uri | { li
     }
   }
   if (!m || !found) {
-    vscode.window.showInformationMessage('This member is not in an exported Git repository that is open in VS Code. Use "Export Source to a Git Repository…" first.');
+    vscode.window.showInformationMessage(vscode.l10n.t('This member is not in an exported Git repository that is open in VS Code. Use "Export Source to a Git Repository…" first.'));
     return;
   }
-  if (!(await isRepo(found.root.fsPath))) { throw new Error(`${found.root.fsPath} is not a Git repository yet — commit the export first.`); }
+  if (!(await isRepo(found.root.fsPath))) { throw new Error(vscode.l10n.t('{0} is not a Git repository yet — commit the export first.', found.root.fsPath)); }
   const commits = parseGitLog(await git(found.root.fsPath, ['log', '--follow', '-n', '200', '--format=%H%x09%an%x09%ad%x09%s', '--date=format:%Y-%m-%d %H:%M', '--', found.rel]));
-  if (!commits.length) { vscode.window.showInformationMessage(`${found.rel} has no commits yet.`); return; }
+  if (!commits.length) { vscode.window.showInformationMessage(vscode.l10n.t('{0} has no commits yet.', found.rel)); return; }
   const pick = await vscode.window.showQuickPick(commits.map((c, i) => ({
-    label: `$(git-commit) ${c.subject}`, description: `${c.sha.substring(0, 8)} · ${c.author} · ${c.date}${i === 0 ? ' · latest' : ''}`, c,
-  })), { title: `Git history of ${m.lib}/${m.file}(${m.member})`, matchOnDescription: true, placeHolder: 'Pick a version' });
+    label: vscode.l10n.t('$(git-commit) {0}', c.subject), description: `${c.sha.substring(0, 8)} · ${c.author} · ${c.date}${i === 0 ? ' · latest' : ''}`, c,
+  })), { title: vscode.l10n.t('Git history of {0}/{1}({2})', m.lib, m.file, m.member), matchOnDescription: true, placeHolder: vscode.l10n.t('Pick a version') });
   if (!pick) { return; }
   const version = vscode.Uri.from({ scheme: GIT_SCHEME, path: `/${found.rel}`, query: JSON.stringify({ root: found.root.fsPath, sha: pick.c.sha }) });
   const connected = !!manager.connection;
@@ -505,7 +505,7 @@ async function memberHistory(manager: ConnectionManager, arg?: vscode.Uri | { li
     const text = await git(found.root.fsPath, ['show', `${pick.c.sha}:${found.rel}`]);
     const editor = await vscode.window.showTextDocument(uri!);
     await editor.edit(e => e.replace(new vscode.Range(0, 0, editor.document.lineCount, 0), text));
-    vscode.window.showInformationMessage(`Version ${short} restored in the editor. Save (Ctrl+S) to write it to the IBM i.`);
+    vscode.window.showInformationMessage(vscode.l10n.t('Version {0} restored in the editor. Save (Ctrl+S) to write it to the IBM i.', short));
   }
 }
 
@@ -522,7 +522,7 @@ export function registerGit(context: vscode.ExtensionContext, manager: Connectio
   const guard = (fn: (...a: any[]) => Promise<unknown>) => async (...a: any[]) => {
     try { await fn(...a); } catch (e) {
       logError(e);
-      const c = await vscode.window.showErrorMessage(errorMessage(e), 'Show Log');
+      const c = await vscode.window.showErrorMessage(errorMessage(e), vscode.l10n.t('Show Log'));
       if (c) { showLog(); }
     }
   };

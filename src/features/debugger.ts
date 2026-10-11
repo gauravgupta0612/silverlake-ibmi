@@ -86,19 +86,19 @@ async function setupCheck(context: vscode.ExtensionContext, manager: ConnectionM
   ];
   const ready = checks.every(c => c.ok);
   const report: Report = {
-    title: `Debugger setup — ${conn.profile.name}`,
+    title: vscode.l10n.t('Debugger setup — {0}', conn.profile.name),
     subtitle: ready ? '✔ Everything is ready. Right-click a program (or open its source) → Debug Program.'
       : 'Fix the items marked ✖, then refresh.',
     actions: [
-      { label: 'Refresh', command: 'vanthrex.debugSetup' },
-      ...(!client ? [{ label: 'Install IBM i Debug extension', command: 'vanthrex.debugInstallClient' }] : []),
-      ...(installed && !listening ? [{ label: 'Start Debug Service', command: 'vanthrex.debugStartService' }] : []),
-      ...(serverCert && !localCert ? [{ label: 'Download certificate', command: 'vanthrex.debugDownloadCertificate' }] : []),
-      { label: 'Debugger settings', command: 'workbench.action.openSettings', args: ['vanthrex.debug'] },
-      { label: 'Debugging guide', command: 'vscode.open', args: [vscode.Uri.parse('https://gauravgupta0612.github.io/vanthrex-ibmi-docs/debugging.html')] },
+      { label: vscode.l10n.t('Refresh'), command: 'vanthrex.debugSetup' },
+      ...(!client ? [{ label: vscode.l10n.t('Install IBM i Debug extension'), command: 'vanthrex.debugInstallClient' }] : []),
+      ...(installed && !listening ? [{ label: vscode.l10n.t('Start Debug Service'), command: 'vanthrex.debugStartService' }] : []),
+      ...(serverCert && !localCert ? [{ label: vscode.l10n.t('Download certificate'), command: 'vanthrex.debugDownloadCertificate' }] : []),
+      { label: vscode.l10n.t('Debugger settings'), command: 'workbench.action.openSettings', args: ['vanthrex.debug'] },
+      { label: vscode.l10n.t('Debugging guide'), command: 'vscode.open', args: [vscode.Uri.parse('https://gauravgupta0612.github.io/vanthrex-ibmi-docs/debugging.html')] },
     ],
     tables: [{
-      title: 'Checks', columns: ['', 'Check', 'Details'],
+      title: vscode.l10n.t('Checks'), columns: ['', 'Check', 'Details'],
       rows: checks.map(c => [c.ok === undefined ? '?' : c.ok ? '✔' : '✖', c.name, c.detail]),
       rowClass: checks.map(c => (c.ok === false ? 'bad' : undefined)),
     }],
@@ -123,7 +123,7 @@ async function resolveTarget(manager: ConnectionManager, n?: ObjArg): Promise<{ 
     program = path.basename(doc.uri.path).split('.')[0].toUpperCase().slice(0, 10);
   }
   const v = await vscode.window.showInputBox({
-    title: 'Debug program', prompt: 'Program to debug (LIBRARY/PROGRAM). Compile it with DBGVIEW(*SOURCE) first.',
+    title: vscode.l10n.t('Debug program'), prompt: vscode.l10n.t('Program to debug (LIBRARY/PROGRAM). Compile it with DBGVIEW(*SOURCE) first.'),
     value: program ? `${library}/${program}` : '', placeHolder: 'MYLIB/ORDENTRY', ignoreFocusOut: true,
     validateInput: s => /^[A-Za-z$#@][\w$#@.]{0,9}\/[A-Za-z$#@][\w$#@.]{0,9}$/.test(s.trim()) ? undefined : 'Use LIBRARY/PROGRAM',
   });
@@ -136,9 +136,9 @@ async function debugProgram(context: vscode.ExtensionContext, manager: Connectio
   const conn = manager.require();
   if (!vscode.extensions.getExtension(DEBUG_EXTENSION_ID)) {
     const c = await vscode.window.showWarningMessage(
-      'Debugging uses IBM\'s free "IBM i Debug" extension as the debug client. Install it now?', 'Install', 'Setup Check');
-    if (c === 'Install') { await installClient(); }
-    if (c === 'Setup Check') { await setupCheck(context, manager); }
+      vscode.l10n.t('Debugging uses IBM\'s free "IBM i Debug" extension as the debug client. Install it now?'), vscode.l10n.t('Install'), vscode.l10n.t('Setup Check'));
+    if (c === vscode.l10n.t('Install')) { await installClient(); }
+    if (c === vscode.l10n.t('Setup Check')) { await setupCheck(context, manager); }
     return;
   }
   const target = await resolveTarget(manager, n);
@@ -147,20 +147,20 @@ async function debugProgram(context: vscode.ExtensionContext, manager: Connectio
   const exists = await conn.rows<{ T: string }>(
     `SELECT OBJTYPE AS T FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(target.library)}, '*PGM', ${sqlString(target.program)}))`, 1)
     .catch(() => [{ T: '*PGM' }]);
-  if (!exists.length) { throw new Error(`Program ${target.library}/${target.program} was not found. Compile it first (Ctrl+Alt+C).`); }
+  if (!exists.length) { throw new Error(vscode.l10n.t('Program {0}/{1} was not found. Compile it first (Ctrl+Alt+C).', target.library, target.program)); }
 
   const cfg = vscode.workspace.getConfiguration('vanthrex.debug');
   const { info, installed } = await serviceInfo(conn);
   if (!installed) {
-    const c = await vscode.window.showErrorMessage('The IBM i Debug Service is not installed on this system.', 'Setup Check');
+    const c = await vscode.window.showErrorMessage(vscode.l10n.t('The IBM i Debug Service is not installed on this system.'), vscode.l10n.t('Setup Check'));
     if (c) { await setupCheck(context, manager); }
     return;
   }
   const port = cfg.get<number>('port') || info.port;
   if (await isListening(conn, port) === false) {
-    const c = await vscode.window.showWarningMessage(`The Debug Service is not running (port ${port}). Start it now?`, 'Start', 'Setup Check');
-    if (c === 'Setup Check') { await setupCheck(context, manager); return; }
-    if (c !== 'Start') { return; }
+    const c = await vscode.window.showWarningMessage(vscode.l10n.t('The Debug Service is not running (port {0}). Start it now?', port), vscode.l10n.t('Start'), vscode.l10n.t('Setup Check'));
+    if (c === vscode.l10n.t('Setup Check')) { await setupCheck(context, manager); return; }
+    if (c !== vscode.l10n.t('Start')) { return; }
     await startService(manager);
   }
 
@@ -172,7 +172,7 @@ async function debugProgram(context: vscode.ExtensionContext, manager: Connectio
     catch (e) {
       if (!ignoreCertificateErrors) {
         const c = await vscode.window.showErrorMessage(
-          `Could not download the debug certificate (${info.clientCertificate}): ${errorMessage(e)}`, 'Setup Check');
+          vscode.l10n.t('Could not download the debug certificate ({0}): {1}', info.clientCertificate, errorMessage(e)), vscode.l10n.t('Setup Check'));
         if (c) { await setupCheck(context, manager); }
         return;
       }
@@ -183,7 +183,7 @@ async function debugProgram(context: vscode.ExtensionContext, manager: Connectio
   const remembered = context.workspaceState.get<Record<string, string>>('vanthrex.debug.calls', {});
   const key = `${target.library}/${target.program}`;
   const callCommand = await vscode.window.showInputBox({
-    title: `Debug ${key}`, prompt: 'Command that starts the program (add PARM(...) if it needs parameters). It runs in a batch job.',
+    title: vscode.l10n.t('Debug {0}', key), prompt: vscode.l10n.t('Command that starts the program (add PARM(...) if it needs parameters). It runs in a batch job.'),
     value: remembered[key] ?? defaultCallCommand(target.library, target.program), ignoreFocusOut: true,
   });
   if (!callCommand?.trim()) { return; }
@@ -192,7 +192,7 @@ async function debugProgram(context: vscode.ExtensionContext, manager: Connectio
   let password = await manager.profiles.getPassword(conn.profile.id);
   if (!password) {
     password = await vscode.window.showInputBox({
-      title: 'IBM i Debug', prompt: `Password for ${conn.user} (the Debug Service signs in with it)`, password: true, ignoreFocusOut: true,
+      title: vscode.l10n.t('IBM i Debug'), prompt: vscode.l10n.t('Password for {0} (the Debug Service signs in with it)', conn.user), password: true, ignoreFocusOut: true,
     });
     if (!password) { return; }
   }
@@ -207,7 +207,7 @@ async function debugProgram(context: vscode.ExtensionContext, manager: Connectio
   log(`Starting IBM i debug session for ${key} (port ${port})`);
   const started = await vscode.debug.startDebugging(undefined, config as vscode.DebugConfiguration);
   if (!started) {
-    const c = await vscode.window.showErrorMessage('The debug session did not start. Check the IBM i Debug output and the setup.', 'Setup Check');
+    const c = await vscode.window.showErrorMessage(vscode.l10n.t('The debug session did not start. Check the IBM i Debug output and the setup.'), vscode.l10n.t('Setup Check'));
     if (c) { await setupCheck(context, manager); }
   }
 }
@@ -215,16 +215,16 @@ async function debugProgram(context: vscode.ExtensionContext, manager: Connectio
 async function startService(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
   const { info, installed } = await serviceInfo(conn);
-  if (!installed) { throw new Error('The IBM i Debug Service is not installed on this system.'); }
+  if (!installed) { throw new Error(vscode.l10n.t('The IBM i Debug Service is not installed on this system.')); }
   // Same start method as IBM's tooling: the service's own script in a batch job named QDBGSRV, with a Java home.
   const jdks = (await conn.qsh('ls -d /QOpenSys/QIBM/ProdData/JavaVM/jdk*/64bit 2>/dev/null')).stdout.split(/\s+/).filter(Boolean);
   const version = (p: string) => { const n = Number(p.match(/jdk(\d+)/)?.[1] ?? 0); return n >= 50 ? n / 10 : n; };
   const javaHome = jdks.sort((a, b) => version(b) - version(a))[0];
-  if (!javaHome) { throw new Error('No 64-bit Java was found on the IBM i (5770-JV1). The Debug Service needs Java 11 or later.'); }
+  if (!javaHome) { throw new Error(vscode.l10n.t('No 64-bit Java was found on the IBM i (5770-JV1). The Debug Service needs Java 11 or later.')); }
   const logFile = `/tmp/vanthrex_debugservice_${conn.user.toLowerCase()}.log`;
   const cmd = `QSYS/SBMJOB JOB(QDBGSRV) SYSLIBL(*SYSVAL) CURLIB(*USRPRF) INLLIBL(*JOBD) CMD(QSH CMD('touch ${logFile};` +
     `attr ${logFile} CCSID=1208;export JAVA_HOME=${javaHome};${info.root}/bin/startDebugService.sh > ${logFile} 2>&1'))`;
-  const r = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Starting the IBM i Debug Service…' },
+  const r = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Starting the IBM i Debug Service…') },
     async () => {
       const res = await conn.runCL(cmd);
       if (res.ok) { await new Promise(done => setTimeout(done, 8000)); } // the service needs a few seconds to open its port
@@ -237,15 +237,15 @@ async function startService(manager: ConnectionManager): Promise<void> {
   const port = vscode.workspace.getConfiguration('vanthrex.debug').get<number>('port') || info.port;
   const up = await isListening(conn, port);
   if (up === false) {
-    vscode.window.showWarningMessage(`The Debug Service job was submitted but port ${port} is not open yet. Its log is ${logFile} on the IBM i.`);
+    vscode.window.showWarningMessage(vscode.l10n.t('The Debug Service job was submitted but port {0} is not open yet. Its log is {1} on the IBM i.', port, logFile));
   } else {
-    vscode.window.showInformationMessage(`The Debug Service is running (port ${port}).`);
+    vscode.window.showInformationMessage(vscode.l10n.t('The Debug Service is running (port {0}).', port));
   }
 }
 
 async function installClient(): Promise<void> {
   await vscode.commands.executeCommand('workbench.extensions.installExtension', DEBUG_EXTENSION_ID);
-  vscode.window.showInformationMessage('IBM i Debug installed. Run "Vanthrex: Debugger Setup Check" to finish the setup.');
+  vscode.window.showInformationMessage(vscode.l10n.t('IBM i Debug installed. Run "Vanthrex: Debugger Setup Check" to finish the setup.'));
 }
 
 export function registerDebugger(context: vscode.ExtensionContext, manager: ConnectionManager): void {
@@ -261,7 +261,7 @@ export function registerDebugger(context: vscode.ExtensionContext, manager: Conn
       const conn = manager.require();
       const { info } = await serviceInfo(conn);
       const local = await downloadCertificate(context, conn, info);
-      vscode.window.showInformationMessage(`Debug certificate saved: ${local}`);
+      vscode.window.showInformationMessage(vscode.l10n.t('Debug certificate saved: {0}', local));
       await setupCheck(context, manager);
     })),
     // Sessions end: nothing to clean up on our side, but log it for support.

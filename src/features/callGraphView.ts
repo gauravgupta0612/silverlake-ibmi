@@ -40,11 +40,11 @@ export async function crossReference(conn: IbmiConnection, libs: string[], refre
   if (cached && !refresh) { return cached; }
   await conn.sql('VALUES 1', 1);
   if (!conn.sqlKeepsJob) {
-    throw new Error('The call graph needs the Mapepire SQL engine (it builds a cross-reference in QTEMP). Change the SQL engine in the connection settings.');
+    throw new Error(vscode.l10n.t('The call graph needs the Mapepire SQL engine (it builds a cross-reference in QTEMP). Change the SQL engine in the connection settings.'));
   }
   const hideSystem = vscode.workspace.getConfiguration('vanthrex').get<boolean>('callGraph.hideSystemObjects', true);
   const refs = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: 'Building the program cross-reference…' },
+    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Building the program cross-reference…') },
     async progress => {
       let first = true;
       for (const lib of libs) {
@@ -53,7 +53,7 @@ export async function crossReference(conn: IbmiConnection, libs: string[], refre
         try { await conn.sql(`CALL QSYS2.QCMDEXC(${sqlString(cmd)})`, 1); first = false; }
         catch (e) { log(`DSPPGMREF ${lib}: ${errorMessage(e)}`); }
       }
-      if (first) { throw new Error('Could not build the cross-reference (DSPPGMREF failed for every library). See the log for details.'); }
+      if (first) { throw new Error(vscode.l10n.t('Could not build the cross-reference (DSPPGMREF failed for every library). See the log for details.')); }
       const rows = await conn.rows<Record<string, unknown>>('SELECT * FROM QTEMP/SLKCGREF', 500000);
       return rows.map(r => ({
         lib: s(r, 'WHLIB'), pgm: s(r, 'WHPNAM'), pgmType: s(r, 'WHSPKG', 'WHOBJT'), text: s(r, 'WHTEXT'),
@@ -69,16 +69,16 @@ export async function crossReference(conn: IbmiConnection, libs: string[], refre
 export async function pickLibraries(conn: IbmiConnection, root: ObjArg): Promise<string[] | undefined> {
   const libl = [...new Set([conn.profile.currentLibrary, ...conn.profile.libraries, root.library].filter(Boolean) as string[])].map(l => l.toUpperCase());
   const pick = await vscode.window.showQuickPick([
-    { label: '$(library) My library list', detail: libl.join(', '), value: 'libl' },
-    { label: `$(folder) Only ${root.library}`, value: 'one' },
-    { label: '$(edit) These libraries…', value: 'custom' },
-  ], { title: `${root.library}/${root.name} — which libraries hold the programs to analyse?` });
+    { label: vscode.l10n.t('$(library) My library list'), detail: libl.join(', '), value: 'libl' },
+    { label: vscode.l10n.t('$(folder) Only {0}', root.library), value: 'one' },
+    { label: vscode.l10n.t('$(edit) These libraries…'), value: 'custom' },
+  ], { title: vscode.l10n.t('{0}/{1} — which libraries hold the programs to analyse?', root.library, root.name) });
   if (!pick) { return undefined; }
   if (pick.value === 'libl') { return libl; }
   if (pick.value === 'one') { return [root.library]; }
-  const v = await vscode.window.showInputBox({ title: 'Libraries', prompt: 'Library names separated by commas or spaces', value: libl.join(', '), ignoreFocusOut: true });
+  const v = await vscode.window.showInputBox({ title: vscode.l10n.t('Libraries'), prompt: vscode.l10n.t('Library names separated by commas or spaces'), value: libl.join(', '), ignoreFocusOut: true });
   const libs = (v ?? '').toUpperCase().split(/[\s,]+/).filter(Boolean);
-  for (const l of libs) { if (!isValidSystemName(l)) { throw new Error(`"${l}" is not a valid library name.`); } }
+  for (const l of libs) { if (!isValidSystemName(l)) { throw new Error(vscode.l10n.t('"{0}" is not a valid library name.', l)); } }
   return libs.length ? libs : undefined;
 }
 
@@ -164,7 +164,7 @@ class CallGraphPanel {
       this.render();
     } else if (m.type === 'mermaid' && this.graph) {
       await vscode.env.clipboard.writeText('```mermaid\n' + toMermaid(this.graph) + '\n```\n');
-      vscode.window.showInformationMessage('Mermaid diagram copied — paste it into a Markdown file, wiki or pull request.');
+      vscode.window.showInformationMessage(vscode.l10n.t('Mermaid diagram copied — paste it into a Markdown file, wiki or pull request.'));
     } else if (m.type === 'sql') {
       await vscode.commands.executeCommand('vanthrex.sqlQuery', { library: this.root.library, name: this.root.name, type: this.root.type });
     } else if (m.type === 'dynamic') {
@@ -172,7 +172,7 @@ class CallGraphPanel {
     } else if (m.type === 'refresh') {
       const conn = this.manager.require();
       if (conn.profile.id !== this.scope.profileId) {
-        throw new Error(`This graph was built on ${this.scope.system}; switch back to it to rebuild the cross-reference.`);
+        throw new Error(vscode.l10n.t('This graph was built on {0}; switch back to it to rebuild the cross-reference.', this.scope.system));
       }
       this.scope = await crossReference(conn, this.scope.libs, true);
       this.render();
@@ -186,18 +186,18 @@ class CallGraphPanel {
   private async findDynamicCalls(): Promise<void> {
     const conn = this.manager.require();
     if (conn.profile.id !== this.scope.profileId) {
-      throw new Error(`This graph was built on ${this.scope.system}; switch back to it to scan its sources.`);
+      throw new Error(vscode.l10n.t('This graph was built on {0}; switch back to it to scan its sources.', this.scope.system));
     }
     const scope = this.scope;
     scope.dynamic ??= new Map(); scope.scanned ??= new Set(); scope.sources ??= new Map(); scope.notScanned ??= 0;
     const programs = (this.graph?.nodes ?? [])
       .filter(n => (n.type === '*PGM' || n.type === '*SRVPGM') && n.lib !== '*LIBL' && !scope.scanned!.has(`${n.lib}/${n.name}`))
       .map(n => ({ lib: n.lib, name: n.name }));
-    if (!programs.length) { vscode.window.showInformationMessage('Every program in this graph has already been scanned for dynamic calls.'); return; }
+    if (!programs.length) { vscode.window.showInformationMessage(vscode.l10n.t('Every program in this graph has already been scanned for dynamic calls.')); return; }
     const batch = programs.slice(0, MAX_DYNAMIC_SCAN);
     let found = 0; let skipped = 0;
     await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: 'Finding dynamic calls…', cancellable: true },
+      { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Finding dynamic calls…'), cancellable: true },
       async (progress, token) => {
         progress.report({ message: `locating the source of ${batch.length} program(s)…` });
         const sources = await sourcesOfPrograms(conn, batch);
@@ -244,12 +244,12 @@ class CallGraphPanel {
       const refs = (owner && this.scope.dynamic?.get(`${owner.lib}/${owner.name}`) || [])
         .filter(r => r.target.toUpperCase() === n.name.toUpperCase());
       const items: A[] = refs.map(r => ({
-        label: `$(go-to-file) ${r.source} line ${r.line}`, description: `${r.kind} name in ${r.target}`,
+        label: vscode.l10n.t('$(go-to-file) {0} line {1}', r.source, r.line), description: `${r.kind} name in ${r.target}`,
         run: () => { const src = this.scope.sources?.get(r.source); return src ? openSourceAtLine(src, r.line) : undefined; },
       }));
       const pick = await vscode.window.showQuickPick(items, {
-        title: `Dynamic ${refs[0]?.kind ?? 'call'}: target held in ${n.name}`,
-        placeHolder: 'The called object is decided at run time, so it is not in the cross-reference. Open the call:',
+        title: vscode.l10n.t('Dynamic {0}: target held in {1}', refs[0]?.kind ?? 'call', n.name),
+        placeHolder: vscode.l10n.t('The called object is decided at run time, so it is not in the cross-reference. Open the call:'),
       });
       if (pick) { await pick.run(); }
       return;
@@ -257,16 +257,16 @@ class CallGraphPanel {
     const o = { library: n.lib, name: n.name, type: n.type };
     const isProgram = ['*PGM', '*SRVPGM', '*MODULE'].includes(n.type);
     const actions: A[] = [
-      { label: '$(target) Center the graph on this object', run: () => this.set({ ...o, text: n.text }, this.scope, this.direction, this.depth) },
-      { label: '$(info) Object information', run: () => vscode.commands.executeCommand('vanthrex.objectInfo', o) },
+      { label: vscode.l10n.t('$(target) Center the graph on this object'), run: () => this.set({ ...o, text: n.text }, this.scope, this.direction, this.depth) },
+      { label: vscode.l10n.t('$(info) Object information'), run: () => vscode.commands.executeCommand('vanthrex.objectInfo', o) },
     ];
-    if (isProgram) { actions.push({ label: '$(go-to-file) Open source', run: () => vscode.commands.executeCommand('vanthrex.openProgramSource', o) }); }
-    if (n.type === '*SRVPGM' && n.lib !== '*LIBL') { actions.push({ label: '$(symbol-method) Who calls each exported procedure?', run: () => vscode.commands.executeCommand('vanthrex.procedureCallers', o) }); }
-    if (n.type === '*FILE') { actions.push({ label: '$(table) Edit data', run: () => vscode.commands.executeCommand('vanthrex.editData', o) }); }
-    if (n.lib !== '*LIBL') { actions.push({ label: '$(database) Run SQL query…', run: () => vscode.commands.executeCommand('vanthrex.sqlQuery', o) }); }
-    actions.push({ label: '$(sparkle) Ask AI to explain this object', run: () => vscode.commands.executeCommand('vanthrex.ai.open', `/object ${n.lib}/${n.name} ${n.type}`) });
-    actions.push({ label: '$(clippy) Copy qualified name', run: () => vscode.env.clipboard.writeText(`${n.lib}/${n.name}`) });
-    if (n.lib === '*LIBL') { actions.splice(1, 0, { label: '$(warning) Library not resolved (*LIBL) — it is outside the analysed libraries', run: () => undefined }); }
+    if (isProgram) { actions.push({ label: vscode.l10n.t('$(go-to-file) Open source'), run: () => vscode.commands.executeCommand('vanthrex.openProgramSource', o) }); }
+    if (n.type === '*SRVPGM' && n.lib !== '*LIBL') { actions.push({ label: vscode.l10n.t('$(symbol-method) Who calls each exported procedure?'), run: () => vscode.commands.executeCommand('vanthrex.procedureCallers', o) }); }
+    if (n.type === '*FILE') { actions.push({ label: vscode.l10n.t('$(table) Edit data'), run: () => vscode.commands.executeCommand('vanthrex.editData', o) }); }
+    if (n.lib !== '*LIBL') { actions.push({ label: vscode.l10n.t('$(database) Run SQL query…'), run: () => vscode.commands.executeCommand('vanthrex.sqlQuery', o) }); }
+    actions.push({ label: vscode.l10n.t('$(sparkle) Ask AI to explain this object'), run: () => vscode.commands.executeCommand('vanthrex.ai.open', `/object ${n.lib}/${n.name} ${n.type}`) });
+    actions.push({ label: vscode.l10n.t('$(clippy) Copy qualified name'), run: () => vscode.env.clipboard.writeText(`${n.lib}/${n.name}`) });
+    if (n.lib === '*LIBL') { actions.splice(1, 0, { label: vscode.l10n.t('$(warning) Library not resolved (*LIBL) — it is outside the analysed libraries'), run: () => undefined }); }
     const pick = await vscode.window.showQuickPick(actions, { title: `${n.lib}/${n.name} ${n.type}`, placeHolder: n.text || undefined });
     if (pick) { await pick.run(); }
   }
@@ -365,13 +365,13 @@ class CallGraphPanel {
 
 async function askRoot(): Promise<ObjArg | undefined> {
   const v = await vscode.window.showInputBox({
-    title: 'Call graph & impact analysis', prompt: 'LIBRARY/OBJECT and optionally its type (*PGM, *SRVPGM, *FILE, *DTAARA…)',
+    title: vscode.l10n.t('Call graph & impact analysis'), prompt: vscode.l10n.t('LIBRARY/OBJECT and optionally its type (*PGM, *SRVPGM, *FILE, *DTAARA…)'),
     placeHolder: 'MYLIB/ORDENTRY *PGM', ignoreFocusOut: true,
   });
   if (!v?.trim()) { return undefined; }
   const [path, type] = v.trim().toUpperCase().split(/\s+/);
   const [library, name] = path.split('/');
-  if (!name) { throw new Error('Use LIBRARY/OBJECT, for example MYLIB/ORDENTRY.'); }
+  if (!name) { throw new Error(vscode.l10n.t('Use LIBRARY/OBJECT, for example MYLIB/ORDENTRY.')); }
   return { library: assertSystemName(library, 'library'), name: assertSystemName(name, 'object name'), type: type || '*PGM' };
 }
 
@@ -390,7 +390,7 @@ export function registerCallGraph(context: vscode.ExtensionContext, manager: Con
   const guard = (fn: (...a: any[]) => Promise<unknown>) => async (...a: any[]) => {
     try { await fn(...a); } catch (e) {
       logError(e);
-      const c = await vscode.window.showErrorMessage(errorMessage(e), 'Show Log');
+      const c = await vscode.window.showErrorMessage(errorMessage(e), vscode.l10n.t('Show Log'));
       if (c) { showLog(); }
     }
   };
