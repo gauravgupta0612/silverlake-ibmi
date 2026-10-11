@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code with an AI assistant (@vanthrex): connection wizard for several systems, library & IFS browser, edit and compile with inline errors, call graph & impact analysis, Db2 for i SQL with autocomplete and explain, table data editor, debugger, system dashboard, jobs & messages, RPG navigation, fixed-to-free conversion and code checks.",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -789,6 +789,46 @@
         "command": "vanthrex.ai.openSql",
         "title": "AI: Open SQL in Scratchpad",
         "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.indexAdvisor",
+        "title": "Index Advisor",
+        "category": "Vanthrex",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "vanthrex.createAdvisedIndex",
+        "title": "Create Advised Index",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.activeQueries",
+        "title": "Show Queries Running Now",
+        "category": "Vanthrex",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "vanthrex.compareData",
+        "title": "Compare Table Data (DEV ↔ PROD)…",
+        "category": "Vanthrex",
+        "icon": "$(table)"
+      },
+      {
+        "command": "vanthrex.exportDataCompare",
+        "title": "Export Data Differences (CSV)…",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.explainMessage",
+        "title": "Explain Message ID…",
+        "category": "Vanthrex",
+        "icon": "$(question)"
+      },
+      {
+        "command": "vanthrex.analyzeJobLog",
+        "title": "Analyze Job Log",
+        "category": "Vanthrex",
+        "icon": "$(search-fuzzy)"
       }
     ],
     "menus": {
@@ -1174,6 +1214,21 @@
           "command": "vanthrex.sqlQuery",
           "when": "view == vanthrex.libraries && viewItem =~ /^(library|srcfile|member|object.*)$/",
           "group": "2_analyse@9"
+        },
+        {
+          "command": "vanthrex.compareData",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@6"
+        },
+        {
+          "command": "vanthrex.indexAdvisor",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@2"
+        },
+        {
+          "command": "vanthrex.analyzeJobLog",
+          "when": "view == vanthrex.jobs && viewItem =~ /^job/",
+          "group": "1_job@0"
         }
       ],
       "editor/title": [
@@ -1456,6 +1511,14 @@
         {
           "command": "vanthrex.sqlQuery",
           "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.createAdvisedIndex",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.exportDataCompare",
+          "when": "false"
         }
       ],
       "vanthrex.ai": [

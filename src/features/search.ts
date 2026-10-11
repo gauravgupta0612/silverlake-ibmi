@@ -14,7 +14,7 @@ function libraryScope(conn: IbmiConnection): string[] {
   return [...new Set([conn.profile.currentLibrary, ...conn.profile.libraries].filter(Boolean) as string[])];
 }
 
-async function pickScope(conn: IbmiConnection, title: string): Promise<string[] | undefined> {
+export async function pickScope(conn: IbmiConnection, title: string): Promise<string[] | undefined> {
   const libs = libraryScope(conn);
   const pick = await vscode.window.showQuickPick([
     { label: '$(library) My library list', detail: libs.join(', ') || '(empty)', value: 'libl' },

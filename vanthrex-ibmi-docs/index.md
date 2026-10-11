@@ -35,6 +35,7 @@ One sidebar for everything you do on IBM i: connect, browse, edit, compile, quer
 | **Source in Git** | Export libraries to Git, move changes both ways and see every version of a member — [new in 0.6](features-git.md). |
 | **See the impact** | Interactive **call graph** of callers and callees before you change a program or file — [new in 0.6](features-call-graph.md). |
 | **DEV, TEST and PROD together** | Several systems connected at once, switch instantly; SQL **Explain** shows scans and advised indexes — new in 0.6. |
+| **Troubleshoot faster** | **Index advisor**, **DEV ↔ PROD data compare**, message help on hover and a **job log analyzer** — [new in 0.8](features-insights.md). |
 | **Understand the code** | Object and source search, **where used**, go to definition into /COPY members, scoped rename and RPG code checks. |
 
 ## Start here
@@ -48,4 +49,4 @@ Something not working? See [Troubleshooting](troubleshooting.md).
 
 ---
 
-Current version: **0.6.1** · [Changelog](changelog.md) · Free and open source under the MIT License.
+Current version: **0.8.0** · [Changelog](changelog.md) · Free and open source under the MIT License.

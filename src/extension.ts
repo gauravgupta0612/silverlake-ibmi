@@ -33,6 +33,7 @@ import { registerProcedureCallers } from './features/procedureCallers';
 import { registerSqlQueryPanel } from './features/sqlQueryPanel';
 import { registerGit } from './git/gitSync';
 import { registerAi } from './ai/assistant';
+import { registerInsights } from './features/insightsView';
 
 let manager: ConnectionManager | undefined;
 
@@ -93,6 +94,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('sql query panel', () => registerSqlQueryPanel(context, m));
   step('git', () => registerGit(context, m));
   step('ai assistant', () => registerAi(context, m));
+  step('insights', () => registerInsights(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(`Vanthrex started with problems: ${failures.join(' | ')}`, 'Show Log')

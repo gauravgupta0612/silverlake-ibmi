@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0
+
+**New: insights for faster troubleshooting**
+
+- **Index Advisor** (right-click a library, or the quick menu): every index Db2 for i itself recommended while your application ran (`QSYS2.SYSIXADV`) across your libraries, most requested first, with the cost of the most expensive query. Click a suggestion to create the index — a name is proposed and the SQL is shown before it runs. *Show Queries Running Now* lists the active SQL on the system.
+- **Compare table data (DEV ↔ PROD)** (right-click a file): compares the rows of the same table in two libraries by key (primary key pre-selected) — exact counts of rows only in one copy and changed rows, a field-by-field list of what changed (`BALANCE: 10.00 → 12.50`), and CSV export.
+- **Message help everywhere**: hover any message ID (CPF9801, MCH1211, RNQ0102, SQL0204…) in any editor — job logs, compile listings, spooled files, comments — to see IBM's text, severity, plain-language advice and the full help text. **Explain Message ID…** does the same on demand.
+- **Job log analyzer** (right-click a job → *Analyze Job Log*): groups the errors, highlights the most likely root cause (not the generic CPF9999 function check) and says what to do.
+
 ## 0.7.1
 
 **New: SQL editor with results, right where you are**

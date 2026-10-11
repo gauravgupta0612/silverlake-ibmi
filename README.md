@@ -45,6 +45,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **SQL power tools** *(new in 0.4)* | Generate SQL (DDL) for tables, views, indexes and routines; run a whole SQL script with per-statement results (`Ctrl+Shift+Enter`); SQL history and saved queries. |
 | **Procedure tools** *(new in 0.4)* | Generate a prototype from a procedure, extract lines to a new procedure safely, and find unused /COPY members. |
 | **Debugger** *(new in 0.5)* | Step-through debugging of RPG, COBOL and CL with breakpoints, variables and call stack (Ctrl+Alt+G), through IBM's IBM i Debug client and Debug Service, with a setup check that fixes the setup for you. |
+| **Insights** *(new in 0.8)* | **Index advisor** with one-click index creation, **table data compare** between DEV and PROD by key, **message help on hover** for any CPF/MCH/RNQ/SQL ID, and a **job log analyzer** that points at the root cause. |
 
 ## Requirements on the IBM i
 
