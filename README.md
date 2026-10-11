@@ -50,6 +50,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **Your language** *(new in 0.10)* | The whole interface in **English, French, Spanish, German, Italian, Portuguese (Brazil), Japanese and Simplified Chinese** — it follows the VS Code display language. |
 | **Work with…** *(new in 0.11)* | The 5250 *WRK* screens in VS Code: **subsystems, job queues, output queues, job scheduler, user profiles, system values, security audit journal, save files (save / restore / download / upload), TCP/IP connections and servers**. |
 | **Operations** *(new in 1.0)* | **Storage & cleanup advisor**, **live alerts** (MSGW, QSYSOPR inquiries, abnormal job ends, disk), **message file editor**, **field finder**, and **object promotion DEV → TEST → PROD** with backup, compare, log and undo. |
+| **Data, performance & quality** *(new in 1.1)* | **Export to Excel / CSV / JSON** and **import CSV or Excel** with a preview, a live **performance monitor**, **code metrics** with grades, **Markdown documentation** from source, and **RPGUnit tests** in VS Code's Testing view. |
 
 ## Requirements on the IBM i
 

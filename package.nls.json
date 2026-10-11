@@ -259,5 +259,19 @@
   "config.alerts.scope.enum.0": "Only jobs and messages of your own user profile",
   "config.alerts.scope.enum.1": "All users (needs authority to see other jobs and QSYSOPR)",
   "config.alerts.diskPercent": "Alert when the system ASP is used above this percentage.",
-  "config.promotion.backupLibrary": "Library for the backup and transfer save files that object promotion creates."
+  "config.promotion.backupLibrary": "Library for the backup and transfer save files that object promotion creates.",
+  "command.exportData": "Export Table Data (Excel, CSV, JSON)…",
+  "command.exportQuery": "Export Query Result (Excel, CSV, JSON)…",
+  "command.importData": "Import CSV or Excel into Table…",
+  "command.importData.run": "Run Import",
+  "command.performanceMonitor": "Performance Monitor",
+  "command.codeMetrics": "Code Metrics",
+  "command.codeMetrics.open": "Open Member",
+  "command.generateDocs": "Generate Documentation (Markdown)",
+  "command.rpgunit.generate": "Generate RPGUnit Tests…",
+  "command.rpgunit.discover": "Find RPGUnit Tests…",
+  "config.export.maxRows": "Maximum number of rows exported to Excel, CSV or JSON.",
+  "config.performance.intervalSeconds": "How often the performance monitor samples the IBM i, in seconds.",
+  "config.rpgunit.library": "Library where RPGUnit (iRPGUnit) is installed; added to the library list to compile and run tests.",
+  "config.rpgunit.testLibrary": "Library for the compiled test programs. Empty = your current library."
 }

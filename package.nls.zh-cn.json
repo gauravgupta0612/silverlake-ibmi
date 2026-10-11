@@ -259,5 +259,19 @@
   "config.alerts.scope.enum.0": "仅您自己的用户概要文件的作业和消息",
   "config.alerts.scope.enum.1": "所有用户（需要查看其他作业和 QSYSOPR 的权限）",
   "config.alerts.diskPercent": "当系统 ASP 使用率超过此百分比时发出警报。",
-  "config.promotion.backupLibrary": "对象升级所创建的备份和传输保存文件所在的库。"
+  "config.promotion.backupLibrary": "对象升级所创建的备份和传输保存文件所在的库。",
+  "command.exportData": "导出表数据（Excel、CSV、JSON）…",
+  "command.exportQuery": "导出查询结果（Excel、CSV、JSON）…",
+  "command.importData": "将 CSV 或 Excel 导入表…",
+  "command.importData.run": "运行导入",
+  "command.performanceMonitor": "性能监视器",
+  "command.codeMetrics": "代码指标",
+  "command.codeMetrics.open": "打开成员",
+  "command.generateDocs": "生成文档（Markdown）",
+  "command.rpgunit.generate": "生成 RPGUnit 测试…",
+  "command.rpgunit.discover": "查找 RPGUnit 测试…",
+  "config.export.maxRows": "导出到 Excel、CSV 或 JSON 的最大行数。",
+  "config.performance.intervalSeconds": "性能监视器对 IBM i 进行采样的频率（秒）。",
+  "config.rpgunit.library": "安装 RPGUnit（iRPGUnit）的库；将添加到库列表中以编译和运行测试。",
+  "config.rpgunit.testLibrary": "已编译测试程序所在的库。为空 = 您的当前库。"
 }

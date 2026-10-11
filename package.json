@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -1079,6 +1079,64 @@
         "command": "vanthrex.promote.undo",
         "title": "%command.promote.undo%",
         "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.exportData",
+        "title": "%command.exportData%",
+        "category": "Vanthrex",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "vanthrex.exportQuery",
+        "title": "%command.exportQuery%",
+        "category": "Vanthrex",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "vanthrex.importData",
+        "title": "%command.importData%",
+        "category": "Vanthrex",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "vanthrex.importData.run",
+        "title": "%command.importData.run%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.performanceMonitor",
+        "title": "%command.performanceMonitor%",
+        "category": "Vanthrex",
+        "icon": "$(graph-line)"
+      },
+      {
+        "command": "vanthrex.codeMetrics",
+        "title": "%command.codeMetrics%",
+        "category": "Vanthrex",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "vanthrex.codeMetrics.open",
+        "title": "%command.codeMetrics.open%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.generateDocs",
+        "title": "%command.generateDocs%",
+        "category": "Vanthrex",
+        "icon": "$(book)"
+      },
+      {
+        "command": "vanthrex.rpgunit.generate",
+        "title": "%command.rpgunit.generate%",
+        "category": "Vanthrex",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "vanthrex.rpgunit.discover",
+        "title": "%command.rpgunit.discover%",
+        "category": "Vanthrex",
+        "icon": "$(search)"
       }
     ],
     "menus": {
@@ -1197,6 +1255,11 @@
           "command": "vanthrex.alerts.show",
           "when": "view == vanthrex.jobs",
           "group": "navigation@8"
+        },
+        {
+          "command": "vanthrex.performanceMonitor",
+          "when": "view == vanthrex.jobs",
+          "group": "navigation@7"
         }
       ],
       "view/item/context": [
@@ -1559,6 +1622,31 @@
           "command": "vanthrex.alerts.show",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "1_info@7"
+        },
+        {
+          "command": "vanthrex.exportData",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@9"
+        },
+        {
+          "command": "vanthrex.importData",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@10"
+        },
+        {
+          "command": "vanthrex.codeMetrics",
+          "when": "view == vanthrex.libraries && viewItem == srcfile",
+          "group": "5_compare@7"
+        },
+        {
+          "command": "vanthrex.rpgunit.discover",
+          "when": "view == vanthrex.libraries && viewItem == srcfile",
+          "group": "5_compare@8"
+        },
+        {
+          "command": "vanthrex.performanceMonitor",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "1_info@6"
         }
       ],
       "editor/title": [
@@ -1683,6 +1771,26 @@
           "command": "vanthrex.explainSql",
           "when": "vanthrex.connected && editorLangId == sql",
           "group": "vanthrex@1"
+        },
+        {
+          "command": "vanthrex.codeMetrics",
+          "when": "resourceScheme == vanthrex-member && editorLangId =~ /rpg|cl/",
+          "group": "vanthrex@20"
+        },
+        {
+          "command": "vanthrex.generateDocs",
+          "when": "resourceScheme == vanthrex-member && editorLangId =~ /rpg|cl/",
+          "group": "vanthrex@21"
+        },
+        {
+          "command": "vanthrex.rpgunit.generate",
+          "when": "resourceScheme == vanthrex-member && editorLangId =~ /rpg/",
+          "group": "vanthrex@22"
+        },
+        {
+          "command": "vanthrex.exportQuery",
+          "when": "editorLangId == sql",
+          "group": "vanthrex@23"
         }
       ],
       "commandPalette": [
@@ -1904,6 +2012,14 @@
         },
         {
           "command": "vanthrex.messageFile.add",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.importData.run",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.codeMetrics.open",
           "when": "false"
         }
       ],
@@ -2508,6 +2624,28 @@
           "type": "string",
           "default": "QGPL",
           "description": "%config.promotion.backupLibrary%"
+        },
+        "vanthrex.export.maxRows": {
+          "type": "number",
+          "default": 100000,
+          "minimum": 1,
+          "description": "%config.export.maxRows%"
+        },
+        "vanthrex.performance.intervalSeconds": {
+          "type": "number",
+          "default": 5,
+          "minimum": 2,
+          "description": "%config.performance.intervalSeconds%"
+        },
+        "vanthrex.rpgunit.library": {
+          "type": "string",
+          "default": "RPGUNIT",
+          "description": "%config.rpgunit.library%"
+        },
+        "vanthrex.rpgunit.testLibrary": {
+          "type": "string",
+          "default": "",
+          "description": "%config.rpgunit.testLibrary%"
         }
       }
     },

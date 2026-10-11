@@ -37,6 +37,10 @@ import { registerInsights } from './features/insightsView';
 import { registerAdmin } from './features/adminView';
 import { registerWorkWith } from './features/workWithView';
 import { registerExtras } from './features/extrasView';
+import { registerDataTransfer } from './features/dataTransferView';
+import { registerPerfMonitor } from './features/perfMonitor';
+import { registerCodeTools } from './features/codeToolsView';
+import { registerRpgUnit } from './features/rpgUnit';
 
 let manager: ConnectionManager | undefined;
 
@@ -101,6 +105,10 @@ export function activate(context: vscode.ExtensionContext): void {
   step('system tools', () => registerAdmin(context, m));
   step('work with', () => registerWorkWith(context, m));
   step('extras', () => registerExtras(context, m));
+  step('data transfer', () => registerDataTransfer(context, m));
+  step('performance', () => registerPerfMonitor(context, m));
+  step('code tools', () => registerCodeTools(context, m));
+  step('rpgunit', () => registerRpgUnit(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

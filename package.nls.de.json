@@ -259,5 +259,19 @@
   "config.alerts.scope.enum.0": "Nur Jobs und Nachrichten Ihres eigenen Benutzerprofils",
   "config.alerts.scope.enum.1": "Alle Benutzer (erfordert Berechtigung zum Anzeigen anderer Jobs und von QSYSOPR)",
   "config.alerts.diskPercent": "Alert auslösen, wenn die Belegung des System-ASP diesen Prozentsatz überschreitet.",
-  "config.promotion.backupLibrary": "Bibliothek für die Sicherungs- und Übertragungs-Sicherungsdateien, die beim Überführen von Objekten erstellt werden."
+  "config.promotion.backupLibrary": "Bibliothek für die Sicherungs- und Übertragungs-Sicherungsdateien, die beim Überführen von Objekten erstellt werden.",
+  "command.exportData": "Tabellendaten exportieren (Excel, CSV, JSON)…",
+  "command.exportQuery": "Abfrageergebnis exportieren (Excel, CSV, JSON)…",
+  "command.importData": "CSV oder Excel in Tabelle importieren…",
+  "command.importData.run": "Import ausführen",
+  "command.performanceMonitor": "Leistungsmonitor",
+  "command.codeMetrics": "Codemetriken",
+  "command.codeMetrics.open": "Teildatei öffnen",
+  "command.generateDocs": "Dokumentation generieren (Markdown)",
+  "command.rpgunit.generate": "RPGUnit-Tests generieren…",
+  "command.rpgunit.discover": "RPGUnit-Tests suchen…",
+  "config.export.maxRows": "Maximale Anzahl der nach Excel, CSV oder JSON exportierten Zeilen.",
+  "config.performance.intervalSeconds": "Wie oft der Leistungsmonitor Stichproben vom IBM i erfasst, in Sekunden.",
+  "config.rpgunit.library": "Bibliothek, in der RPGUnit (iRPGUnit) installiert ist; wird zum Kompilieren und Ausführen der Tests zur Bibliotheksliste hinzugefügt.",
+  "config.rpgunit.testLibrary": "Bibliothek für die kompilierten Testprogramme. Leer = Ihre aktuelle Bibliothek."
 }

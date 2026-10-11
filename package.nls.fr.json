@@ -259,5 +259,19 @@
   "config.alerts.scope.enum.0": "Uniquement les travaux et messages de votre propre profil utilisateur",
   "config.alerts.scope.enum.1": "Tous les utilisateurs (nécessite les droits pour voir les autres travaux et QSYSOPR)",
   "config.alerts.diskPercent": "Alerter lorsque l'utilisation de l'ASP système dépasse ce pourcentage.",
-  "config.promotion.backupLibrary": "Bibliothèque des fichiers sauvegarde de sauvegarde et de transfert créés par la promotion d'objets."
+  "config.promotion.backupLibrary": "Bibliothèque des fichiers sauvegarde de sauvegarde et de transfert créés par la promotion d'objets.",
+  "command.exportData": "Exporter les données de la table (Excel, CSV, JSON)…",
+  "command.exportQuery": "Exporter le résultat de la requête (Excel, CSV, JSON)…",
+  "command.importData": "Importer un fichier CSV ou Excel dans une table…",
+  "command.importData.run": "Lancer l'importation",
+  "command.performanceMonitor": "Moniteur de performances",
+  "command.codeMetrics": "Métriques de code",
+  "command.codeMetrics.open": "Ouvrir le membre",
+  "command.generateDocs": "Générer la documentation (Markdown)",
+  "command.rpgunit.generate": "Générer des tests RPGUnit…",
+  "command.rpgunit.discover": "Rechercher des tests RPGUnit…",
+  "config.export.maxRows": "Nombre maximal de lignes exportées vers Excel, CSV ou JSON.",
+  "config.performance.intervalSeconds": "Fréquence d'échantillonnage de l'IBM i par le moniteur de performances, en secondes.",
+  "config.rpgunit.library": "Bibliothèque dans laquelle RPGUnit (iRPGUnit) est installé ; ajoutée à la liste de bibliothèques pour compiler et exécuter les tests.",
+  "config.rpgunit.testLibrary": "Bibliothèque des programmes de test compilés. Vide = votre bibliothèque en cours."
 }

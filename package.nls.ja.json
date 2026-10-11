@@ -259,5 +259,19 @@
   "config.alerts.scope.enum.0": "自分のユーザー・プロファイルのジョブとメッセージのみ",
   "config.alerts.scope.enum.1": "すべてのユーザー (他のジョブと QSYSOPR を表示するための権限が必要)",
   "config.alerts.diskPercent": "システム ASP の使用率がこのパーセンテージを超えたときにアラートを出します。",
-  "config.promotion.backupLibrary": "オブジェクトのプロモートで作成されるバックアップ用および転送用の保管ファイルのライブラリー。"
+  "config.promotion.backupLibrary": "オブジェクトのプロモートで作成されるバックアップ用および転送用の保管ファイルのライブラリー。",
+  "command.exportData": "テーブル・データのエクスポート (Excel、CSV、JSON)…",
+  "command.exportQuery": "照会結果のエクスポート (Excel、CSV、JSON)…",
+  "command.importData": "CSV または Excel をテーブルにインポート…",
+  "command.importData.run": "インポートの実行",
+  "command.performanceMonitor": "パフォーマンス・モニター",
+  "command.codeMetrics": "コード・メトリック",
+  "command.codeMetrics.open": "メンバーを開く",
+  "command.generateDocs": "ドキュメントの生成 (Markdown)",
+  "command.rpgunit.generate": "RPGUnit テストの生成…",
+  "command.rpgunit.discover": "RPGUnit テストの検索…",
+  "config.export.maxRows": "Excel、CSV、または JSON にエクスポートする最大行数。",
+  "config.performance.intervalSeconds": "パフォーマンス・モニターが IBM i をサンプリングする間隔 (秒)。",
+  "config.rpgunit.library": "RPGUnit (iRPGUnit) がインストールされているライブラリー。テストのコンパイルと実行のためにライブラリー・リストに追加されます。",
+  "config.rpgunit.testLibrary": "コンパイルされたテスト・プログラム用のライブラリー。空 = 現行ライブラリー。"
 }

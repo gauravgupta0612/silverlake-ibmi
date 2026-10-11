@@ -259,5 +259,19 @@
   "config.alerts.scope.enum.0": "Somente jobs e mensagens do seu próprio perfil de usuário",
   "config.alerts.scope.enum.1": "Todos os usuários (requer autorização para ver outros jobs e o QSYSOPR)",
   "config.alerts.diskPercent": "Alertar quando o uso do ASP do sistema estiver acima desta porcentagem.",
-  "config.promotion.backupLibrary": "Biblioteca para os arquivos de salvamento de backup e transferência criados pela promoção de objetos."
+  "config.promotion.backupLibrary": "Biblioteca para os arquivos de salvamento de backup e transferência criados pela promoção de objetos.",
+  "command.exportData": "Exportar dados da tabela (Excel, CSV, JSON)…",
+  "command.exportQuery": "Exportar resultado da consulta (Excel, CSV, JSON)…",
+  "command.importData": "Importar CSV ou Excel para a tabela…",
+  "command.importData.run": "Executar importação",
+  "command.performanceMonitor": "Monitor de desempenho",
+  "command.codeMetrics": "Métricas de código",
+  "command.codeMetrics.open": "Abrir membro",
+  "command.generateDocs": "Gerar documentação (Markdown)",
+  "command.rpgunit.generate": "Gerar testes RPGUnit…",
+  "command.rpgunit.discover": "Localizar testes RPGUnit…",
+  "config.export.maxRows": "Número máximo de linhas exportadas para Excel, CSV ou JSON.",
+  "config.performance.intervalSeconds": "Com que frequência o monitor de desempenho coleta amostras do IBM i, em segundos.",
+  "config.rpgunit.library": "Biblioteca onde o RPGUnit (iRPGUnit) está instalado; adicionada à lista de bibliotecas para compilar e executar os testes.",
+  "config.rpgunit.testLibrary": "Biblioteca para os programas de teste compilados. Vazio = sua biblioteca atual."
 }
