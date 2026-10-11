@@ -6,6 +6,15 @@ nav_order: 90
 
 # Changelog
 
+## 0.9.0
+
+**New: system tools**
+
+- **Journal Explorer: Who Changed This Table?** (right-click a file): row changes from the journal for a time range — added, updated, deleted, by which user, program and job — with before/after images of updates, a "who changed it" summary and the history of a single row. Offers `STRJRNPF` when the file isn't journaled.
+- **Check Authority (Can a User Use This?)** (right-click any object): resolves a user's authority in IBM i order (*ALLOBJ → own → groups → authorization list → *PUBLIC), checks the library too, explains where the authority comes from and what is missing, and offers the `GRTOBJAUT` fix.
+- **Data queues & data areas** (right-click a `*DTAQ` / `*DTAARA`): peek at data queue entries without removing them, send a test entry, clear the queue; view a data area and change its value with type, length and decimal checks.
+- **PTF & System Health** (quick menu, or right-click the active connection): PTF groups compared with IBM's latest levels, PTFs waiting for an IPL, system ASP use, certificates expiring within 60 days, and user profiles with default or expiring passwords — worst first, with what to do.
+
 ## 0.8.0
 
 **New: insights for faster troubleshooting**
@@ -161,5 +170,6 @@ nav_order: 90
 - Spooled file viewer: open, save, delete.
 - RPG: syntax highlighting (free and fixed), outline, hovers for BIFs/opcodes, fixed-format column hints, `%` completion, snippets, fixed C-spec → free conversion.
 - CL and DDS syntax highlighting and snippets.
+
 
 Full release history: [GitHub Releases](https://github.com/gauravgupta0612/silverlake-ibmi/releases).

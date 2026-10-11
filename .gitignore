@@ -12,3 +12,4 @@ Thumbs.db
 
 # Release helper clones
 .publish/
+push-release-tag.bat

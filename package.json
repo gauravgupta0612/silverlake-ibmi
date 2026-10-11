@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "Vanthrex for IBM i",
   "description": "A friendly, all-in-one IBM i workbench for VS Code with an AI assistant (@vanthrex): connection wizard for several systems, library & IFS browser, edit and compile with inline errors, call graph & impact analysis, Db2 for i SQL with autocomplete and explain, table data editor, debugger, system dashboard, jobs & messages, RPG navigation, fixed-to-free conversion and code checks.",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -829,6 +829,57 @@
         "title": "Analyze Job Log",
         "category": "Vanthrex",
         "icon": "$(search-fuzzy)"
+      },
+      {
+        "command": "vanthrex.journalExplorer",
+        "title": "Journal Explorer: Who Changed This Table?",
+        "category": "Vanthrex",
+        "icon": "$(history)"
+      },
+      {
+        "command": "vanthrex.checkAuthority",
+        "title": "Check Authority (Can a User Use This?)…",
+        "category": "Vanthrex",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "vanthrex.grantAuthority",
+        "title": "Grant Missing Authority",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.dataQueue",
+        "title": "View Data Queue Entries",
+        "category": "Vanthrex",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "vanthrex.sendDataQueue",
+        "title": "Send Data Queue Entry…",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.clearDataQueue",
+        "title": "Clear Data Queue…",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.dataArea",
+        "title": "View Data Area",
+        "category": "Vanthrex",
+        "icon": "$(symbol-variable)"
+      },
+      {
+        "command": "vanthrex.editDataArea",
+        "title": "Change Data Area Value…",
+        "category": "Vanthrex",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "vanthrex.systemHealth",
+        "title": "PTF & System Health",
+        "category": "Vanthrex",
+        "icon": "$(pulse)"
       }
     ],
     "menus": {
@@ -1229,6 +1280,36 @@
           "command": "vanthrex.analyzeJobLog",
           "when": "view == vanthrex.jobs && viewItem =~ /^job/",
           "group": "1_job@0"
+        },
+        {
+          "command": "vanthrex.journalExplorer",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@7"
+        },
+        {
+          "command": "vanthrex.checkAuthority",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object/",
+          "group": "0_info@8"
+        },
+        {
+          "command": "vanthrex.dataQueue",
+          "when": "view == vanthrex.libraries && viewItem == object.dtaq",
+          "group": "0_info@1"
+        },
+        {
+          "command": "vanthrex.dataArea",
+          "when": "view == vanthrex.libraries && viewItem == object.dtaara",
+          "group": "0_info@1"
+        },
+        {
+          "command": "vanthrex.editDataArea",
+          "when": "view == vanthrex.libraries && viewItem == object.dtaara",
+          "group": "0_info@2"
+        },
+        {
+          "command": "vanthrex.systemHealth",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "1_info@9"
         }
       ],
       "editor/title": [
@@ -1518,6 +1599,18 @@
         },
         {
           "command": "vanthrex.exportDataCompare",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.grantAuthority",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.sendDataQueue",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.clearDataQueue",
           "when": "false"
         }
       ],
