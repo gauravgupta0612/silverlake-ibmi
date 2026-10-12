@@ -277,5 +277,13 @@
   "command.selfCheck": "Self-Check (Is This System Ready?)",
   "command.selfCheck.copy": "Copy Self-Check Report",
   "command.setProtection": "Set Protection (Production / Read-Only)…",
-  "config.selfCheck.onConnect": "Check the system the first time you connect to it in a session and warn about setup problems (SQL engine, CCSID, library list…)."
+  "config.selfCheck.onConnect": "Check the system the first time you connect to it in a session and warn about setup problems (SQL engine, CCSID, library list…).",
+  "command.previewDspf": "Preview Screen (Display File)",
+  "command.databaseDiagram": "Database Diagram",
+  "command.compareSystems": "Compare with Another System…",
+  "command.spoolPdf": "Save as PDF…",
+  "command.spoolEmail": "Send by E-mail…",
+  "command.emailQuery": "E-mail Query Result (Excel)…",
+  "config.spool.pdfMode": "How spooled files become PDF: \"local\" converts the text in VS Code (works everywhere); \"server\" asks the IBM i (CPYSPLF WSCST(*PDF)) and keeps fonts and graphics, falling back to local.",
+  "config.compare.maxRows": "Maximum rows read from each system when comparing a table across two systems."
 }

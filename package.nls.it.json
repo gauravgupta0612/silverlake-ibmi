@@ -277,5 +277,13 @@
   "command.selfCheck": "Autoverifica (questo sistema è pronto?)",
   "command.selfCheck.copy": "Copia report di autoverifica",
   "command.setProtection": "Imposta protezione (produzione / sola lettura)…",
-  "config.selfCheck.onConnect": "Verifica il sistema alla prima connessione in una sessione e segnala i problemi di configurazione (motore SQL, CCSID, elenco librerie…)."
+  "config.selfCheck.onConnect": "Verifica il sistema alla prima connessione in una sessione e segnala i problemi di configurazione (motore SQL, CCSID, elenco librerie…).",
+  "command.previewDspf": "Anteprima videata (file video)",
+  "command.databaseDiagram": "Diagramma del database",
+  "command.compareSystems": "Confronta con un altro sistema…",
+  "command.spoolPdf": "Salva come PDF…",
+  "command.spoolEmail": "Invia per e-mail…",
+  "command.emailQuery": "Invia risultato della query per e-mail (Excel)…",
+  "config.spool.pdfMode": "Come i file di spool vengono convertiti in PDF: \"local\" converte il testo in VS Code (funziona ovunque); \"server\" lo richiede all'IBM i (CPYSPLF WSCST(*PDF)) e mantiene caratteri e grafica, ripiegando su local.",
+  "config.compare.maxRows": "Numero massimo di righe lette da ciascun sistema quando si confronta una tabella tra due sistemi."
 }

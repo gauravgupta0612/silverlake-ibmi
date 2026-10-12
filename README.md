@@ -52,6 +52,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **Operations** *(new in 1.0)* | **Storage & cleanup advisor**, **live alerts** (MSGW, QSYSOPR inquiries, abnormal job ends, disk), **message file editor**, **field finder**, and **object promotion DEV → TEST → PROD** with backup, compare, log and undo. |
 | **Data, performance & quality** *(new in 1.1)* | **Export to Excel / CSV / JSON** and **import CSV or Excel** with a preview, a live **performance monitor**, **code metrics** with grades, **Markdown documentation** from source, and **RPGUnit tests** in VS Code's Testing view. |
 | **Safe on production** *(new in 1.2)* | Mark a connection **Production** (every change asks first) or **Read-only**, a **self-check** of the system with fixes, and **errors that explain what to do**. |
+| **See and share** *(new in 1.3)* | **5250 screen preview** for display files, **database diagrams** with inferred relationships, **compare two systems** (member, objects, table rows, system values, PTFs), and **spooled files to PDF / e-mail**. |
 
 ## Requirements on the IBM i
 

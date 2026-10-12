@@ -277,5 +277,13 @@
   "command.selfCheck": "Auto-vérification (ce système est-il prêt ?)",
   "command.selfCheck.copy": "Copier le rapport d'auto-vérification",
   "command.setProtection": "Définir la protection (production / lecture seule)…",
-  "config.selfCheck.onConnect": "Vérifier le système lors de la première connexion dans une session et signaler les problèmes de configuration (moteur SQL, CCSID, liste de bibliothèques…)."
+  "config.selfCheck.onConnect": "Vérifier le système lors de la première connexion dans une session et signaler les problèmes de configuration (moteur SQL, CCSID, liste de bibliothèques…).",
+  "command.previewDspf": "Aperçu de l'écran (fichier écran)",
+  "command.databaseDiagram": "Diagramme de base de données",
+  "command.compareSystems": "Comparer avec un autre système…",
+  "command.spoolPdf": "Enregistrer en PDF…",
+  "command.spoolEmail": "Envoyer par e-mail…",
+  "command.emailQuery": "Envoyer le résultat de requête par e-mail (Excel)…",
+  "config.spool.pdfMode": "Mode de conversion des fichiers spoule en PDF : « local » convertit le texte dans VS Code (fonctionne partout) ; « server » fait appel à l'IBM i (CPYSPLF WSCST(*PDF)) et conserve les polices et les graphiques, avec repli sur local.",
+  "config.compare.maxRows": "Nombre maximal de lignes lues sur chaque système lors de la comparaison d'une table entre deux systèmes."
 }

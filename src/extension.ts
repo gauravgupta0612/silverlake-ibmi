@@ -42,6 +42,10 @@ import { registerPerfMonitor } from './features/perfMonitor';
 import { registerCodeTools } from './features/codeToolsView';
 import { registerRpgUnit } from './features/rpgUnit';
 import { registerProtection, registerSelfCheck } from './features/selfCheck';
+import { registerDspfPreview } from './features/dspfPreview';
+import { registerErd } from './features/erdView';
+import { registerCrossSystem } from './features/crossSystem';
+import { registerSpoolExtras } from './features/spoolExtras';
 
 let manager: ConnectionManager | undefined;
 
@@ -112,6 +116,10 @@ export function activate(context: vscode.ExtensionContext): void {
   step('rpgunit', () => registerRpgUnit(context, m));
   step('self-check', () => registerSelfCheck(context, m));
   step('protection', () => registerProtection(context, m));
+  step('screen preview', () => registerDspfPreview(context));
+  step('database diagram', () => registerErd(context, m));
+  step('cross-system compare', () => registerCrossSystem(context, m));
+  step('spool pdf & e-mail', () => registerSpoolExtras(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

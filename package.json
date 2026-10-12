@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -1154,6 +1154,42 @@
         "title": "%command.setProtection%",
         "category": "Vanthrex",
         "icon": "$(shield)"
+      },
+      {
+        "command": "vanthrex.previewDspf",
+        "title": "%command.previewDspf%",
+        "category": "Vanthrex",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "vanthrex.databaseDiagram",
+        "title": "%command.databaseDiagram%",
+        "category": "Vanthrex",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "vanthrex.compareSystems",
+        "title": "%command.compareSystems%",
+        "category": "Vanthrex",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "vanthrex.spoolPdf",
+        "title": "%command.spoolPdf%",
+        "category": "Vanthrex",
+        "icon": "$(file-pdf)"
+      },
+      {
+        "command": "vanthrex.spoolEmail",
+        "title": "%command.spoolEmail%",
+        "category": "Vanthrex",
+        "icon": "$(mail)"
+      },
+      {
+        "command": "vanthrex.emailQuery",
+        "title": "%command.emailQuery%",
+        "category": "Vanthrex",
+        "icon": "$(mail)"
       }
     ],
     "menus": {
@@ -1674,6 +1710,26 @@
           "command": "vanthrex.setProtection",
           "when": "view == vanthrex.connections && viewItem =~ /^connection/",
           "group": "2_edit@5"
+        },
+        {
+          "command": "vanthrex.databaseDiagram",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@9"
+        },
+        {
+          "command": "vanthrex.spoolPdf",
+          "when": "view == vanthrex.spool && viewItem == spool",
+          "group": "1_spool@5"
+        },
+        {
+          "command": "vanthrex.spoolEmail",
+          "when": "view == vanthrex.spool && viewItem == spool",
+          "group": "1_spool@6"
+        },
+        {
+          "command": "vanthrex.compareSystems",
+          "when": "view == vanthrex.connections && viewItem == connection.active && vanthrex.multipleConnections",
+          "group": "1_info@4"
         }
       ],
       "editor/title": [
@@ -1716,6 +1772,11 @@
           "command": "vanthrex.explainSql",
           "when": "vanthrex.connected && editorLangId == sql",
           "group": "navigation@2"
+        },
+        {
+          "command": "vanthrex.previewDspf",
+          "when": "editorLangId == dds && resourceExtname =~ /dspf/i",
+          "group": "navigation@5"
         }
       ],
       "editor/context": [
@@ -1818,6 +1879,16 @@
           "command": "vanthrex.exportQuery",
           "when": "editorLangId == sql",
           "group": "vanthrex@23"
+        },
+        {
+          "command": "vanthrex.previewDspf",
+          "when": "editorLangId == dds",
+          "group": "vanthrex@24"
+        },
+        {
+          "command": "vanthrex.emailQuery",
+          "when": "editorLangId == sql",
+          "group": "vanthrex@25"
         }
       ],
       "commandPalette": [
@@ -2682,6 +2753,21 @@
           "type": "boolean",
           "default": true,
           "description": "%config.selfCheck.onConnect%"
+        },
+        "vanthrex.spool.pdfMode": {
+          "type": "string",
+          "enum": [
+            "local",
+            "server"
+          ],
+          "default": "local",
+          "description": "%config.spool.pdfMode%"
+        },
+        "vanthrex.compare.maxRows": {
+          "type": "number",
+          "default": 50000,
+          "minimum": 100,
+          "description": "%config.compare.maxRows%"
         }
       }
     },

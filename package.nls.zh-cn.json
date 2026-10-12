@@ -277,5 +277,13 @@
   "command.selfCheck": "自检（此系统是否就绪？）",
   "command.selfCheck.copy": "复制自检报告",
   "command.setProtection": "设置保护（生产/只读）…",
-  "config.selfCheck.onConnect": "在会话中首次连接到系统时检查该系统，并就设置问题（SQL 引擎、CCSID、库列表…）发出警告。"
+  "config.selfCheck.onConnect": "在会话中首次连接到系统时检查该系统，并就设置问题（SQL 引擎、CCSID、库列表…）发出警告。",
+  "command.previewDspf": "预览屏幕（显示文件）",
+  "command.databaseDiagram": "数据库图",
+  "command.compareSystems": "与另一个系统比较…",
+  "command.spoolPdf": "另存为 PDF…",
+  "command.spoolEmail": "通过电子邮件发送…",
+  "command.emailQuery": "通过电子邮件发送查询结果（Excel）…",
+  "config.spool.pdfMode": "假脱机文件转换为 PDF 的方式：\"local\" 在 VS Code 中转换文本（适用于所有环境）；\"server\" 请求 IBM i 执行转换 (CPYSPLF WSCST(*PDF)) 并保留字体和图形，失败时回退到 local。",
+  "config.compare.maxRows": "在两个系统之间比较表时从每个系统读取的最大行数。"
 }

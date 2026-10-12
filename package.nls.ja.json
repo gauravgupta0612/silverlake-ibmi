@@ -277,5 +277,13 @@
   "command.selfCheck": "セルフチェック (このシステムは準備できていますか?)",
   "command.selfCheck.copy": "セルフチェック・レポートのコピー",
   "command.setProtection": "保護の設定 (実動 / 読み取り専用)…",
-  "config.selfCheck.onConnect": "セッションで初めてシステムに接続したときにシステムをチェックし、セットアップの問題 (SQL エンジン、CCSID、ライブラリー・リストなど) について警告します。"
+  "config.selfCheck.onConnect": "セッションで初めてシステムに接続したときにシステムをチェックし、セットアップの問題 (SQL エンジン、CCSID、ライブラリー・リストなど) について警告します。",
+  "command.previewDspf": "画面のプレビュー (表示装置ファイル)",
+  "command.databaseDiagram": "データベース・ダイアグラム",
+  "command.compareSystems": "別のシステムとの比較…",
+  "command.spoolPdf": "PDF として保存…",
+  "command.spoolEmail": "電子メールで送信…",
+  "command.emailQuery": "照会結果を電子メールで送信 (Excel)…",
+  "config.spool.pdfMode": "スプール・ファイルを PDF にする方法: \"local\" は VS Code 内でテキストを変換します (どの環境でも動作します)。\"server\" は IBM i に依頼し (CPYSPLF WSCST(*PDF))、フォントとグラフィックスを保持します。失敗した場合は local にフォールバックします。",
+  "config.compare.maxRows": "2 つのシステム間で表を比較するときに各システムから読み取る最大行数。"
 }
