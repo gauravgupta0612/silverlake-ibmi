@@ -6,7 +6,7 @@ import { SpoolNode, SpoolTreeProvider } from '../views/spoolTree';
 
 export const SPOOL_SCHEME = 'vanthrex-spool';
 
-function spoolUri(n: SpoolNode): vscode.Uri {
+export function spoolUri(n: Pick<SpoolNode, "job" | "name" | "number">): vscode.Uri {
   const query = new URLSearchParams({ job: n.job, name: n.name, number: String(n.number) }).toString();
   return vscode.Uri.from({ scheme: SPOOL_SCHEME, path: `/${n.name}_${n.number}.txt`, query });
 }

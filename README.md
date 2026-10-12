@@ -53,6 +53,7 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **Data, performance & quality** *(new in 1.1)* | **Export to Excel / CSV / JSON** and **import CSV or Excel** with a preview, a live **performance monitor**, **code metrics** with grades, **Markdown documentation** from source, and **RPGUnit tests** in VS Code's Testing view. |
 | **Safe on production** *(new in 1.2)* | Mark a connection **Production** (every change asks first) or **Read-only**, a **self-check** of the system with fixes, and **errors that explain what to do**. |
 | **See and share** *(new in 1.3)* | **5250 screen preview** for display files, **database diagrams** with inferred relationships, **compare two systems** (member, objects, table rows, system values, PTFs), and **spooled files to PDF / e-mail**. |
+| **2.0: 20 new helpers** | RPG code from a table, SQL formatter, find & replace across members, compile changed members, print preview, copy members / objects, test data, duplicates, table statistics, SQL INSERT export, submit & watch, recent jobs, spool compare, `tail -f` for IFS files, IFS search, library list sets and a CL command finder. |
 
 ## Requirements on the IBM i
 

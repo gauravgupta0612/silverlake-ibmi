@@ -5,6 +5,7 @@ import { ConnectionManager } from '../core/manager';
 import { IbmiConnection } from '../core/connection';
 import { errorMessage, logError } from '../core/log';
 import { assertSystemName, isDestructiveSql, sqlString, statementAtOffset, toCsv } from '../core/util';
+import { insertScript } from '../core/v2';
 import { Column, buildXlsx, insertStatements, mapColumns, parseCsv, readSheet, toJson, unzip } from '../core/dataTransfer';
 import { showReport } from './reportPanel';
 
@@ -31,19 +32,21 @@ async function columnsOf(conn: IbmiConnection, t: Obj): Promise<Column[]> {
   return rows.map(r => ({ name: String(r.N).trim(), type: String(r.T).trim(), length: Number(r.L), scale: Number(r.S), nullable: String(r.NL).trim() === 'Y' }));
 }
 
-type Format = 'csv' | 'xlsx' | 'json';
+type Format = 'csv' | 'xlsx' | 'json' | 'sql';
 
-async function pickFormat(): Promise<Format | undefined> {
+async function pickFormat(withSql = false): Promise<Format | undefined> {
   const f = await vscode.window.showQuickPick([
     { label: vscode.l10n.t('$(table) Excel (.xlsx)'), f: 'xlsx' as const }, { label: vscode.l10n.t('$(file) CSV (.csv)'), f: 'csv' as const }, { label: vscode.l10n.t('$(json) JSON (.json)'), f: 'json' as const },
+    ...(withSql ? [{ label: vscode.l10n.t('$(database) SQL INSERT statements (.sql)'), f: 'sql' as const }] : []),
   ], { title: vscode.l10n.t('Export format') });
   return f?.f;
 }
 
-async function writeExport(base: string, format: Format, columns: string[], rows: Row[], numeric: boolean[]): Promise<void> {
+async function writeExport(base: string, format: Format, columns: string[], rows: Row[], numeric: boolean[], table?: { library: string; name: string; cols: Column[] }): Promise<void> {
   const target = await vscode.window.showSaveDialog({ defaultUri: vscode.Uri.file(`${base}.${format}`), filters: { [format.toUpperCase()]: [format] }, saveLabel: 'Export' });
   if (!target) { return; }
-  const data = format === 'xlsx' ? buildXlsx(base, columns, rows, numeric)
+  const data = format === 'sql' && table ? Buffer.from(insertScript(table.library, table.name, table.cols.filter(c => columns.includes(c.name)), rows), 'utf8')
+    : format === 'xlsx' ? buildXlsx(base, columns, rows, numeric)
     : Buffer.from(format === 'csv' ? '﻿' + toCsv(columns, rows) : toJson(columns, rows), 'utf8');
   await vscode.workspace.fs.writeFile(target, data);
   const open = await vscode.window.showInformationMessage(vscode.l10n.t('Exported {0} row(s) to {1}', rows.length, path.basename(target.fsPath)), vscode.l10n.t('Open'), vscode.l10n.t('Show in Folder'));
@@ -55,7 +58,7 @@ async function exportData(manager: ConnectionManager, o?: Obj): Promise<void> {
   const conn = manager.require();
   const t = await askTable('Export table data', o);
   if (!t) { return; }
-  const format = await pickFormat();
+  const format = await pickFormat(true);
   if (!format) { return; }
   const where = await vscode.window.showInputBox({ title: vscode.l10n.t('Filter rows (optional)'), prompt: vscode.l10n.t('SQL WHERE condition, e.g. STATUS = \'A\' — leave empty for all rows'), ignoreFocusOut: true });
   if (where === undefined) { return; }
@@ -67,7 +70,7 @@ async function exportData(manager: ConnectionManager, o?: Obj): Promise<void> {
   if (rows.length >= max) { vscode.window.showWarningMessage(vscode.l10n.t('Only the first {0} rows were exported (setting vanthrex.export.maxRows).', max)); }
   const names = rows.length ? Object.keys(rows[0]) : cols.map(c => c.name);
   const numeric = names.map(nm => /DECIMAL|NUMERIC|INT|FLOAT|DOUBLE|REAL|DECFLOAT/i.test(cols.find(c => c.name === nm)?.type ?? ''));
-  await writeExport(`${t.library}_${t.name}`, format, names, rows.map(r => Object.fromEntries(names.map(nm => [nm, typeof r[nm] === 'string' ? (r[nm] as string).trimEnd() : r[nm]]))), numeric);
+  await writeExport(`${t.library}_${t.name}`, format, names, rows.map(r => Object.fromEntries(names.map(nm => [nm, typeof r[nm] === 'string' ? (r[nm] as string).trimEnd() : r[nm]]))), numeric, { library: t.library, name: t.name, cols });
 }
 
 async function exportQuery(manager: ConnectionManager): Promise<void> {

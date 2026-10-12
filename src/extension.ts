@@ -46,6 +46,8 @@ import { registerDspfPreview } from './features/dspfPreview';
 import { registerErd } from './features/erdView';
 import { registerCrossSystem } from './features/crossSystem';
 import { registerSpoolExtras } from './features/spoolExtras';
+import { registerMore } from './features/moreView';
+import { registerV2 } from './features/v2View';
 
 let manager: ConnectionManager | undefined;
 
@@ -120,6 +122,8 @@ export function activate(context: vscode.ExtensionContext): void {
   step('database diagram', () => registerErd(context, m));
   step('cross-system compare', () => registerCrossSystem(context, m));
   step('spool pdf & e-mail', () => registerSpoolExtras(context, m));
+  step('more tools', () => registerMore(context, m));
+  step('2.0 tools', () => registerV2(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))
