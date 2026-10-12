@@ -48,6 +48,10 @@ import { registerCrossSystem } from './features/crossSystem';
 import { registerSpoolExtras } from './features/spoolExtras';
 import { registerMore } from './features/moreView';
 import { registerV2 } from './features/v2View';
+import { registerSecadm } from './features/secadmView';
+import { registerV21 } from './features/v21View';
+import { registerV22 } from './features/v22View';
+import { registerV23 } from './features/v23View';
 
 let manager: ConnectionManager | undefined;
 
@@ -124,6 +128,10 @@ export function activate(context: vscode.ExtensionContext): void {
   step('spool pdf & e-mail', () => registerSpoolExtras(context, m));
   step('more tools', () => registerMore(context, m));
   step('2.0 tools', () => registerV2(context, m));
+  step('security admin', () => registerSecadm(context, m));
+  step('2.1 tools', () => registerV21(context, m));
+  step('2.1 more tools', () => registerV22(context, m));
+  step('2.1 batch 4', () => registerV23(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

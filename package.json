@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -1314,6 +1314,282 @@
         "title": "%command.findDuplicates%",
         "category": "Vanthrex",
         "icon": "$(copy)"
+      },
+      {
+        "command": "vanthrex.securityCenter",
+        "title": "%command.securityCenter%",
+        "category": "Vanthrex",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "vanthrex.secadm.createUser",
+        "title": "%command.secadm.createUser%",
+        "category": "Vanthrex",
+        "icon": "$(person-add)"
+      },
+      {
+        "command": "vanthrex.secadm.copyUser",
+        "title": "%command.secadm.copyUser%",
+        "category": "Vanthrex",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "vanthrex.secadm.inactive",
+        "title": "%command.secadm.inactive%",
+        "category": "Vanthrex",
+        "icon": "$(clock)"
+      },
+      {
+        "command": "vanthrex.secadm.powerful",
+        "title": "%command.secadm.powerful%",
+        "category": "Vanthrex",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "vanthrex.secadm.groups",
+        "title": "%command.secadm.groups%",
+        "category": "Vanthrex",
+        "icon": "$(organization)"
+      },
+      {
+        "command": "vanthrex.secadm.autl",
+        "title": "%command.secadm.autl%",
+        "category": "Vanthrex",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "vanthrex.secadm.row",
+        "title": "%command.secadm.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.secadm.disableInactive",
+        "title": "%command.secadm.disableInactive%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.secadm.autlEntries",
+        "title": "%command.secadm.autlEntries%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.secadm.createAutl",
+        "title": "%command.secadm.createAutl%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.secadm.addAutlEntry",
+        "title": "%command.secadm.addAutlEntry%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.secadm.autlRow",
+        "title": "%command.secadm.autlRow%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.outOfSync",
+        "title": "%command.outOfSync%",
+        "category": "Vanthrex",
+        "icon": "$(sync-ignored)"
+      },
+      {
+        "command": "vanthrex.changeReport",
+        "title": "%command.changeReport%",
+        "category": "Vanthrex",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "vanthrex.changeReport.copy",
+        "title": "%command.changeReport.copy%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.newFromTemplate",
+        "title": "%command.newFromTemplate%",
+        "category": "Vanthrex",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "vanthrex.retrieveBinderSource",
+        "title": "%command.retrieveBinderSource%",
+        "category": "Vanthrex",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "vanthrex.bindingDirectory",
+        "title": "%command.bindingDirectory%",
+        "category": "Vanthrex",
+        "icon": "$(references)"
+      },
+      {
+        "command": "vanthrex.bnddir.add",
+        "title": "%command.bnddir.add%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.bnddir.remove",
+        "title": "%command.bnddir.remove%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.rowLocks",
+        "title": "%command.rowLocks%",
+        "category": "Vanthrex",
+        "icon": "$(lock)"
+      },
+      {
+        "command": "vanthrex.rowLocks.row",
+        "title": "%command.rowLocks.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.activeSql",
+        "title": "%command.activeSql%",
+        "category": "Vanthrex",
+        "icon": "$(database)"
+      },
+      {
+        "command": "vanthrex.activeSql.cancel",
+        "title": "%command.activeSql.cancel%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.exitPoints",
+        "title": "%command.exitPoints%",
+        "category": "Vanthrex",
+        "icon": "$(key)"
+      },
+      {
+        "command": "vanthrex.bulkOwnerAuthority",
+        "title": "%command.bulkOwnerAuthority%",
+        "category": "Vanthrex",
+        "icon": "$(person)"
+      },
+      {
+        "command": "vanthrex.installedSoftware",
+        "title": "%command.installedSoftware%",
+        "category": "Vanthrex",
+        "icon": "$(package)"
+      },
+      {
+        "command": "vanthrex.ptfLookup",
+        "title": "%command.ptfLookup%",
+        "category": "Vanthrex",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "vanthrex.journals",
+        "title": "%command.journals%",
+        "category": "Vanthrex",
+        "icon": "$(book)"
+      },
+      {
+        "command": "vanthrex.journals.row",
+        "title": "%command.journals.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.ifsPermissions",
+        "title": "%command.ifsPermissions%",
+        "category": "Vanthrex",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "vanthrex.ifsPermissions.row",
+        "title": "%command.ifsPermissions.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.compareStructure",
+        "title": "%command.compareStructure%",
+        "category": "Vanthrex",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "vanthrex.compareStructure.script",
+        "title": "%command.compareStructure.script%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.unusedCode",
+        "title": "%command.unusedCode%",
+        "category": "Vanthrex",
+        "icon": "$(search-stop)"
+      },
+      {
+        "command": "vanthrex.hardcodedLibraries",
+        "title": "%command.hardcodedLibraries%",
+        "category": "Vanthrex",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "vanthrex.messageQueue",
+        "title": "%command.messageQueue%",
+        "category": "Vanthrex",
+        "icon": "$(mail)"
+      },
+      {
+        "command": "vanthrex.messageQueue.row",
+        "title": "%command.messageQueue.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.messageQueue.send",
+        "title": "%command.messageQueue.send%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.v22.gotoLine",
+        "title": "%command.v22.gotoLine%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.jobDetails",
+        "title": "%command.jobDetails%",
+        "category": "Vanthrex",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "vanthrex.historyLog",
+        "title": "%command.historyLog%",
+        "category": "Vanthrex",
+        "icon": "$(history)"
+      },
+      {
+        "command": "vanthrex.tableDependents",
+        "title": "%command.tableDependents%",
+        "category": "Vanthrex",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "vanthrex.indicatorUsage",
+        "title": "%command.indicatorUsage%",
+        "category": "Vanthrex",
+        "icon": "$(symbol-boolean)"
+      },
+      {
+        "command": "vanthrex.ifsCcsid",
+        "title": "%command.ifsCcsid%",
+        "category": "Vanthrex",
+        "icon": "$(symbol-key)"
+      },
+      {
+        "command": "vanthrex.ifsCcsid.change",
+        "title": "%command.ifsCcsid.change%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.networkTest",
+        "title": "%command.networkTest%",
+        "category": "Vanthrex",
+        "icon": "$(radio-tower)"
+      },
+      {
+        "command": "vanthrex.callWebApi",
+        "title": "%command.callWebApi%",
+        "category": "Vanthrex",
+        "icon": "$(globe)"
       }
     ],
     "menus": {
@@ -1442,6 +1718,16 @@
           "command": "vanthrex.myRecentJobs",
           "when": "view == vanthrex.jobs",
           "group": "navigation@6"
+        },
+        {
+          "command": "vanthrex.securityCenter",
+          "when": "view == vanthrex.connections && vanthrex.secadm",
+          "group": "navigation@8"
+        },
+        {
+          "command": "vanthrex.activeSql",
+          "when": "view == vanthrex.jobs",
+          "group": "navigation@5"
         }
       ],
       "view/item/context": [
@@ -1929,6 +2215,81 @@
           "command": "vanthrex.searchIfs",
           "when": "view == vanthrex.ifs && viewItem == ifs.dir",
           "group": "1_open@6"
+        },
+        {
+          "command": "vanthrex.securityCenter",
+          "when": "view == vanthrex.connections && viewItem == connection.active && vanthrex.secadm",
+          "group": "1_info@3"
+        },
+        {
+          "command": "vanthrex.outOfSync",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@15"
+        },
+        {
+          "command": "vanthrex.changeReport",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@16"
+        },
+        {
+          "command": "vanthrex.bulkOwnerAuthority",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@17"
+        },
+        {
+          "command": "vanthrex.newFromTemplate",
+          "when": "view == vanthrex.libraries && viewItem == srcfile",
+          "group": "1_new@2"
+        },
+        {
+          "command": "vanthrex.retrieveBinderSource",
+          "when": "view == vanthrex.libraries && viewItem == object.srvpgm",
+          "group": "2_analyse@5"
+        },
+        {
+          "command": "vanthrex.bindingDirectory",
+          "when": "view == vanthrex.libraries && viewItem == object.bnddir",
+          "group": "0_info@1"
+        },
+        {
+          "command": "vanthrex.rowLocks",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@14"
+        },
+        {
+          "command": "vanthrex.journals",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@18"
+        },
+        {
+          "command": "vanthrex.hardcodedLibraries",
+          "when": "view == vanthrex.libraries && viewItem == srcfile",
+          "group": "5_compare@19"
+        },
+        {
+          "command": "vanthrex.compareStructure",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@15"
+        },
+        {
+          "command": "vanthrex.ifsPermissions",
+          "when": "view == vanthrex.ifs && viewItem =~ /^ifs/",
+          "group": "1_open@7"
+        },
+        {
+          "command": "vanthrex.jobDetails",
+          "when": "view == vanthrex.jobs && viewItem =~ /^job/",
+          "group": "1_job@-1"
+        },
+        {
+          "command": "vanthrex.tableDependents",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@15"
+        },
+        {
+          "command": "vanthrex.ifsCcsid",
+          "when": "view == vanthrex.ifs && viewItem =~ /^ifs/",
+          "group": "1_open@8"
         }
       ],
       "editor/title": [
@@ -2103,6 +2464,21 @@
           "command": "vanthrex.previewPrtf",
           "when": "editorLangId == dds",
           "group": "vanthrex@27"
+        },
+        {
+          "command": "vanthrex.unusedCode",
+          "when": "editorLangId == rpgle",
+          "group": "vanthrex@28"
+        },
+        {
+          "command": "vanthrex.hardcodedLibraries",
+          "when": "editorLangId =~ /rpgle|cl|sql/",
+          "group": "vanthrex@29"
+        },
+        {
+          "command": "vanthrex.indicatorUsage",
+          "when": "editorLangId =~ /rpgle|dds/",
+          "group": "vanthrex@30"
         }
       ],
       "commandPalette": [
@@ -2349,6 +2725,138 @@
         {
           "command": "vanthrex.moveRenameObject",
           "when": "false"
+        },
+        {
+          "command": "vanthrex.secadm.createUser",
+          "when": "vanthrex.secadm"
+        },
+        {
+          "command": "vanthrex.secadm.copyUser",
+          "when": "vanthrex.secadm"
+        },
+        {
+          "command": "vanthrex.secadm.inactive",
+          "when": "vanthrex.secadm"
+        },
+        {
+          "command": "vanthrex.secadm.powerful",
+          "when": "vanthrex.secadm"
+        },
+        {
+          "command": "vanthrex.secadm.groups",
+          "when": "vanthrex.secadm"
+        },
+        {
+          "command": "vanthrex.secadm.autl",
+          "when": "vanthrex.secadm"
+        },
+        {
+          "command": "vanthrex.secadm.createAutl",
+          "when": "vanthrex.secadm"
+        },
+        {
+          "command": "vanthrex.secadm.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.secadm.disableInactive",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.secadm.autlEntries",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.secadm.addAutlEntry",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.secadm.autlRow",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.changeReport.copy",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.bnddir.add",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.bnddir.remove",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.rowLocks.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.activeSql.cancel",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.retrieveBinderSource",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.bindingDirectory",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.journals.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ifsPermissions.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.compareStructure.script",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.messageQueue.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.messageQueue.send",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.v22.gotoLine",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ifsCcsid.change",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.jobDetails",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.historyLog",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.tableDependents",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.indicatorUsage",
+          "when": "editorLangId =~ /rpgle|dds/"
+        },
+        {
+          "command": "vanthrex.ifsCcsid",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.networkTest",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.callWebApi",
+          "when": "vanthrex.connected"
         }
       ],
       "vanthrex.ai": [
@@ -3001,6 +3509,41 @@
           "minimum": 10,
           "maximum": 20000,
           "description": "%config.ifs.followLines%"
+        },
+        "vanthrex.templates": {
+          "type": "array",
+          "default": [],
+          "description": "%config.templates%",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "type",
+              "text"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "vanthrex.scan.allowedLibraries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "%config.scan.allowedLibraries%"
         }
       }
     },

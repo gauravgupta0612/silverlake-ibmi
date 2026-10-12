@@ -54,6 +54,8 @@ An all-in-one IBM i workbench for VS Code, built to be easy for first-time users
 | **Safe on production** *(new in 1.2)* | Mark a connection **Production** (every change asks first) or **Read-only**, a **self-check** of the system with fixes, and **errors that explain what to do**. |
 | **See and share** *(new in 1.3)* | **5250 screen preview** for display files, **database diagrams** with inferred relationships, **compare two systems** (member, objects, table rows, system values, PTFs), and **spooled files to PDF / e-mail**. |
 | **2.0: 20 new helpers** | RPG code from a table, SQL formatter, find & replace across members, compile changed members, print preview, copy members / objects, test data, duplicates, table statistics, SQL INSERT export, submit & watch, recent jobs, spool compare, `tail -f` for IFS files, IFS search, library list sets and a CL command finder. |
+| **Security Admin** *(2.1, for *SECADM users)* | Create, copy, change, reset, disable and delete user profiles, unused and powerful profiles, group profiles and authorization lists — shown only to users with *SECADM; passwords are always masked. |
+| **More in 2.1** | Objects out of sync with their source, release notes of what changed, member templates, binder source and binding directories, row locks, running SQL with cancel, exit points, bulk owner / authority changes, installed software & license keys, PTF lookup, journals, IFS permissions, table structure compare, unused code, hard-coded library scan, any message queue, what a job is doing, QHST history log, file dependents, indicator usage, IFS CCSID, ping and web API calls from the IBM i. |
 
 ## Requirements on the IBM i
 

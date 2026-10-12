@@ -8,6 +8,7 @@ import { clString, memberPath, shDoubleQuote, shSingleQuote, sqlString } from '.
 import { SourceRecord } from './sourceDates';
 import { log, logError } from './log';
 import { isChangingSql, isReadOnlyCommand, isTempPath } from './robust';
+import { redactPasswords } from './secadm';
 
 export interface MemberLock {
   /** Qualified job name: number/user/name (for interactive jobs, name = the workstation). */
@@ -115,7 +116,7 @@ export class IbmiConnection implements vscode.Disposable {
 
   /** Run a CL command in a QSH job that has the profile's library list. */
   async runCL(command: string, extraLibraries: string[] = []): Promise<ClResult> {
-    if (!isReadOnlyCommand(command, this.tempDir)) { await this.guardChange(command); }
+    if (!isReadOnlyCommand(command, this.tempDir)) { await this.guardChange(redactPasswords(command)); }
     const libs = [...new Set([...extraLibraries, ...this.profile.libraries].map(l => l.toUpperCase()))];
     const lines: string[] = [];
     // liblist -a puts the library at the top of the user list, so add in reverse to preserve order.
@@ -126,7 +127,7 @@ export class IbmiConnection implements vscode.Disposable {
       lines.push(`liblist -c ${this.profile.currentLibrary.toUpperCase()} >/dev/null 2>&1`);
     }
     lines.push(`system ${shDoubleQuote(command)}`);
-    log(`> ${command}`);
+    log(`> ${redactPasswords(command)}`);
     const r = await this.exec(QSH, lines.join('\n') + '\n');
     const all = `${r.stdout}\n${r.stderr}`;
     const messages = [...new Set(all.match(/\b[A-Z]{3}[0-9A-F]{4}\b/g) ?? [])];
