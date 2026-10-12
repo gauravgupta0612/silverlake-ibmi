@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -1137,6 +1137,23 @@
         "title": "%command.rpgunit.discover%",
         "category": "Vanthrex",
         "icon": "$(search)"
+      },
+      {
+        "command": "vanthrex.selfCheck",
+        "title": "%command.selfCheck%",
+        "category": "Vanthrex",
+        "icon": "$(pass)"
+      },
+      {
+        "command": "vanthrex.selfCheck.copy",
+        "title": "%command.selfCheck.copy%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.setProtection",
+        "title": "%command.setProtection%",
+        "category": "Vanthrex",
+        "icon": "$(shield)"
       }
     ],
     "menus": {
@@ -1647,6 +1664,16 @@
           "command": "vanthrex.performanceMonitor",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "1_info@6"
+        },
+        {
+          "command": "vanthrex.selfCheck",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "1_info@5"
+        },
+        {
+          "command": "vanthrex.setProtection",
+          "when": "view == vanthrex.connections && viewItem =~ /^connection/",
+          "group": "2_edit@5"
         }
       ],
       "editor/title": [
@@ -2020,6 +2047,10 @@
         },
         {
           "command": "vanthrex.codeMetrics.open",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.selfCheck.copy",
           "when": "false"
         }
       ],
@@ -2646,6 +2677,11 @@
           "type": "string",
           "default": "",
           "description": "%config.rpgunit.testLibrary%"
+        },
+        "vanthrex.selfCheck.onConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.selfCheck.onConnect%"
         }
       }
     },

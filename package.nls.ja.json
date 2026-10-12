@@ -273,5 +273,9 @@
   "config.export.maxRows": "Excel、CSV、または JSON にエクスポートする最大行数。",
   "config.performance.intervalSeconds": "パフォーマンス・モニターが IBM i をサンプリングする間隔 (秒)。",
   "config.rpgunit.library": "RPGUnit (iRPGUnit) がインストールされているライブラリー。テストのコンパイルと実行のためにライブラリー・リストに追加されます。",
-  "config.rpgunit.testLibrary": "コンパイルされたテスト・プログラム用のライブラリー。空 = 現行ライブラリー。"
+  "config.rpgunit.testLibrary": "コンパイルされたテスト・プログラム用のライブラリー。空 = 現行ライブラリー。",
+  "command.selfCheck": "セルフチェック (このシステムは準備できていますか?)",
+  "command.selfCheck.copy": "セルフチェック・レポートのコピー",
+  "command.setProtection": "保護の設定 (実動 / 読み取り専用)…",
+  "config.selfCheck.onConnect": "セッションで初めてシステムに接続したときにシステムをチェックし、セットアップの問題 (SQL エンジン、CCSID、ライブラリー・リストなど) について警告します。"
 }

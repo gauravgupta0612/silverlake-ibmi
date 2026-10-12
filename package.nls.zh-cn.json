@@ -273,5 +273,9 @@
   "config.export.maxRows": "导出到 Excel、CSV 或 JSON 的最大行数。",
   "config.performance.intervalSeconds": "性能监视器对 IBM i 进行采样的频率（秒）。",
   "config.rpgunit.library": "安装 RPGUnit（iRPGUnit）的库；将添加到库列表中以编译和运行测试。",
-  "config.rpgunit.testLibrary": "已编译测试程序所在的库。为空 = 您的当前库。"
+  "config.rpgunit.testLibrary": "已编译测试程序所在的库。为空 = 您的当前库。",
+  "command.selfCheck": "自检（此系统是否就绪？）",
+  "command.selfCheck.copy": "复制自检报告",
+  "command.setProtection": "设置保护（生产/只读）…",
+  "config.selfCheck.onConnect": "在会话中首次连接到系统时检查该系统，并就设置问题（SQL 引擎、CCSID、库列表…）发出警告。"
 }

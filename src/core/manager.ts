@@ -157,20 +157,23 @@ export class ConnectionManager implements vscode.Disposable {
     this._onDidChange.fire(this.connection);
   }
 
-  private updateStatus(): void {
+  updateStatus(): void {
     const c = this.connection;
     const count = this.openConnections.length;
     if (c) {
-      this.statusItem.text = `$(server) ${c.profile.name}${count > 1 ? ` +${count - 1}` : ''}`;
+      const prot = c.profile.protection ?? 'none';
+      this.statusItem.text = `${prot === 'none' ? '$(server)' : prot === 'readOnly' ? '$(lock)' : '$(shield)'} ${c.profile.name}${count > 1 ? ` +${count - 1}` : ''}`;
       this.statusItem.tooltip = new vscode.MarkdownString(
         `**${c.profile.name}** — ${c.user}@${c.profile.host}\n\n` +
         `Current library: ${c.profile.currentLibrary || '*none*'}\n\n` +
         `Library list: ${c.profile.libraries.join(', ') || '*none*'}\n\n` +
         `SQL engine: ${c.sqlEngineName}\n\n` +
+        (prot === 'readOnly' ? '🔒 **Read-only** — Vanthrex refuses every change on this system\n\n' : prot === 'confirm' ? '🛡 **Production** — every change asks first\n\n' : '') +
         (count > 1 ? `Also connected: ${this.openConnections.slice(1).map(o => o.profile.name).join(', ')} — switch from the quick menu\n\n` : '') +
         'Click for the IBM i quick menu');
-      this.statusItem.backgroundColor = undefined;
+      this.statusItem.backgroundColor = prot === 'none' ? undefined : new vscode.ThemeColor(prot === 'readOnly' ? 'statusBarItem.warningBackground' : 'statusBarItem.errorBackground');
     } else {
+      this.statusItem.backgroundColor = undefined;
       this.statusItem.text = '$(plug) IBM i: not connected';
       this.statusItem.tooltip = 'Click to connect to an IBM i system';
     }

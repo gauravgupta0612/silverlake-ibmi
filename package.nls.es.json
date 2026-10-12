@@ -273,5 +273,9 @@
   "config.export.maxRows": "Número máximo de filas exportadas a Excel, CSV o JSON.",
   "config.performance.intervalSeconds": "Frecuencia con la que el supervisor de rendimiento toma muestras del IBM i, en segundos.",
   "config.rpgunit.library": "Biblioteca donde está instalado RPGUnit (iRPGUnit); se añade a la lista de bibliotecas para compilar y ejecutar las pruebas.",
-  "config.rpgunit.testLibrary": "Biblioteca para los programas de prueba compilados. Vacío = su biblioteca actual."
+  "config.rpgunit.testLibrary": "Biblioteca para los programas de prueba compilados. Vacío = su biblioteca actual.",
+  "command.selfCheck": "Autocomprobación (¿está listo este sistema?)",
+  "command.selfCheck.copy": "Copiar informe de autocomprobación",
+  "command.setProtection": "Establecer protección (producción / solo lectura)…",
+  "config.selfCheck.onConnect": "Comprobar el sistema la primera vez que se conecta a él en una sesión y avisar de problemas de configuración (motor SQL, CCSID, lista de bibliotecas…)."
 }

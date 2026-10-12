@@ -7,6 +7,7 @@ import { Db2utilEngine, MapepireEngine, SqlEngine, SqlResult } from './sql';
 import { clString, memberPath, shDoubleQuote, shSingleQuote, sqlString } from './util';
 import { SourceRecord } from './sourceDates';
 import { log, logError } from './log';
+import { isChangingSql, isReadOnlyCommand, isTempPath } from './robust';
 
 export interface MemberLock {
   /** Qualified job name: number/user/name (for interactive jobs, name = the workstation). */
@@ -42,6 +43,29 @@ export class IbmiConnection implements vscode.Disposable {
   homeDirectory = '/home';
 
   constructor(public profile: ConnectionProfile) {}
+
+  // ---------------------------------------------------------------- production protection
+
+  private allowChangesUntil = 0;
+
+  private get tempDir(): string {
+    return vscode.workspace.getConfiguration('vanthrex').get<string>('tempDirectory', '/tmp').replace(/\/$/, '');
+  }
+
+  /** Stop or confirm a change on a protected system. `what` is shown to the user. */
+  async guardChange(what: string): Promise<void> {
+    const mode = this.profile.protection ?? 'none';
+    if (mode === 'none') { return; }
+    if (mode === 'readOnly') {
+      throw new Error(vscode.l10n.t('Read-only connection: {0} is protected, so this change was not made: {1}', this.profile.name, what.slice(0, 200)));
+    }
+    if (Date.now() < this.allowChangesUntil) { return; }
+    const once = vscode.l10n.t('Allow Once'); const window = vscode.l10n.t('Allow for 15 Minutes');
+    const pick = await vscode.window.showWarningMessage(vscode.l10n.t('{0} is a protected system. Make this change?', this.profile.name),
+      { modal: true, detail: what.slice(0, 1000) }, once, window);
+    if (pick === window) { this.allowChangesUntil = Date.now() + 15 * 60 * 1000; return; }
+    if (pick !== once) { throw new Error(vscode.l10n.t('Change cancelled on protected system {0}.', this.profile.name)); }
+  }
 
   get user(): string { return this.profile.user.toUpperCase(); }
 
@@ -91,6 +115,7 @@ export class IbmiConnection implements vscode.Disposable {
 
   /** Run a CL command in a QSH job that has the profile's library list. */
   async runCL(command: string, extraLibraries: string[] = []): Promise<ClResult> {
+    if (!isReadOnlyCommand(command, this.tempDir)) { await this.guardChange(command); }
     const libs = [...new Set([...extraLibraries, ...this.profile.libraries].map(l => l.toUpperCase()))];
     const lines: string[] = [];
     // liblist -a puts the library at the top of the user list, so add in reverse to preserve order.
@@ -115,6 +140,7 @@ export class IbmiConnection implements vscode.Disposable {
   // ---------------------------------------------------------------- SQL
 
   async sql(statement: string, maxRows = 1000): Promise<SqlResult> {
+    if (isChangingSql(statement, this.tempDir)) { await this.guardChange(statement); }
     const engine = await this.getSqlEngine();
     return engine.query(statement, maxRows);
   }
@@ -188,6 +214,7 @@ export class IbmiConnection implements vscode.Disposable {
   }
 
   async writeStreamFile(path: string, content: Uint8Array): Promise<void> {
+    if (!isTempPath(path, this.tempDir)) { await this.guardChange(vscode.l10n.t('Write {0}', path)); }
     const sftp = await this.sftp();
     await new Promise<void>((resolve, reject) =>
       sftp.writeFile(path, Buffer.from(content), err => err ? reject(err) : resolve()));
@@ -204,16 +231,19 @@ export class IbmiConnection implements vscode.Disposable {
   }
 
   async mkdir(path: string): Promise<void> {
+    await this.guardChange(`mkdir ${path}`);
     const r = await this.exec(`mkdir -p ${shSingleQuote(path)}`);
     if (r.code !== 0) { throw new Error(r.stderr || `mkdir failed for ${path}`); }
   }
 
   async removePath(path: string, recursive: boolean): Promise<void> {
+    if (!isTempPath(path, this.tempDir)) { await this.guardChange(vscode.l10n.t('Delete {0}', path)); }
     const r = await this.exec(`rm ${recursive ? '-rf' : '-f'} ${shSingleQuote(path)}`);
     if (r.code !== 0) { throw new Error(r.stderr || `Could not delete ${path}`); }
   }
 
   async renamePath(from: string, to: string): Promise<void> {
+    await this.guardChange(`mv ${from} ${to}`);
     const r = await this.exec(`mv ${shSingleQuote(from)} ${shSingleQuote(to)}`);
     if (r.code !== 0) { throw new Error(r.stderr || `Could not rename ${from}`); }
   }

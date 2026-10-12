@@ -20,6 +20,7 @@ interface FormData {
   sqlEngine: SqlEngineKind;
   mapepirePort: string;
   ifsHome: string;
+  protection: 'none' | 'confirm' | 'readOnly';
 }
 
 /** Guided, single-page form to add or edit a connection (with a "Test" button). */
@@ -98,6 +99,7 @@ export class ConnectionForm {
       sqlEngine: d.sqlEngine,
       mapepirePort: Number(d.mapepirePort) || 8076,
       ifsHome: d.ifsHome.trim() || undefined,
+      protection: d.protection && d.protection !== 'none' ? d.protection : undefined,
     };
   }
 
@@ -220,6 +222,16 @@ export class ConnectionForm {
     <div><label for="objectLibrary">Compile objects into</label><input id="objectLibrary" value="${v(p.objectLibrary)}" placeholder="(same as source)"></div>
   </div></fieldset>
 
+  <fieldset><legend>Protection</legend><div class="grid">
+    <div class="full"><label for="protection">Is this a production system?</label>
+      <select id="protection">
+        <option value="none" ${sel(p.protection ?? 'none', 'none')}>No protection (development / test)</option>
+        <option value="confirm" ${sel(p.protection ?? 'none', 'confirm')}>Production: ask before every change</option>
+        <option value="readOnly" ${sel(p.protection ?? 'none', 'readOnly')}>Read-only: never change anything</option>
+      </select>
+      <div class="hint">Protected systems show a shield in the status bar. "Ask" confirms every command, SQL statement and file save that changes something; "Read-only" refuses them.</div></div>
+  </div></fieldset>
+
   <details><summary>Advanced: SQL engine &amp; IFS</summary>
   <fieldset><legend>SQL</legend><div class="grid">
     <div><label for="sqlEngine">SQL engine</label>
@@ -243,7 +255,7 @@ export class ConnectionForm {
 <script nonce="${n}">
   const vscode = acquireVsCodeApi();
   const $ = id => document.getElementById(id);
-  const ids = ['name','host','port','user','authType','password','privateKeyPath','libraries','currentLibrary','objectLibrary','sqlEngine','mapepirePort','ifsHome'];
+  const ids = ['name','host','port','user','authType','password','privateKeyPath','libraries','currentLibrary','objectLibrary','sqlEngine','mapepirePort','ifsHome','protection'];
   function data() {
     const d = {}; ids.forEach(i => d[i] = $(i).value); d.savePassword = $('savePassword').checked; return d;
   }

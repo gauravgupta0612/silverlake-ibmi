@@ -539,6 +539,17 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 
 **How:** In a member with exported procedures, **Generate RPGUnit Tests…** creates a test member (T + member name) in the same source file with one test per procedure. Fill in the inputs and expected values, then click ▶ next to the member or a single test in the Testing view: Vanthrex compiles it with RUCRTRPG and runs it with RUCALLTST, and shows each test as passed or failed with the assertion message. Test members (with `/include qinclude,TESTCASE`) are found when opened, or with **Find RPGUnit Tests…** on a source file. Settings: `vanthrex.rpgunit.library` (where RPGUnit is installed, RPGUNIT by default) and `vanthrex.rpgunit.testLibrary`.
 
+### 53. Production protection — new in 1.2
+
+**What:** Per connection: *No protection*, *Production: ask before every change*, or *Read-only: never change anything*. Covers CL commands, SQL that changes data or objects, member saves and IFS writes; reading, querying, downloading and Vanthrex's own work in QTEMP are never blocked.
+
+**How:** In the connection form under **Protection**, or right-click a connection → **Set Protection…**. The status bar shows 🛡 (production, red) or 🔒 (read-only, amber).
+
+### 54. Self-check and plain-language errors — new in 1.2
+
+- **Self-check:** quick menu or right-click the active connection → **Self-Check**. Checks SSH and SQL latency, QSH/CL, the SQL engine and Java, CCSID, home directory, library list, release and Db2 PTF group, special authorities, RPGUnit and the debug service, and which IBM i services are missing (with the features they affect). **Copy the report** for a support issue. Runs automatically the first time you connect to a system in a session (`vanthrex.selfCheck.onConnect`).
+- **Errors explained:** every error from IBM i, Db2 or SSH ends with what to do next (missing service → PTF group, not authorized → Check Authority, SQL7008 → WITH NC, locks → Who Has It Locked?, lost connection → reconnect…).
+
 ## Keyboard shortcuts
 
 | Keys | Action |

@@ -19,6 +19,8 @@ export interface ConnectionProfile {
   sqlEngine: SqlEngineKind;
   mapepirePort: number;
   ifsHome?: string;
+  /** Protect production systems: ask before every change, or allow no change at all. */
+  protection?: 'none' | 'confirm' | 'readOnly';
 }
 
 const PROFILES_KEY = 'vanthrex.profiles';
