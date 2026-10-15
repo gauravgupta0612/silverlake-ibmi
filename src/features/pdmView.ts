@@ -399,7 +399,7 @@ class PdmPanel {
               if (to) { await run(r, duplicateObjectCommand(l.library!, r.name, r.type, toLib, to)); }
               break;
             }
-            case '16': if (r.type !== '*PGM') { throw new Error(vscode.l10n.t('Option 16 calls programs.')); } await vscode.commands.executeCommand('vanthrex.objectCall', obj); ok(r); break;
+            case '16': if (r.type !== '*PGM') { throw new Error(vscode.l10n.t('Option 16 calls programs.')); } await vscode.commands.executeCommand('vanthrex.callTyped', obj); ok(r); break;
             case '18': if (r.type !== '*FILE') { throw new Error(vscode.l10n.t('Option 18 works on files.')); } await vscode.commands.executeCommand('vanthrex.editData', obj); ok(r); break;
             case '34': if (r.type !== '*PGM') { throw new Error(vscode.l10n.t('Option 34 debugs programs.')); } await vscode.commands.executeCommand('vanthrex.debugProgram', obj); ok(r); break;
             case 'WU': await vscode.commands.executeCommand('vanthrex.whereUsed', obj); ok(r); break;

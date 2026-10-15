@@ -398,5 +398,13 @@
   "command.pendingSaves": "Offline aufbewahrte Änderungen…",
   "command.copyToSystem": "In ein anderes System kopieren…",
   "config.connections.autoReconnect": "Wenn eine Verbindung abbricht (Netzwerk, VPN, Ruhezustand), automatisch mit der gespeicherten Anmeldung neu verbinden: 5 Versuche über etwa 2 Minuten. Änderungen, die in der Zwischenzeit nicht gespeichert werden konnten, werden auf diesem Computer aufbewahrt und gespeichert, sobald das System wieder verfügbar ist.",
-  "config.connections.healthCheckSeconds": "Alle N Sekunden prüfen, ob das aktive System noch antwortet (eine winzige Abfrage). Eine langsame Antwort wird in der Statusleiste angezeigt; zwei Ausfälle hintereinander lösen eine neue Verbindung aus. `0` schaltet die Prüfung aus."
+  "config.connections.healthCheckSeconds": "Alle N Sekunden prüfen, ob das aktive System noch antwortet (eine winzige Abfrage). Eine langsame Antwort wird in der Statusleiste angezeigt; zwei Ausfälle hintereinander lösen eine neue Verbindung aus. `0` schaltet die Prüfung aus.",
+  "command.callTyped": "Programm aufrufen (typisierte Parameter)…",
+  "command.signedOn": "Wer ist angemeldet",
+  "command.signedOn.row": "Sitzungsoptionen",
+  "command.signedOn.broadcast": "Nachricht an alle Angemeldeten…",
+  "command.notes.add": "Notiz zu dieser Zeile hinzufügen…",
+  "command.notes.show": "Notizen zu dieser Teildatei",
+  "command.notes.all": "Alle Teildateinotizen…",
+  "config.notes.sharedFile": "Teildateinotizen mit Ihrem Team teilen: eine IFS-Datei wie `/home/TEAM/vanthrex-notes.json`, die alle lesen und schreiben können. Leer: Notizen bleiben nur auf diesem Computer."
 }

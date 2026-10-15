@@ -1780,6 +1780,46 @@
         "title": "%command.copyToSystem%",
         "category": "Vanthrex",
         "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "vanthrex.callTyped",
+        "title": "%command.callTyped%",
+        "category": "Vanthrex",
+        "icon": "$(play)"
+      },
+      {
+        "command": "vanthrex.signedOn",
+        "title": "%command.signedOn%",
+        "category": "Vanthrex",
+        "icon": "$(person)"
+      },
+      {
+        "command": "vanthrex.signedOn.row",
+        "title": "%command.signedOn.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.signedOn.broadcast",
+        "title": "%command.signedOn.broadcast%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.notes.add",
+        "title": "%command.notes.add%",
+        "category": "Vanthrex",
+        "icon": "$(note)"
+      },
+      {
+        "command": "vanthrex.notes.show",
+        "title": "%command.notes.show%",
+        "category": "Vanthrex",
+        "icon": "$(note)"
+      },
+      {
+        "command": "vanthrex.notes.all",
+        "title": "%command.notes.all%",
+        "category": "Vanthrex",
+        "icon": "$(notebook)"
       }
     ],
     "menus": {
@@ -1953,6 +1993,11 @@
           "command": "vanthrex.compareSystemValues",
           "when": "view == vanthrex.connections && vanthrex.multipleConnections",
           "group": "1_connections@5"
+        },
+        {
+          "command": "vanthrex.signedOn",
+          "when": "view == vanthrex.jobs",
+          "group": "navigation@4"
         }
       ],
       "view/item/context": [
@@ -2595,6 +2640,11 @@
           "command": "vanthrex.connection.reconnectNow",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "1_info@7"
+        },
+        {
+          "command": "vanthrex.callTyped",
+          "when": "view == vanthrex.libraries && viewItem == object.pgm",
+          "group": "0_info@0"
         }
       ],
       "editor/title": [
@@ -2804,6 +2854,16 @@
           "command": "vanthrex.copyToSystem",
           "when": "resourceScheme =~ /^vanthrex-(member|ifs)$/ && vanthrex.multipleConnections",
           "group": "vanthrex@34"
+        },
+        {
+          "command": "vanthrex.notes.add",
+          "when": "resourceScheme == vanthrex-member",
+          "group": "vanthrex@35"
+        },
+        {
+          "command": "vanthrex.notes.show",
+          "when": "resourceScheme == vanthrex-member",
+          "group": "vanthrex@36"
         }
       ],
       "commandPalette": [
@@ -3300,6 +3360,34 @@
         },
         {
           "command": "vanthrex.connection.reconnectNow",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.signedOn.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.signedOn.broadcast",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.callTyped",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.signedOn",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.notes.add",
+          "when": "resourceScheme == vanthrex-member"
+        },
+        {
+          "command": "vanthrex.notes.show",
+          "when": "resourceScheme == vanthrex-member"
+        },
+        {
+          "command": "vanthrex.notes.all",
           "when": "vanthrex.connected"
         }
       ],
@@ -4126,6 +4214,11 @@
           "default": 60,
           "minimum": 0,
           "markdownDescription": "%config.connections.healthCheckSeconds%"
+        },
+        "vanthrex.notes.sharedFile": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%config.notes.sharedFile%"
         }
       }
     },

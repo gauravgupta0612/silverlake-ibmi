@@ -165,6 +165,8 @@ export function registerBrowseCommands(
       { label: vscode.l10n.t('$(pulse) System Tracker — everything in one place'), cmd: 'vanthrex.systemTracker' },
       { label: vscode.l10n.t('$(repo-create) Create library…'), cmd: 'vanthrex.createLibrary' },
       { label: vscode.l10n.t('$(new-file) Create IFS folder or file…'), cmd: 'vanthrex.createIfs' },
+      { label: vscode.l10n.t('$(person) Who is signed on'), cmd: 'vanthrex.signedOn' },
+      { label: vscode.l10n.t('$(note) All member notes'), cmd: 'vanthrex.notes.all' },
       { label: vscode.l10n.t('$(list-selection) Work with using PDM…'), cmd: 'vanthrex.pdm' },
       { label: vscode.l10n.t('$(history) Compile history'), cmd: 'vanthrex.compileHistory' },
       { label: vscode.l10n.t('$(output) Live job log…'), cmd: 'vanthrex.jobLogLive' },

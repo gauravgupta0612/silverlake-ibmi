@@ -398,5 +398,13 @@
   "command.pendingSaves": "Alterações mantidas offline…",
   "command.copyToSystem": "Copiar para outro sistema…",
   "config.connections.autoReconnect": "Quando uma conexão cai (rede, VPN, suspensão), reconectar automaticamente com o logon salvo: 5 tentativas em cerca de 2 minutos. As alterações que não puderam ser salvas nesse meio-tempo são mantidas neste computador e salvas quando o sistema voltar.",
-  "config.connections.healthCheckSeconds": "Verificar a cada N segundos se o sistema ativo ainda responde (uma consulta mínima). Uma resposta lenta aparece na barra de status; duas falhas seguidas provocam a reconexão. `0` desativa a verificação."
+  "config.connections.healthCheckSeconds": "Verificar a cada N segundos se o sistema ativo ainda responde (uma consulta mínima). Uma resposta lenta aparece na barra de status; duas falhas seguidas provocam a reconexão. `0` desativa a verificação.",
+  "command.callTyped": "Chamar programa (parâmetros tipados)…",
+  "command.signedOn": "Quem está conectado",
+  "command.signedOn.row": "Opções da sessão",
+  "command.signedOn.broadcast": "Enviar mensagem a todos os conectados…",
+  "command.notes.add": "Adicionar nota a esta linha…",
+  "command.notes.show": "Notas neste membro",
+  "command.notes.all": "Todas as notas de membros…",
+  "config.notes.sharedFile": "Compartilhe as notas de membros com sua equipe: um arquivo IFS como `/home/TEAM/vanthrex-notes.json` que todos possam ler e gravar. Vazio mantém as notas somente neste computador."
 }

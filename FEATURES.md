@@ -679,6 +679,10 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 - **Automatic reconnect** with the saved sign-on, **connection health** in the status bar, **no lost saves** while offline, editors that reopen by themselves, and a warning before disconnecting with unsaved changes.
 - **Copy to Another System…** for members and IFS files, with a preview of what changes.
 
+### 75. Call, sign-on and notes — new in 2.3
+
+- **Call Program (Typed Parameters)** from the program's own parameter list, with exact packed / zoned / integer literals; **Who Is Signed On** with break messages and ending sessions; **member notes** on lines, local or shared through an IFS file.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

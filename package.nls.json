@@ -398,5 +398,13 @@
   "command.pendingSaves": "Changes Kept While Offline…",
   "command.copyToSystem": "Copy to Another System…",
   "config.connections.autoReconnect": "When a connection drops (network, VPN, sleep), reconnect by itself with the saved sign-on: 5 attempts over about 2 minutes. Changes that could not be saved meanwhile are kept on this computer and saved when the system is back.",
-  "config.connections.healthCheckSeconds": "Check every N seconds that the active system still answers (a tiny query). A slow answer shows in the status bar; two misses in a row reconnect. `0` turns it off."
+  "config.connections.healthCheckSeconds": "Check every N seconds that the active system still answers (a tiny query). A slow answer shows in the status bar; two misses in a row reconnect. `0` turns it off.",
+  "command.callTyped": "Call Program (Typed Parameters)…",
+  "command.signedOn": "Who Is Signed On",
+  "command.signedOn.row": "Session Options",
+  "command.signedOn.broadcast": "Message Everyone Signed On…",
+  "command.notes.add": "Add Note to This Line…",
+  "command.notes.show": "Notes on This Member",
+  "command.notes.all": "All Member Notes…",
+  "config.notes.sharedFile": "Share member notes with your team: an IFS file such as `/home/TEAM/vanthrex-notes.json` that everybody can read and write. Empty keeps notes on this computer only."
 }

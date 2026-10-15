@@ -398,5 +398,13 @@
   "command.pendingSaves": "オフライン中に保持された変更…",
   "command.copyToSystem": "別のシステムへのコピー…",
   "config.connections.autoReconnect": "接続が切断された場合 (ネットワーク、VPN、スリープ)、保存されたサインオン情報で自動的に再接続します: 約 2 分間に 5 回試行します。その間に保存できなかった変更はこのコンピューターに保持され、システムが戻ったときに保存されます。",
-  "config.connections.healthCheckSeconds": "アクティブなシステムがまだ応答するかどうかを N 秒ごとに確認します (ごく小さな照会)。応答が遅い場合はステータス・バーに表示され、2 回続けて応答がない場合は再接続します。`0` でオフになります。"
+  "config.connections.healthCheckSeconds": "アクティブなシステムがまだ応答するかどうかを N 秒ごとに確認します (ごく小さな照会)。応答が遅い場合はステータス・バーに表示され、2 回続けて応答がない場合は再接続します。`0` でオフになります。",
+  "command.callTyped": "プログラムの呼び出し (型付きパラメーター)…",
+  "command.signedOn": "サインオン中のユーザー",
+  "command.signedOn.row": "セッション・オプション",
+  "command.signedOn.broadcast": "サインオン中の全員にメッセージを送信…",
+  "command.notes.add": "この行にメモを追加…",
+  "command.notes.show": "このメンバーのメモ",
+  "command.notes.all": "すべてのメンバー・メモ…",
+  "config.notes.sharedFile": "メンバー・メモをチームで共有します: 全員が読み書きできる IFS ファイル (例: `/home/TEAM/vanthrex-notes.json`)。空の場合、メモはこのコンピューターにのみ保持されます。"
 }

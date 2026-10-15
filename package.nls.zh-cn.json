@@ -398,5 +398,13 @@
   "command.pendingSaves": "脱机期间保留的更改…",
   "command.copyToSystem": "复制到其他系统…",
   "config.connections.autoReconnect": "连接断开（网络、VPN、睡眠）时，使用已保存的登录信息自动重新连接：在约 2 分钟内尝试 5 次。在此期间无法保存的更改将保留在此计算机上，并在系统恢复后保存。",
-  "config.connections.healthCheckSeconds": "每隔 N 秒检查活动系统是否仍有响应（一个极小的查询）。响应缓慢时会显示在状态栏中；连续两次无响应将重新连接。`0` 表示关闭。"
+  "config.connections.healthCheckSeconds": "每隔 N 秒检查活动系统是否仍有响应（一个极小的查询）。响应缓慢时会显示在状态栏中；连续两次无响应将重新连接。`0` 表示关闭。",
+  "command.callTyped": "调用程序（类型化参数）…",
+  "command.signedOn": "谁已登录",
+  "command.signedOn.row": "会话选项",
+  "command.signedOn.broadcast": "向所有已登录用户发送消息…",
+  "command.notes.add": "向此行添加注释…",
+  "command.notes.show": "此成员的注释",
+  "command.notes.all": "所有成员注释…",
+  "config.notes.sharedFile": "与团队共享成员注释：所有人都可以读写的 IFS 文件，例如 `/home/TEAM/vanthrex-notes.json`。留空则注释仅保存在此计算机上。"
 }

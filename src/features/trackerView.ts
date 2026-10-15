@@ -21,7 +21,7 @@ interface Tab { hero?: Hero; id: string; title: string; badge?: number; badgeTon
 const ALLOWED = new Set([
   'vanthrex.tracker.tab', 'vanthrex.pdm', 'vanthrex.jobDetails', 'vanthrex.jobLog', 'vanthrex.jobLogLive', 'vanthrex.messageQueue', 'vanthrex.explainMessage',
   'vanthrex.performanceMonitor', 'vanthrex.compileHistory', 'vanthrex.compileHistory.open', 'vanthrex.editConnection', 'vanthrex.storageAdvisor', 'vanthrex.installedSoftware',
-  'vanthrex.ptfLookup', 'vanthrex.securityCenter', 'vanthrex.tracker.cl', 'vanthrex.tracker.copySummary', 'vanthrex.tracker.switch', 'vanthrex.journals', 'vanthrex.objectInfo', 'vanthrex.createLibrary', 'vanthrex.createIfs', 'vanthrex.publicAuthorityScan', 'vanthrex.compareSystemValues', 'vanthrex.libraryListFromJobd', 'vanthrex.spool.focus', 'vanthrex.secadm.inactive', 'vanthrex.secadm.powerful', 'vanthrex.findMember', 'vanthrex.pin', 'vanthrex.pin.open',
+  'vanthrex.ptfLookup', 'vanthrex.securityCenter', 'vanthrex.tracker.cl', 'vanthrex.tracker.copySummary', 'vanthrex.tracker.switch', 'vanthrex.journals', 'vanthrex.objectInfo', 'vanthrex.createLibrary', 'vanthrex.createIfs', 'vanthrex.signedOn', 'vanthrex.publicAuthorityScan', 'vanthrex.compareSystemValues', 'vanthrex.libraryListFromJobd', 'vanthrex.spool.focus', 'vanthrex.secadm.inactive', 'vanthrex.secadm.powerful', 'vanthrex.findMember', 'vanthrex.pin', 'vanthrex.pin.open',
   'vanthrex.historyLog', 'vanthrex.activeSql', 'vanthrex.journals', 'vanthrex.openDashboard', 'vanthrex.tracker.addLibrary', 'vanthrex.objectLocks', 'vanthrex.exitPoints',
 ]);
 
@@ -233,6 +233,7 @@ class Tracker {
           { label: vscode.l10n.t('PDM'), command: 'vanthrex.pdm' }, { label: vscode.l10n.t('Find member'), command: 'vanthrex.findMember' }, { label: vscode.l10n.t('Performance monitor'), command: 'vanthrex.performanceMonitor' },
           { label: vscode.l10n.t('Running SQL'), command: 'vanthrex.activeSql' }, { label: vscode.l10n.t('History log (QHST)'), command: 'vanthrex.historyLog' }, { label: vscode.l10n.t('Exit points'), command: 'vanthrex.exitPoints' },
           { label: vscode.l10n.t('Create library'), command: 'vanthrex.createLibrary' }, { label: vscode.l10n.t('Create IFS folder or file'), command: 'vanthrex.createIfs' },
+          { label: vscode.l10n.t('Who is signed on'), command: 'vanthrex.signedOn' },
           { label: vscode.l10n.t('Copy summary'), command: 'vanthrex.tracker.copySummary' },
         ],
         tables: [],
