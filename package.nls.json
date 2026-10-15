@@ -406,5 +406,14 @@
   "command.notes.add": "Add Note to This Line…",
   "command.notes.show": "Notes on This Member",
   "command.notes.all": "All Member Notes…",
-  "config.notes.sharedFile": "Share member notes with your team: an IFS file such as `/home/TEAM/vanthrex-notes.json` that everybody can read and write. Empty keeps notes on this computer only."
+  "config.notes.sharedFile": "Share member notes with your team: an IFS file such as `/home/TEAM/vanthrex-notes.json` that everybody can read and write. Empty keeps notes on this computer only.",
+  "command.dsLayout": "Data Structure Layout (Positions and Lengths)",
+  "command.dsLayout.copy": "Copy Data Structure Layout",
+  "command.expandCopies": "Show Source with /COPY Expanded",
+  "command.signatureCheck": "Check Service Program Signatures",
+  "command.signatureCheck.rebind": "Re-bind to the Current Signature",
+  "command.signatureCheck.rebindAll": "Re-bind All Failing Objects",
+  "command.failedJobs": "Failed Jobs (Ended Abnormally)",
+  "command.failedJobs.row": "Failed Job Options",
+  "config.dsLayout.hover": "Show the position and length of a data structure subfield when you hover over its definition."
 }

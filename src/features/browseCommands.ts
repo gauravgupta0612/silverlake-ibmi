@@ -167,6 +167,8 @@ export function registerBrowseCommands(
       { label: vscode.l10n.t('$(new-file) Create IFS folder or file…'), cmd: 'vanthrex.createIfs' },
       { label: vscode.l10n.t('$(person) Who is signed on'), cmd: 'vanthrex.signedOn' },
       { label: vscode.l10n.t('$(note) All member notes'), cmd: 'vanthrex.notes.all' },
+      { label: vscode.l10n.t('$(error) Failed jobs'), cmd: 'vanthrex.failedJobs' },
+      { label: vscode.l10n.t('$(shield) Check service program signatures'), cmd: 'vanthrex.signatureCheck' },
       { label: vscode.l10n.t('$(list-selection) Work with using PDM…'), cmd: 'vanthrex.pdm' },
       { label: vscode.l10n.t('$(history) Compile history'), cmd: 'vanthrex.compileHistory' },
       { label: vscode.l10n.t('$(output) Live job log…'), cmd: 'vanthrex.jobLogLive' },

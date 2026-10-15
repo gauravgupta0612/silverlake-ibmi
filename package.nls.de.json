@@ -406,5 +406,14 @@
   "command.notes.add": "Notiz zu dieser Zeile hinzufügen…",
   "command.notes.show": "Notizen zu dieser Teildatei",
   "command.notes.all": "Alle Teildateinotizen…",
-  "config.notes.sharedFile": "Teildateinotizen mit Ihrem Team teilen: eine IFS-Datei wie `/home/TEAM/vanthrex-notes.json`, die alle lesen und schreiben können. Leer: Notizen bleiben nur auf diesem Computer."
+  "config.notes.sharedFile": "Teildateinotizen mit Ihrem Team teilen: eine IFS-Datei wie `/home/TEAM/vanthrex-notes.json`, die alle lesen und schreiben können. Leer: Notizen bleiben nur auf diesem Computer.",
+  "command.dsLayout": "Datenstruktur-Layout (Positionen und Längen)",
+  "command.dsLayout.copy": "Datenstruktur-Layout kopieren",
+  "command.expandCopies": "Quelle mit erweitertem /COPY anzeigen",
+  "command.signatureCheck": "Signaturen von Serviceprogrammen prüfen",
+  "command.signatureCheck.rebind": "An die aktuelle Signatur neu binden",
+  "command.signatureCheck.rebindAll": "Alle fehlerhaften Objekte neu binden",
+  "command.failedJobs": "Fehlgeschlagene Jobs (abnormal beendet)",
+  "command.failedJobs.row": "Optionen für fehlgeschlagenen Job",
+  "config.dsLayout.hover": "Zeigt Position und Länge eines Datenstruktur-Unterfelds an, wenn Sie mit der Maus auf seine Definition zeigen."
 }

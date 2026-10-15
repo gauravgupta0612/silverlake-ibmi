@@ -683,6 +683,10 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 
 - **Call Program (Typed Parameters)** from the program's own parameter list, with exact packed / zoned / integer literals; **Who Is Signed On** with break messages and ending sessions; **member notes** on lines, local or shared through an IFS file.
 
+### 76. Layout, includes, signatures and failed jobs — new in 2.3
+
+- **Data Structure Layout** with positions and lengths (also on hover), **Show Source with /COPY Expanded**, **Check Service Program Signatures** with one-click re-bind, and **Failed Jobs** from the history log with end codes and job logs.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

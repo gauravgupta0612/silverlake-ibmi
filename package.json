@@ -1820,6 +1820,50 @@
         "title": "%command.notes.all%",
         "category": "Vanthrex",
         "icon": "$(notebook)"
+      },
+      {
+        "command": "vanthrex.dsLayout",
+        "title": "%command.dsLayout%",
+        "category": "Vanthrex",
+        "icon": "$(table)"
+      },
+      {
+        "command": "vanthrex.dsLayout.copy",
+        "title": "%command.dsLayout.copy%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.expandCopies",
+        "title": "%command.expandCopies%",
+        "category": "Vanthrex",
+        "icon": "$(references)"
+      },
+      {
+        "command": "vanthrex.signatureCheck",
+        "title": "%command.signatureCheck%",
+        "category": "Vanthrex",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "vanthrex.signatureCheck.rebind",
+        "title": "%command.signatureCheck.rebind%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.signatureCheck.rebindAll",
+        "title": "%command.signatureCheck.rebindAll%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.failedJobs",
+        "title": "%command.failedJobs%",
+        "category": "Vanthrex",
+        "icon": "$(error)"
+      },
+      {
+        "command": "vanthrex.failedJobs.row",
+        "title": "%command.failedJobs.row%",
+        "category": "Vanthrex"
       }
     ],
     "menus": {
@@ -1998,6 +2042,11 @@
           "command": "vanthrex.signedOn",
           "when": "view == vanthrex.jobs",
           "group": "navigation@4"
+        },
+        {
+          "command": "vanthrex.failedJobs",
+          "when": "view == vanthrex.jobs",
+          "group": "navigation@5"
         }
       ],
       "view/item/context": [
@@ -2645,6 +2694,11 @@
           "command": "vanthrex.callTyped",
           "when": "view == vanthrex.libraries && viewItem == object.pgm",
           "group": "0_info@0"
+        },
+        {
+          "command": "vanthrex.signatureCheck",
+          "when": "view == vanthrex.libraries && viewItem == object.srvpgm",
+          "group": "2_analyse@4"
         }
       ],
       "editor/title": [
@@ -2864,6 +2918,16 @@
           "command": "vanthrex.notes.show",
           "when": "resourceScheme == vanthrex-member",
           "group": "vanthrex@36"
+        },
+        {
+          "command": "vanthrex.dsLayout",
+          "when": "editorLangId == rpgle",
+          "group": "vanthrex@7"
+        },
+        {
+          "command": "vanthrex.expandCopies",
+          "when": "vanthrex.connected && editorLangId == rpgle",
+          "group": "vanthrex@7"
         }
       ],
       "commandPalette": [
@@ -3388,6 +3452,38 @@
         },
         {
           "command": "vanthrex.notes.all",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.dsLayout.copy",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.signatureCheck.rebind",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.signatureCheck.rebindAll",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.failedJobs.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.dsLayout",
+          "when": "editorLangId == rpgle"
+        },
+        {
+          "command": "vanthrex.expandCopies",
+          "when": "vanthrex.connected && editorLangId == rpgle"
+        },
+        {
+          "command": "vanthrex.signatureCheck",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.failedJobs",
           "when": "vanthrex.connected"
         }
       ],
@@ -4219,6 +4315,11 @@
           "type": "string",
           "default": "",
           "markdownDescription": "%config.notes.sharedFile%"
+        },
+        "vanthrex.dsLayout.hover": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.dsLayout.hover%"
         }
       }
     },

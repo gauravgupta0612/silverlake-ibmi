@@ -406,5 +406,14 @@
   "command.notes.add": "Añadir nota a esta línea…",
   "command.notes.show": "Notas de este miembro",
   "command.notes.all": "Todas las notas de miembros…",
-  "config.notes.sharedFile": "Comparta las notas de miembros con su equipo: un archivo IFS como `/home/TEAM/vanthrex-notes.json` que todos puedan leer y escribir. Si está vacío, las notas se guardan solo en este ordenador."
+  "config.notes.sharedFile": "Comparta las notas de miembros con su equipo: un archivo IFS como `/home/TEAM/vanthrex-notes.json` que todos puedan leer y escribir. Si está vacío, las notas se guardan solo en este ordenador.",
+  "command.dsLayout": "Diseño de la estructura de datos (posiciones y longitudes)",
+  "command.dsLayout.copy": "Copiar el diseño de la estructura de datos",
+  "command.expandCopies": "Mostrar el código fuente con /COPY expandido",
+  "command.signatureCheck": "Comprobar firmas de programas de servicio",
+  "command.signatureCheck.rebind": "Volver a enlazar con la firma actual",
+  "command.signatureCheck.rebindAll": "Volver a enlazar todos los objetos con error",
+  "command.failedJobs": "Trabajos con error (finalización anómala)",
+  "command.failedJobs.row": "Opciones del trabajo con error",
+  "config.dsLayout.hover": "Muestra la posición y la longitud de un subcampo de estructura de datos al pasar el puntero sobre su definición."
 }

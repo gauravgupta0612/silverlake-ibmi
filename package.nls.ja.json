@@ -406,5 +406,14 @@
   "command.notes.add": "この行にメモを追加…",
   "command.notes.show": "このメンバーのメモ",
   "command.notes.all": "すべてのメンバー・メモ…",
-  "config.notes.sharedFile": "メンバー・メモをチームで共有します: 全員が読み書きできる IFS ファイル (例: `/home/TEAM/vanthrex-notes.json`)。空の場合、メモはこのコンピューターにのみ保持されます。"
+  "config.notes.sharedFile": "メンバー・メモをチームで共有します: 全員が読み書きできる IFS ファイル (例: `/home/TEAM/vanthrex-notes.json`)。空の場合、メモはこのコンピューターにのみ保持されます。",
+  "command.dsLayout": "データ構造のレイアウト (位置と長さ)",
+  "command.dsLayout.copy": "データ構造のレイアウトをコピー",
+  "command.expandCopies": "/COPY を展開してソースを表示",
+  "command.signatureCheck": "サービス・プログラムのシグニチャーを確認",
+  "command.signatureCheck.rebind": "現在のシグニチャーに再バインド",
+  "command.signatureCheck.rebindAll": "失敗するすべてのオブジェクトを再バインド",
+  "command.failedJobs": "失敗したジョブ (異常終了)",
+  "command.failedJobs.row": "失敗したジョブのオプション",
+  "config.dsLayout.hover": "データ構造のサブフィールドの定義にカーソルを合わせると、その位置と長さを表示します。"
 }

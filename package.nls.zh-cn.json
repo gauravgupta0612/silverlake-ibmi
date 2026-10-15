@@ -406,5 +406,14 @@
   "command.notes.add": "向此行添加注释…",
   "command.notes.show": "此成员的注释",
   "command.notes.all": "所有成员注释…",
-  "config.notes.sharedFile": "与团队共享成员注释：所有人都可以读写的 IFS 文件，例如 `/home/TEAM/vanthrex-notes.json`。留空则注释仅保存在此计算机上。"
+  "config.notes.sharedFile": "与团队共享成员注释：所有人都可以读写的 IFS 文件，例如 `/home/TEAM/vanthrex-notes.json`。留空则注释仅保存在此计算机上。",
+  "command.dsLayout": "数据结构布局（位置和长度）",
+  "command.dsLayout.copy": "复制数据结构布局",
+  "command.expandCopies": "显示展开 /COPY 后的源代码",
+  "command.signatureCheck": "检查服务程序签名",
+  "command.signatureCheck.rebind": "重新绑定到当前签名",
+  "command.signatureCheck.rebindAll": "重新绑定所有失败对象",
+  "command.failedJobs": "失败的作业（异常结束）",
+  "command.failedJobs.row": "失败作业的选项",
+  "config.dsLayout.hover": "将鼠标悬停在数据结构子字段的定义上时，显示其位置和长度。"
 }
