@@ -362,5 +362,5 @@
   "command.pdm": "Trabajar con utilizando PDM…",
   "command.pdm.key": "Tecla de función PDM",
   "command.pdm.userOptions": "PDM: opciones definidas por el usuario (F16)…",
-  "config.pdm.userOptions": "Opciones de PDM definidas por el usuario (F16): código de opción → mandato CL. Variables: `&L` biblioteca, `&F` archivo, `&N` nombre, `&T` tipo, `&A` atributo, `&O` biblioteca de objetos, `&U` usuario, `&X` texto. Predefinidas: CB, CS, CC, DF, PF (establezca una en una serie vacía para ocultarla)."
+  "config.pdm.userOptions": "Opciones de PDM definidas por el usuario (F16): código de opción → mandato CL. Variables: `&L` biblioteca, `&F` archivo, `&N` nombre, `&T` tipo, `&A` atributo, `&O` biblioteca de objetos, `&U` usuario, `&X` texto. Predefinidas: CB, CS, CC, DF, PF, RS (establezca una en una serie vacía para ocultarla)."
 }

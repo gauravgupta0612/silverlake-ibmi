@@ -362,5 +362,5 @@
   "command.pdm": "使用 PDM 处理…",
   "command.pdm.key": "PDM 功能键",
   "command.pdm.userOptions": "PDM：用户定义的选项 (F16)…",
-  "config.pdm.userOptions": "PDM 用户定义的选项 (F16)：选项代码 → CL 命令。变量：`&L` 库，`&F` 文件，`&N` 名称，`&T` 类型，`&A` 属性，`&O` 对象库，`&U` 用户，`&X` 文本。内置：CB、CS、CC、DF、PF（设置为空字符串可将其隐藏）。"
+  "config.pdm.userOptions": "PDM 用户定义的选项 (F16)：选项代码 → CL 命令。变量：`&L` 库，`&F` 文件，`&N` 名称，`&T` 类型，`&A` 属性，`&O` 对象库，`&U` 用户，`&X` 文本。内置：CB、CS、CC、DF、PF、RS（设置为空字符串可将其隐藏）。"
 }

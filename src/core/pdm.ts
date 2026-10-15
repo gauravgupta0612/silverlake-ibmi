@@ -11,7 +11,7 @@ export interface PdmOption { code: string; label: string; /** Needs one extra an
 /** The options PDM users know, with the same numbers. Extra two-letter options are Vanthrex additions. */
 export const MEMBER_OPTIONS: PdmOption[] = [
   { code: '2', label: 'Edit' }, { code: '3', label: 'Copy', asks: true }, { code: '4', label: 'Delete' },
-  { code: '5', label: 'Display' }, { code: '7', label: 'Rename', asks: true }, { code: '8', label: 'Display description' },
+  { code: '5', label: 'Display' }, { code: '6', label: 'Print' }, { code: '7', label: 'Rename', asks: true }, { code: '8', label: 'Display description' },
   { code: '13', label: 'Change text and type', asks: true }, { code: '14', label: 'Compile' }, { code: '15', label: 'Create module' },
   { code: '16', label: 'Local history' }, { code: '25', label: 'Find string', asks: true }, { code: '54', label: 'Compare (two members)' },
   { code: 'GH', label: 'Git history' }, { code: 'UC', label: 'Unused code' }, { code: 'HL', label: 'Hard-coded libraries' },
@@ -53,8 +53,10 @@ export function matchGeneric(name: string, pattern: string): boolean {
   return re.test(name.trim());
 }
 
-export interface PdmRow { name: string; type: string; attribute?: string; text: string; changed?: string; size?: number }
-export interface Subset { name?: string; type?: string; text?: string; since?: string }
+export interface PdmRow { name: string; type: string; attribute?: string; text: string; changed?: string; size?: number; lockedBy?: string; objStatus?: ObjStatus }
+/** '' = not something you compile, none = no object yet, current = object newer than the source, stale = source changed after the object. */
+export type ObjStatus = '' | 'none' | 'current' | 'stale';
+export interface Subset { name?: string; type?: string; text?: string; since?: string; needsCompile?: boolean; locked?: boolean }
 
 export function applySubset(rows: PdmRow[], s: Subset): PdmRow[] {
   const since = s.since?.trim();
@@ -62,7 +64,9 @@ export function applySubset(rows: PdmRow[], s: Subset): PdmRow[] {
   return rows.filter(r => matchGeneric(r.name, s.name ?? '*ALL')
     && (!s.type?.trim() || matchGeneric(r.type, s.type) || (!!r.attribute && matchGeneric(r.attribute, s.type)))
     && (!s.text?.trim() || r.text.toLowerCase().includes(s.text.trim().toLowerCase()))
-    && (!since || (r.changed ?? '') >= since));
+    && (!since || (r.changed ?? '') >= since)
+    && (!s.needsCompile || r.objStatus === 'stale' || r.objStatus === 'none')
+    && (!s.locked || !!r.lockedBy));
 }
 
 /** Index of the first row at or after a name (PDM "Position to"). */
@@ -170,6 +174,7 @@ export const DEFAULT_USER_OPTIONS: Record<string, string> = {
   CC: 'CRTBNDCL PGM(&O/&N) SRCFILE(&L/&F) SRCMBR(&N) DBGVIEW(*SOURCE)',
   DF: 'CRTDSPF FILE(&O/&N) SRCFILE(&L/&F) SRCMBR(&N)',
   PF: 'CRTPF FILE(&O/&N) SRCFILE(&L/&F) SRCMBR(&N)',
+  RS: 'RUNSQLSTM SRCFILE(&L/&F) SRCMBR(&N) COMMIT(*NONE) NAMING(*SYS)',
 };
 
 export interface PdmVars { library: string; file?: string; name: string; type?: string; attribute?: string; objectLibrary: string; user: string; text?: string }
@@ -216,4 +221,52 @@ export function rowsToCsv(rows: PdmRow[], level: PdmLevel): string {
   const head = level === 'members' ? ['Member', 'Type', 'Text', 'Changed', 'Lines'] : level === 'objects' ? ['Object', 'Type', 'Attribute', 'Text', 'Changed', 'Size'] : ['Library', 'Type', 'Text'];
   const body = rows.map(r => (level === 'members' ? [r.name, r.type, r.text, r.changed, r.size] : level === 'objects' ? [r.name, r.type, r.attribute, r.text, r.changed, r.size] : [r.name, r.type, r.text]).map(cell).join(','));
   return [head.join(','), ...body].join('\n') + '\n';
+}
+
+// ---------------------------------------------------------------- robustness helpers
+
+export function printMemberCommand(lib: string, file: string, mbr: string): string {
+  return `CPYSRCF FROMFILE(${NAME(lib, 'library')}/${NAME(file, 'file')}) TOFILE(*PRINT) FROMMBR(${NAME(mbr, 'member')})`;
+}
+
+/** The useful line of a failed CL command: the escape message (CPF…: text) rather than QSH noise. */
+export function clError(stdout: string, stderr: string): string {
+  const lines = `${stderr}\n${stdout}`.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const msg = [...lines].reverse().find(l => /\b[A-Z]{3}[0-9A-F]{4}\b/.test(l) && !/^CPC|\bCPC[0-9A-F]{4}\b/.test(l));
+  return (msg ?? lines.pop() ?? 'The command failed.').replace(/^qsh:\s*/i, '').slice(0, 300);
+}
+
+/** Options that change something on the system (confirmed when typed on many rows). */
+export function changesSomething(level: PdmLevel, option: string, userCodes: string[]): boolean {
+  const o = option.toUpperCase();
+  if (userCodes.includes(o)) { return true; }
+  const c: Record<PdmLevel, string[]> = { members: ['3', '4', '7', '13', '15'], objects: ['4', '7', '11', '13', '15'], libraries: ['13'] };
+  return c[level].includes(o);
+}
+
+const NOT_COMPILED = /^(RPGLEINC|SQLRPGLEINC|INC|CPY|COPY|TXT|TEXT|MNUDDS|HELP|PNLGRP|BND|BNDSRC|SQL|CLP?INC|README|MD)$/;
+const OBJECT_TYPES: Record<string, string[]> = {
+  RPGLE: ['*PGM', '*MODULE'], SQLRPGLE: ['*PGM', '*MODULE'], RPG: ['*PGM'], SQLRPG: ['*PGM'], CLLE: ['*PGM', '*MODULE'], CLP: ['*PGM'], CL: ['*PGM'],
+  CBLLE: ['*PGM', '*MODULE'], SQLCBLLE: ['*PGM', '*MODULE'], CBL: ['*PGM'], C: ['*PGM', '*MODULE'], CPP: ['*PGM', '*MODULE'],
+  DSPF: ['*FILE'], PRTF: ['*FILE'], PF: ['*FILE'], LF: ['*FILE'], CMD: ['*CMD'], MENU: ['*MENU'],
+};
+
+/** Is the object built from this member older than the source? Timestamps as YYYY-MM-DD-HH.MM.SS (any precision). */
+export function objectStatus(srcType: string, memberChanged: string | undefined, objects: { type: string; created: string }[]): ObjStatus {
+  const t = srcType.trim().toUpperCase();
+  const types = OBJECT_TYPES[t];
+  if (!t || NOT_COMPILED.test(t) || !types) { return ''; }
+  const norm = (x: string) => x.replace(/[ T]/, '-').replace(/:/g, '.').slice(0, 19);
+  const mine = objects.filter(o => types.includes(o.type.trim().toUpperCase()) && o.created);
+  if (!mine.length) { return 'none'; }
+  if (!memberChanged) { return 'current'; }
+  const newest = mine.map(o => norm(o.created)).sort().pop()!;
+  return norm(memberChanged) > newest ? 'stale' : 'current';
+}
+
+/** Rows per type, most common first (for the type chips). */
+export function typeCounts(rows: PdmRow[]): [string, number][] {
+  const m = new Map<string, number>();
+  for (const r of rows) { const t = (r.attribute === 'PF-SRC' ? 'PF-SRC' : r.type) || '—'; m.set(t, (m.get(t) ?? 0) + 1); }
+  return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 12);
 }

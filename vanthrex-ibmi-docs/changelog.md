@@ -6,7 +6,23 @@ nav_order: 90
 
 # Changelog
 
-## 2.1.0 (not released yet)
+## 2.2.0 (not released yet)
+
+**New: PDM in one screen — Work with Libraries, Objects and Members using PDM**
+
+- **The PDM you know, in VS Code:** right-click a library, a source file or a file and choose *Work with Using PDM…* (or the list button on the Libraries view, the quick menu, or type `WRKMBRPDM FILE(LIB/QRPGLESRC)`, `WRKOBJPDM LIB(X)`, `WRKLIBPDM LIB(A*)` or `STRPDM` in *Run CL Command*).
+- **Type options and press Enter**, on as many rows as you like, with the PDM numbers: members 2 edit, 3 copy, 4 delete, 5 display (read-only), 6 print, 7 rename, 8 description, 13 change text and type, 14 compile, 15 create module, 16 local history, 25 find string, 54 compare two members; objects 4, 5, 7, 8, 11 move, 12 work with members, 13, 15 duplicate, 16 call, 18 edit data, 34 debug; libraries 5 / 12 work with objects, 8, 13. Deletes are confirmed once for the whole batch.
+- **Function keys:** F3 exit, F5 refresh, F6 create (member, source file or library), F9 undo delete, F12 back, F13 repeat an option down the list, F16 user-defined options, F17 subset, F21 export the list to CSV, F23 more options. Shift+F1…F12 work as F13…F24 like in a 5250 emulator; ↑ / ↓ move between option fields.
+- **Subset and position to:** generic names (ORD*, \*CUST\*), type, text, changed since, *Needs compile*, *In use*, or click a type chip (RPGLE 120, CLLE 30…); click a column to sort, double-click a row for its usual option.
+- **User-defined options (F16)** with PDM variables &L &F &N &T &A &O &U &X, and parameters from the command line appended (for example `CB` + `TGTRLS(V7R4M0)`). Built-in: CB, CS, CC, DF, PF, RS (RUNSQLSTM) (`vanthrex.pdm.userOptions`).
+- **Robust by design:**
+  - **Undo delete (F9):** members removed with option 4 are copied first and can be put back with F9 (or `UNDO` on the command line); copies are also kept on disk. Members in use by another job are not deleted or renamed.
+  - **Failed options stay on their rows** with the IBM i message (CPF…) in the Status column, so you fix and press Enter again — like PDM, but with the reason.
+  - **Batches show progress and can be cancelled;** more than 10 changing options ask first. Renames to an existing name are stopped before they run.
+- **See more at a glance:** an *Object* column (✓ up to date, ⚠ source changed after the last compile, ○ not compiled yet — in your object library), an *In use by* column with the job that has the member open, and a **preview pane** (tick *Preview*, click a member or move with the arrow keys).
+- **Extras PDM never had:** Git history (GH), unused code (UC), hard-coded libraries (HL), where used (WU), who has it locked (LK), what depends on this file (DP), source files only (SF), add to library list (LL), set current library (CL), a status column per row and recently used lists.
+
+## 2.1.0
 
 **New: Security Admin center for users with *SECADM**
 

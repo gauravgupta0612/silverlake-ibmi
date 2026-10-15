@@ -67,3 +67,30 @@ test('CSV export', () => {
   const csv = p.rowsToCsv([{ name: 'A', type: 'RPGLE', text: 'x, "y"', changed: '2026', size: 3 }], 'members');
   assert.strictEqual(csv, 'Member,Type,Text,Changed,Lines\nA,RPGLE,"x, ""y""",2026,3\n');
 });
+
+test('robustness helpers', () => {
+  assert.strictEqual(p.clError('', 'qsh: 001-0055 Error found\nCPF3220: Cannot do operation on file X.\n'), 'CPF3220: Cannot do operation on file X.');
+  assert.strictEqual(p.clError('CPC2191: Object deleted.\nCPF2105: Object not found.', ''), 'CPF2105: Object not found.');
+  assert.strictEqual(p.clError('', ''), 'The command failed.');
+  assert.ok(p.changesSomething('members', '4', []) && p.changesSomething('members', 'CB', ['CB']) && !p.changesSomething('members', '2', []));
+  assert.strictEqual(p.printMemberCommand('L', 'F', 'M'), 'CPYSRCF FROMFILE(L/F) TOFILE(*PRINT) FROMMBR(M)');
+  assert.ok(p.DEFAULT_USER_OPTIONS.RS.startsWith('RUNSQLSTM'));
+});
+
+test('compile status', () => {
+  const pgm = [{ type: '*PGM', created: '2026-10-01-10.00.00.000000' }];
+  assert.strictEqual(p.objectStatus('RPGLE', '2026-10-02-08.00.00.000000', pgm), 'stale');
+  assert.strictEqual(p.objectStatus('RPGLE', '2026-09-30-08.00.00', pgm), 'current');
+  assert.strictEqual(p.objectStatus('RPGLE', '2026-09-30-08.00.00', []), 'none');
+  assert.strictEqual(p.objectStatus('DSPF', '2026-09-30-08.00.00', pgm), 'none');
+  assert.strictEqual(p.objectStatus('RPGLEINC', '2026-09-30', pgm), '');
+  assert.strictEqual(p.objectStatus('', '2026-09-30', pgm), '');
+  assert.strictEqual(p.objectStatus('SQLRPGLE', '2026-10-02 08:00:00', [{ type: '*MODULE', created: '2026-10-01-10.00.00' }, { type: '*PGM', created: '2026-10-03-10.00.00' }]), 'current');
+});
+
+test('subset by compile status and locks, type counts', () => {
+  const rows = [{ name: 'A', type: 'RPGLE', text: '', objStatus: 'stale' }, { name: 'B', type: 'RPGLE', text: '', objStatus: 'current', lockedBy: '1/U/J' }, { name: 'C', type: 'CLLE', text: '', objStatus: 'none' }];
+  assert.deepStrictEqual(p.applySubset(rows, { needsCompile: true }).map(r => r.name), ['A', 'C']);
+  assert.deepStrictEqual(p.applySubset(rows, { locked: true }).map(r => r.name), ['B']);
+  assert.deepStrictEqual(p.typeCounts(rows), [['RPGLE', 2], ['CLLE', 1]]);
+});

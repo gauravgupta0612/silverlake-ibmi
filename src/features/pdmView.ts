@@ -7,7 +7,7 @@ import { IbmiConnection } from '../core/connection';
 import { errorMessage, logError } from '../core/log';
 import { sqlString } from '../core/util';
 import {
-  DEFAULT_USER_OPTIONS, PdmLevel, PdmRow, PdmTarget, Subset, addMemberCommand, applySubset, changeMemberCommand, copyMemberCommand,
+  DEFAULT_USER_OPTIONS, PdmLevel, PdmRow, PdmTarget, Subset, addMemberCommand, changesSomething, clError, objectStatus, printMemberCommand, typeCounts, applySubset, changeMemberCommand, copyMemberCommand,
   createLibraryCommand, createModuleCommand, deleteObjectCommand, duplicateObjectCommand, libraryTextCommand, moveObjectCommand,
   objectTextCommand, optionsFor, parseEntries, parsePdmCommand, removeMemberCommand, renameMemberCommand, renameObjectCommand, rowsToCsv,
   substitutePdm, validUserOptionCode,
@@ -57,16 +57,20 @@ class PdmPanel {
   private statuses: Record<string, string> = {};
   private message = '';
   private busy = false;
+  private retry: Record<string, string> = {};
+  /** Members removed by the last option 4, with their source, so F9 can put them back. */
+  private lastDeleted: { library: string; file: string; name: string; type: string; text: string; source: string }[] = [];
+  private readonly previewCache = new Map<string, string>();
 
-  constructor(private readonly manager: ConnectionManager, private readonly state: vscode.Memento) {
+  constructor(private readonly manager: ConnectionManager, private readonly state: vscode.Memento, private readonly storage?: vscode.Uri) {
     this.panel = vscode.window.createWebviewPanel('vanthrex.pdm', 'PDM', vscode.ViewColumn.Active, { enableScripts: true, retainContextWhenHidden: true });
     this.panel.webview.html = this.html();
     this.panel.onDidDispose(() => { PdmPanel.current = undefined; });
     this.panel.webview.onDidReceiveMessage(m => { void this.onMessage(m); });
   }
 
-  static show(manager: ConnectionManager, state: vscode.Memento): PdmPanel {
-    if (!PdmPanel.current) { PdmPanel.current = new PdmPanel(manager, state); } else { PdmPanel.current.panel.reveal(); }
+  static show(manager: ConnectionManager, state: vscode.Memento, storage?: vscode.Uri): PdmPanel {
+    if (!PdmPanel.current) { PdmPanel.current = new PdmPanel(manager, state, storage); } else { PdmPanel.current.panel.reveal(); }
     return PdmPanel.current;
   }
 
@@ -130,7 +134,19 @@ class PdmPanel {
       `SELECT SYSTEM_TABLE_MEMBER AS N, COALESCE(SOURCE_TYPE, '') AS T, COALESCE(PARTITION_TEXT, '') AS X, ` +
       `VARCHAR(COALESCE(LAST_SOURCE_UPDATE_TIMESTAMP, LAST_CHANGE_TIMESTAMP)) AS C, NUMBER_ROWS AS R ` +
       `FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND SYSTEM_TABLE_NAME = ${sqlString(file)} ORDER BY 1`, 50000);
-    return rows.map(r => ({ name: s(r, 'N'), type: s(r, 'T'), text: s(r, 'X'), changed: s(r, 'C').slice(0, 16), size: Number(r.R ?? 0) }));
+    const objLib = (this.conn.profile.objectLibrary || lib).toUpperCase();
+    const [locks, objs] = await Promise.all([
+      this.conn.rows<Row>(`SELECT SYSTEM_TABLE_MEMBER AS M, MAX(JOB_NAME) AS J FROM QSYS2.OBJECT_LOCK_INFO WHERE SYSTEM_OBJECT_SCHEMA = ${sqlString(lib)} ` +
+        `AND SYSTEM_OBJECT_NAME = ${sqlString(file)} AND OBJECT_TYPE = '*FILE' AND SYSTEM_TABLE_MEMBER IS NOT NULL GROUP BY SYSTEM_TABLE_MEMBER`, 5000).catch(() => [] as Row[]),
+      this.conn.rows<Row>(`SELECT OBJNAME AS N, OBJTYPE AS T, VARCHAR(OBJCREATED) AS C FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(objLib)}, '*PGM *MODULE *FILE *CMD *MENU')) X`, 50000).catch(() => [] as Row[]),
+    ]);
+    const lockBy = new Map(locks.map(r => [s(r, 'M'), s(r, 'J')]));
+    const byName = new Map<string, { type: string; created: string }[]>();
+    for (const o of objs) { const k = s(o, 'N'); if (!byName.has(k)) { byName.set(k, []); } byName.get(k)!.push({ type: s(o, 'T'), created: s(o, 'C') }); }
+    return rows.map(r => ({
+      name: s(r, 'N'), type: s(r, 'T'), text: s(r, 'X'), changed: s(r, 'C').slice(0, 16), size: Number(r.R ?? 0),
+      lockedBy: lockBy.get(s(r, 'N')) ?? '', objStatus: objectStatus(s(r, 'T'), s(r, 'C'), byName.get(s(r, 'N')) ?? []),
+    }));
   }
 
   private async objects(lib: string): Promise<PdmRow[]> {
@@ -169,13 +185,17 @@ class PdmPanel {
     const user = Object.keys(userOptions()).filter(k => validUserOptionCode(k, l.level)).sort();
     this.post({
       t: 'data', level: l.level, library: l.library ?? '', file: l.file ?? '', subset: l.subset, canBack: this.back.length > 0,
-      rows: view.map(r => ({ k: this.key(r), name: r.name, type: r.type, attribute: r.attribute ?? '', text: r.text, changed: r.changed ?? '', size: r.size ?? '' })),
-      total: this.rows.length, options: opts, user, statuses: this.statuses, message: this.message,
+      rows: view.map(r => ({ k: this.key(r), name: r.name, type: r.type, attribute: r.attribute ?? '', text: r.text, changed: r.changed ?? '', size: r.size ?? '', lock: r.lockedBy ?? '', obj: r.objStatus ?? '' })),
+      total: this.rows.length, options: opts, user, statuses: this.statuses, message: this.message, retry: this.retry,
+      types: typeCounts(this.rows), canUndo: this.lastDeleted.length > 0,
+      objLib: l.level === 'members' ? (this.conn.profile.objectLibrary || l.library || '').toUpperCase() : '',
     });
+    this.retry = {};
   }
 
   private async onMessage(m: { t: string; [k: string]: unknown }): Promise<void> {
-    if (this.busy && m.t !== 'ready') { return; }
+    if (m.t === 'preview') { await this.preview(String(m.k)); return; }
+    if (this.busy && m.t !== 'ready') { this.post({ t: 'note', text: vscode.l10n.t('Still working on the previous request…') }); return; }
     this.busy = true;
     try {
       switch (m.t) {
@@ -205,6 +225,7 @@ class PdmPanel {
       case 'F6': await this.create(); return;
       case 'F16': await editUserOptions(this.loc.level); this.send(); return;
       case 'F21': await this.exportList(); return;
+      case 'F9': await this.undoDelete(); return;
       case 'F13': case 'F17': case 'F23': this.post({ t: 'key', key }); return;
     }
   }
@@ -223,13 +244,25 @@ class PdmPanel {
       return;
     }
     this.statuses = {};
+    this.retry = {};
     this.message = '';
     let changed = false;
+    // Many rows with options that change things: say what will happen first.
+    const changing = list.filter(e => changesSomething(l.level, e.option, userCodes) && e.option !== '4');
+    if (changing.length > 10) {
+      const yes = vscode.l10n.t('Continue');
+      const go = await vscode.window.showWarningMessage(vscode.l10n.t('Run {0} changing option(s) ({1})?', changing.length, [...new Set(changing.map(e => e.option))].join(', ')), { modal: true }, yes);
+      if (go !== yes) { list.forEach(e => { this.retry[this.key(e.row)] = e.option; }); this.message = vscode.l10n.t('Nothing done.'); this.send(); return; }
+    }
     const ok = (r: PdmRow, msg = '✓') => { this.statuses[this.key(r)] = msg; };
-    const fail = (r: PdmRow, e: unknown) => { this.statuses[this.key(r)] = `✗ ${errorMessage(e).split('\n')[0]}`; };
+    const optionOf = new Map(list.map(e => [this.key(e.row), e.option]));
+    const fail = (r: PdmRow, e: unknown) => {
+      this.statuses[this.key(r)] = `✗ ${errorMessage(e).split('\n')[0]}`;
+      this.retry[this.key(r)] = optionOf.get(this.key(r)) ?? '';      // keep the option on the row, like PDM, to fix and retry
+    };
     const run = async (r: PdmRow, cmd: string) => {
       const res = await this.conn.runCL(cmd);
-      if (!res.ok) { throw new Error((res.stderr || res.stdout).trim().split('\n').pop() || vscode.l10n.t('The command failed.')); }
+      if (!res.ok) { throw new Error(clError(res.stdout, res.stderr)); }
       changed = true; ok(r);
     };
 
@@ -239,10 +272,31 @@ class PdmPanel {
       const names = deletes.map(e => (l.level === 'objects' ? `${e.row.name} ${e.row.type}` : e.row.name)).join(', ');
       const yes = vscode.l10n.t('Delete');
       const go = await vscode.window.showWarningMessage(vscode.l10n.t('Delete {0} item(s) from {1}? {2}', deletes.length, l.level === 'members' ? `${l.library}/${l.file}` : l.library ?? '', names.slice(0, 600)), { modal: true }, yes);
+      if (go === yes && l.level === 'members') { this.lastDeleted = []; }
       for (const e of deletes) {
-        if (go !== yes) { this.statuses[this.key(e.row)] = vscode.l10n.t('not deleted'); continue; }
-        try { await run(e.row, l.level === 'members' ? removeMemberCommand(l.library!, l.file!, e.row.name) : deleteObjectCommand(l.library!, e.row.name, e.row.type)); } catch (x) { fail(e.row, x); }
+        if (go !== yes) { this.statuses[this.key(e.row)] = vscode.l10n.t('not deleted'); this.retry[this.key(e.row)] = '4'; continue; }
+        try {
+          if (l.level === 'members') {
+            if (e.row.lockedBy) { throw new Error(vscode.l10n.t('In use by {0}.', e.row.lockedBy)); }
+            // Keep a copy first, so F9 can bring it back.
+            let source: string | undefined;
+            try { source = await this.conn.readMember(l.library!, l.file!, e.row.name); } catch (x) {
+              const anyway = vscode.l10n.t('Delete anyway');
+              if (await vscode.window.showWarningMessage(vscode.l10n.t('{0} could not be backed up ({1}). Delete it anyway?', e.row.name, errorMessage(x).split('\n')[0]), { modal: true }, anyway) !== anyway) {
+                this.statuses[this.key(e.row)] = vscode.l10n.t('not deleted'); continue;
+              }
+            }
+            await run(e.row, removeMemberCommand(l.library!, l.file!, e.row.name));
+            if (source !== undefined) {
+              this.lastDeleted.push({ library: l.library!, file: l.file!, name: e.row.name, type: e.row.type, text: e.row.text, source });
+              await this.backupToDisk(l.library!, l.file!, e.row.name, e.row.type, source);
+            }
+          } else {
+            await run(e.row, deleteObjectCommand(l.library!, e.row.name, e.row.type));
+          }
+        } catch (x) { fail(e.row, x); }
       }
+      if (this.lastDeleted.length) { this.message = vscode.l10n.t('{0} member(s) deleted. F9 puts them back.', this.lastDeleted.length); }
     }
     const compare = list.filter(e => e.option === '54');
     if (compare.length) {
@@ -254,10 +308,12 @@ class PdmPanel {
     }
     const finds = list.filter(e => e.option === '25');
     if (finds.length) { await this.findString(finds.map(e => e.row)); }
-    let copyTo: string | undefined; let moveTo: string | undefined;
-
-    for (const { option, row: r } of list) {
-      if (['4', '54', '25'].includes(option)) { continue; }
+    let copyTo: string | undefined; let moveTo: string | undefined; let navigated = false;
+    const rest = list.filter(e => !['4', '54', '25'].includes(e.option));
+    const loop = async (tok?: vscode.CancellationToken, progress?: vscode.Progress<{ message?: string; increment?: number }>) => {
+    for (const { option, row: r } of rest) {
+      if (tok?.isCancellationRequested) { this.statuses[this.key(r)] = vscode.l10n.t('cancelled'); this.retry[this.key(r)] = option; continue; }
+      progress?.report({ message: `${option} ${r.name}`, increment: 100 / rest.length });
       try {
         const uri = l.level === 'members' ? memberUri(l.library!, l.file!, r.name, r.type) : undefined;
         const obj = { library: l.library!, name: r.name, type: r.type, attribute: r.attribute ?? '', text: r.text };
@@ -282,7 +338,14 @@ class PdmPanel {
               if (exists.length && await vscode.window.showWarningMessage(vscode.l10n.t('{0} already exists in {1}. Replace it?', to.toUpperCase(), copyTo.toUpperCase()), { modal: true }, vscode.l10n.t('Replace')) !== vscode.l10n.t('Replace')) { continue; }
               await run(r, copyMemberCommand(l.library!, l.file!, r.name, tl, tf ?? '', to)); break;
             }
-            case '7': { const to = await ask(vscode.l10n.t('Rename {0} to', r.name), r.name, true); if (to && to.toUpperCase() !== r.name) { await run(r, renameMemberCommand(l.library!, l.file!, r.name, to)); } break; }
+            case '6': await run(r, printMemberCommand(l.library!, l.file!, r.name)); this.message = vscode.l10n.t('Printed to your output queue — see the Spooled Files view.'); break;
+            case '7': {
+              const to = await ask(vscode.l10n.t('Rename {0} to', r.name), r.name, true);
+              if (!to || to.toUpperCase() === r.name) { break; }
+              if (this.rows.some(x => x.name === to.toUpperCase())) { throw new Error(vscode.l10n.t('{0} already exists.', to.toUpperCase())); }
+              if (r.lockedBy) { throw new Error(vscode.l10n.t('In use by {0}.', r.lockedBy)); }
+              await run(r, renameMemberCommand(l.library!, l.file!, r.name, to)); break;
+            }
             case '8': await this.describeMember(r); ok(r); break;
             case '13': {
               const text = await vscode.window.showInputBox({ title: vscode.l10n.t('Text of {0}', r.name), value: r.text, ignoreFocusOut: true });
@@ -301,9 +364,14 @@ class PdmPanel {
         } else if (l.level === 'objects') {
           switch (option) {
             case '5': case '8': await vscode.commands.executeCommand('vanthrex.objectInfo', obj); ok(r); break;
-            case '7': { const to = await ask(vscode.l10n.t('Rename {0} {1} to', r.name, r.type), r.name, true); if (to && to.toUpperCase() !== r.name) { await run(r, renameObjectCommand(l.library!, r.name, r.type, to)); } break; }
+            case '7': {
+              const to = await ask(vscode.l10n.t('Rename {0} {1} to', r.name, r.type), r.name, true);
+              if (!to || to.toUpperCase() === r.name) { break; }
+              if (this.rows.some(x => x.name === to.toUpperCase() && x.type === r.type)) { throw new Error(vscode.l10n.t('{0} {1} already exists.', to.toUpperCase(), r.type)); }
+              await run(r, renameObjectCommand(l.library!, r.name, r.type, to)); break;
+            }
             case '11': { moveTo = moveTo ?? await ask(vscode.l10n.t('Move objects to library'), '', true); if (!moveTo) { return; } await run(r, moveObjectCommand(l.library!, r.name, r.type, moveTo)); break; }
-            case '12': if (r.type !== '*FILE') { throw new Error(vscode.l10n.t('Option 12 works on files.')); } await this.go({ level: 'members', library: l.library, file: r.name }); return;
+            case '12': if (r.type !== '*FILE') { throw new Error(vscode.l10n.t('Option 12 works on files.')); } await this.go({ level: 'members', library: l.library, file: r.name }); navigated = true; return;
             case '13': { const text = await vscode.window.showInputBox({ title: vscode.l10n.t('Text of {0}', r.name), value: r.text, ignoreFocusOut: true }); if (text !== undefined) { await run(r, objectTextCommand(l.library!, r.name, r.type, text)); } break; }
             case '15': {
               const toLib = await ask(vscode.l10n.t('Copy {0} {1} to library', r.name, r.type), l.library!, true);
@@ -321,8 +389,8 @@ class PdmPanel {
           }
         } else {
           switch (option) {
-            case '5': case '12': await this.go({ level: 'objects', library: r.name }); return;
-            case 'SF': await this.go({ level: 'objects', library: r.name, type: 'PF-SRC' }); return;
+            case '5': case '12': await this.go({ level: 'objects', library: r.name }); navigated = true; return;
+            case 'SF': await this.go({ level: 'objects', library: r.name, type: 'PF-SRC' }); navigated = true; return;
             case '8': await vscode.commands.executeCommand('vanthrex.objectInfo', { library: 'QSYS', name: r.name, type: '*LIB' }); ok(r); break;
             case '13': { const text = await vscode.window.showInputBox({ title: vscode.l10n.t('Text of {0}', r.name), value: r.text, ignoreFocusOut: true }); if (text !== undefined) { await run(r, libraryTextCommand(r.name, text)); } break; }
             case 'LL': await this.manager.updateActiveProfile(p => { if (!p.libraries.map(x => x.toUpperCase()).includes(r.name)) { p.libraries = [r.name, ...p.libraries]; } }); ok(r); break;
@@ -331,6 +399,11 @@ class PdmPanel {
         }
       } catch (e) { fail(r, e); }
     }
+    };
+    if (rest.length > 1) {
+      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('PDM: {0} option(s)', rest.length), cancellable: true }, (p, tok) => loop(tok, p));
+    } else { await loop(); }
+    if (navigated) { return; }
     const failed = Object.values(this.statuses).filter(x => x.startsWith('✗')).length;
     if (!this.message) { this.message = failed ? vscode.l10n.t('{0} option(s) failed — see the Status column.', failed) : vscode.l10n.t('Done.'); }
     if (changed) { await this.load(); void vscode.commands.executeCommand('vanthrex.refreshLibraries'); } else { this.send(); }
@@ -346,9 +419,10 @@ class PdmPanel {
   private async commandLine(cmd: string): Promise<void> {
     const t = parsePdmCommand(cmd);
     if (t) { await this.go(t); return; }
+    if (/^UNDO$/i.test(cmd)) { await this.undoDelete(); return; }
     const r = await this.conn.runCL(cmd);
     const lines = `${r.stdout}\n${r.stderr}`.split('\n').map(x => x.trim()).filter(Boolean);
-    this.message = `${r.ok ? '✓' : '✗'} ${lines.pop() ?? (r.ok ? vscode.l10n.t('Command ended normally.') : vscode.l10n.t('The command failed.'))}`;
+    this.message = r.ok ? `✓ ${lines.pop() ?? vscode.l10n.t('Command ended normally.')}` : `✗ ${clError(r.stdout, r.stderr)}`;
     if (r.ok) { await this.load(); } else { this.send(); }
   }
 
@@ -378,6 +452,55 @@ class PdmPanel {
       if (!r.ok) { throw new Error((r.stderr || r.stdout).trim()); }
       this.message = vscode.l10n.t('Library {0} created.', name.toUpperCase());
       await this.load();
+    }
+  }
+
+  /** Also keep deleted members on disk (extension storage), so nothing is lost if VS Code closes. */
+  private async backupToDisk(lib: string, file: string, mbr: string, type: string, source: string): Promise<void> {
+    if (!this.storage) { return; }
+    try {
+      const dir = vscode.Uri.joinPath(this.storage, 'pdm-deleted');
+      await vscode.workspace.fs.createDirectory(dir);
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(dir, `${lib}.${file}.${mbr}.${stamp}.${(type || 'txt').toLowerCase()}`), Buffer.from(source, 'utf8'));
+    } catch (e) { logError(e); }
+  }
+
+  private async undoDelete(): Promise<void> {
+    if (!this.lastDeleted.length) { this.message = vscode.l10n.t('Nothing to put back.'); this.send(); return; }
+    const list = this.lastDeleted;
+    const yes = vscode.l10n.t('Restore');
+    if (await vscode.window.showInformationMessage(vscode.l10n.t('Put back {0} deleted member(s): {1}?', list.length, list.map(d => d.name).join(', ').slice(0, 400)), { modal: true }, yes) !== yes) { return; }
+    const failed: string[] = [];
+    for (const d of list) {
+      try {
+        const r = await this.conn.runCL(addMemberCommand(d.library, d.file, d.name, d.type, d.text));
+        if (!r.ok) { throw new Error(clError(r.stdout, r.stderr)); }
+        await this.conn.writeMember(d.library, d.file, d.name, d.source);
+        this.statuses[`${d.name}|${d.type}`] = vscode.l10n.t('✓ restored');
+      } catch (e) { failed.push(`${d.name}: ${errorMessage(e).split('\n')[0]}`); }
+    }
+    this.lastDeleted = failed.length ? list.filter(d => failed.some(f => f.startsWith(`${d.name}:`))) : [];
+    this.message = failed.length ? `✗ ${failed.join('; ')}` : vscode.l10n.t('{0} member(s) restored.', list.length);
+    await this.load();
+  }
+
+  /** First lines of a member for the preview pane (cached by member and change time). */
+  private async preview(k: string): Promise<void> {
+    const l = this.loc;
+    const r = this.rows.find(x => this.key(x) === k);
+    if (!r || l.level !== 'members') { return; }
+    const ck = `${l.library}/${l.file}/${k}/${r.changed}`;
+    try {
+      let text = this.previewCache.get(ck);
+      if (text === undefined) {
+        text = (await this.conn.readMember(l.library!, l.file!, r.name)).split(/\r?\n/).slice(0, 300).join('\n');
+        if (this.previewCache.size > 200) { this.previewCache.clear(); }
+        this.previewCache.set(ck, text);
+      }
+      this.post({ t: 'preview', k, title: `${r.name}.${r.type.toLowerCase()} — ${r.text}`, text });
+    } catch (e) {
+      this.post({ t: 'preview', k, title: r.name, text: `✗ ${errorMessage(e).split('\n')[0]}` });
     }
   }
 
@@ -442,7 +565,10 @@ class PdmPanel {
       size: vscode.l10n.t('Size / lines'), status: vscode.l10n.t('Status'), opt: vscode.l10n.t('Opt'), typeOptions: vscode.l10n.t('Type options, press Enter.'),
       params: vscode.l10n.t('Parameters or command'), enter: vscode.l10n.t('Enter'), user: vscode.l10n.t('User options'), of: vscode.l10n.t('of'),
       more: vscode.l10n.t('More…'), empty: vscode.l10n.t('(No items match)'), go: vscode.l10n.t('Go'), clear: vscode.l10n.t('Clear'),
-      keys: [['F3', vscode.l10n.t('Exit')], ['F5', vscode.l10n.t('Refresh')], ['F6', vscode.l10n.t('Create')], ['F12', vscode.l10n.t('Back')], ['F13', vscode.l10n.t('Repeat')],
+      obj: vscode.l10n.t('Object'), lock: vscode.l10n.t('In use by'), needsCompile: vscode.l10n.t('Needs compile'), locked: vscode.l10n.t('In use'),
+      preview: vscode.l10n.t('Preview'), stale: vscode.l10n.t('source newer'), none: vscode.l10n.t('not compiled'), current: vscode.l10n.t('up to date'),
+      objIn: vscode.l10n.t('Objects in'), types: vscode.l10n.t('Types'), all: vscode.l10n.t('All'),
+      keys: [['F3', vscode.l10n.t('Exit')], ['F5', vscode.l10n.t('Refresh')], ['F6', vscode.l10n.t('Create')], ['F9', vscode.l10n.t('Undo delete')], ['F12', vscode.l10n.t('Back')], ['F13', vscode.l10n.t('Repeat')],
         ['F16', vscode.l10n.t('User options')], ['F17', vscode.l10n.t('Subset')], ['F21', vscode.l10n.t('Export CSV')], ['F23', vscode.l10n.t('More options')]],
     };
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -475,6 +601,16 @@ class PdmPanel {
   #msg { min-height: 1.3em; margin: 2px 0; } .dim { color: var(--vscode-descriptionForeground); }
   #busy { visibility: hidden; } body.busy #busy { visibility: visible; }
   .crumb a { cursor: pointer; color: var(--vscode-textLink-foreground); }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+  .chip { padding: 1px 8px; border-radius: 10px; cursor: pointer; border: 1px solid var(--vscode-editorWidget-border, #8884); color: var(--vscode-descriptionForeground); }
+  .chip.on { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border-color: transparent; }
+  .warn { color: var(--vscode-editorWarning-foreground, #c90); }
+  #main { display: block; } body.pv #main { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 10px; }
+  #pv { display: none; } body.pv #pv { display: block; position: sticky; top: 0; align-self: start; max-height: calc(100vh - 120px); overflow: auto;
+    border: 1px solid var(--vscode-editorWidget-border, #8884); border-radius: 3px; padding: 6px 8px; background: var(--vscode-textCodeBlock-background, transparent); }
+  #pv pre { margin: 4px 0 0; white-space: pre; font-family: var(--vscode-editor-font-family); font-size: var(--vscode-editor-font-size); }
+  #pvTitle { color: var(--vscode-descriptionForeground); }
+  label.cb { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
 </style></head><body>
 <h1 id="title"></h1>
 <div class="hdr mono">
@@ -483,6 +619,8 @@ class PdmPanel {
   <label id="fileBox">${escapeHtml(L.file)} <input class="n" id="file"></label>
   <button id="go">${escapeHtml(L.go)}</button>
   <label>${escapeHtml(L.position)} <input class="n" id="pos"></label>
+  <span id="objLib" class="dim"></span>
+  <label class="cb" id="pvBox"><input type="checkbox" id="pvOn">${escapeHtml(L.preview)}</label>
   <span id="busy" class="dim">⏳</span>
 </div>
 <div class="bar" id="subsetBar">
@@ -490,12 +628,15 @@ class PdmPanel {
   <label>${escapeHtml(L.type)} <input class="n" id="sType" placeholder="*ALL"></label>
   <label id="sTextL">${escapeHtml(L.text)} <input class="t" id="sText"></label>
   <label id="sSinceL">${escapeHtml(L.since)} <input class="n" id="sSince" placeholder="YYYY-MM-DD"></label>
+  <label class="cb" id="ncBox"><input type="checkbox" id="sNeeds">${escapeHtml(L.needsCompile)}</label>
+  <label class="cb" id="lkBox"><input type="checkbox" id="sLocked">${escapeHtml(L.locked)}</label>
   <button id="clear">${escapeHtml(L.clear)}</button>
 </div>
+<div class="chips mono" id="chips"></div>
 <div class="dim">${escapeHtml(L.typeOptions)}</div>
 <div class="legend mono" id="legend"></div>
-<table class="mono"><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table>
-<div id="moreRow"></div>
+<div id="main"><div><table class="mono"><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table>
+<div id="moreRow"></div></div><div id="pv"><div id="pvTitle" class="mono"></div><pre id="pvText"></pre></div></div>
 <div class="foot">
   <div id="msg" class="mono"></div>
   <div class="bar"><label>${escapeHtml(L.params)}</label><input class="cmd" id="cmd"><button class="primary" id="enter">${escapeHtml(L.enter)}</button></div>
@@ -512,7 +653,7 @@ const PAGE = 400;
 
 function cols() {
   if (!D) return [];
-  if (D.level === 'members') return [['name', L.name], ['type', L.type], ['text', L.text], ['changed', L.changed], ['size', L.size]];
+  if (D.level === 'members') return [['name', L.name], ['type', L.type], ['text', L.text], ['changed', L.changed], ['size', L.size], ['obj', L.obj], ['lock', L.lock]];
   if (D.level === 'objects') return [['name', L.name], ['type', L.type], ['attribute', L.attribute], ['text', L.text], ['changed', L.changed], ['size', L.size]];
   return [['name', L.library], ['type', L.type], ['text', L.text]];
 }
@@ -529,6 +670,16 @@ function render() {
   $('sSinceL').style.display = D.level === 'libraries' ? 'none' : '';
   $('sType').parentElement.style.display = D.level === 'libraries' ? 'none' : '';
   $('sTextL').style.display = D.level === 'libraries' ? 'none' : '';
+  const mem = D.level === 'members';
+  $('ncBox').style.display = mem ? '' : 'none'; $('lkBox').style.display = mem ? '' : 'none'; $('pvBox').style.display = mem ? '' : 'none';
+  if (!mem) document.body.classList.remove('pv'); else document.body.classList.toggle('pv', $('pvOn').checked);
+  $('objLib').textContent = mem && D.objLib ? L.objIn + ' ' + D.objLib : '';
+  $('sNeeds').checked = !!D.subset.needsCompile; $('sLocked').checked = !!D.subset.locked;
+  const cur = (D.subset.type || '').toUpperCase();
+  $('chips').innerHTML = D.level === 'libraries' || D.types.length < 2 ? '' : '<span class="dim">' + esc(L.types) + ':</span>' +
+    '<span class="chip' + (cur ? '' : ' on') + '" data-chip="">' + esc(L.all) + ' ' + D.total + '</span>' +
+    D.types.map(([t, n]) => '<span class="chip' + (cur === t.toUpperCase() ? ' on' : '') + '" data-chip="' + esc(t) + '">' + esc(t) + ' ' + n + '</span>').join('');
+  Object.entries(D.retry || {}).forEach(([k, v]) => { if (v) opts.set(k, v); });
   $('sName').value = D.subset.name || ''; $('sType').value = D.subset.type || ''; $('sText').value = D.subset.text || ''; $('sSince').value = D.subset.since || '';
   $('crumb').innerHTML = '<a data-goto="libraries">' + esc(L.libs) + '</a>' +
     (D.level !== 'libraries' ? ' › <a data-goto="objects">' + esc(D.library) + '</a>' : '') + (D.level === 'members' ? ' › ' + esc(D.file) : '');
@@ -538,13 +689,25 @@ function render() {
   $('head').innerHTML = '<th>' + esc(L.opt) + '</th>' + cols().map(([k, t]) => '<th data-sort="' + k + '">' + esc(t) + (sort === k ? (sortDir > 0 ? ' ▲' : ' ▼') : '') + '</th>').join('') + '<th>' + esc(L.status) + '</th>';
   shown = 0; $('body').innerHTML = ''; more();
   $('msg').textContent = D.message || (D.rows.length + ' ' + L.of + ' ' + D.total);
-  $('msg').className = 'mono ' + (/^✗/.test(D.message) ? 'bad' : '');
+  $('msg').className = 'mono ' + (/^✗|failed/.test(D.message) ? 'bad' : '');
 }
 function rowHtml(r) {
   const st = D.statuses[r.k] || '';
   return '<tr data-k="' + esc(r.k) + '"><td class="o"><input maxlength="2" value="' + esc(opts.get(r.k) || '') + '"></td>' +
-    cols().map(([k]) => '<td class="' + (k === 'text' ? 'x' : k === 'size' ? 'num' : '') + '">' + esc(k === 'size' && r[k] !== '' ? Number(r[k]).toLocaleString() : r[k]) + '</td>').join('') +
+    cols().map(([k]) => k === 'obj' ? objCell(r.obj) : '<td class="' + (k === 'text' ? 'x' : k === 'size' ? 'num' : k === 'lock' ? 'warn' : '') + '">' + esc(k === 'size' && r[k] !== '' ? Number(r[k]).toLocaleString() : r[k]) + '</td>').join('') +
     '<td class="' + (st.startsWith('✗') ? 'bad' : 'ok') + '">' + esc(st) + '</td></tr>';
+}
+function objCell(o) {
+  if (o === 'stale') return '<td class="warn" title="' + esc(L.stale) + '">⚠ ' + esc(L.stale) + '</td>';
+  if (o === 'none') return '<td class="dim">○ ' + esc(L.none) + '</td>';
+  if (o === 'current') return '<td class="ok" title="' + esc(L.current) + '">✓</td>';
+  return '<td></td>';
+}
+let pvKey = '';
+function askPreview(tr) {
+  if (!tr || !document.body.classList.contains('pv') || tr.dataset.k === pvKey) return;
+  pvKey = tr.dataset.k; [...document.querySelectorAll('tr.sel')].forEach(x => x.classList.remove('sel')); tr.classList.add('sel');
+  $('pvTitle').textContent = '…'; vscode.postMessage({ t: 'preview', k: pvKey });
 }
 function more() {
   const all = rows();
@@ -562,7 +725,8 @@ function enter() {
   vscode.postMessage({ t: 'enter', entries: e, params });
 }
 function subset() {
-  vscode.postMessage({ t: 'subset', subset: { name: $('sName').value.trim(), type: $('sType').value.trim(), text: $('sText').value.trim(), since: $('sSince').value.trim() } });
+  vscode.postMessage({ t: 'subset', subset: { name: $('sName').value.trim(), type: $('sType').value.trim(), text: $('sText').value.trim(), since: $('sSince').value.trim(),
+    needsCompile: $('sNeeds').checked, locked: $('sLocked').checked } });
 }
 function position() {
   const v = $('pos').value.trim().toUpperCase(); if (!v) return;
@@ -584,6 +748,16 @@ document.addEventListener('input', e => {
   if (tr && e.target.tagName === 'INPUT') { opts.set(tr.dataset.k, e.target.value.toUpperCase()); }
 });
 document.addEventListener('keydown', e => {
+  const cell = e.target.closest && e.target.closest('td.o');
+  if (cell && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+    // Move between option fields like on a 5250 screen.
+    e.preventDefault();
+    const tr = e.key === 'ArrowDown' ? cell.parentElement.nextElementSibling : cell.parentElement.previousElementSibling;
+    if (!tr && e.key === 'ArrowDown' && $('moreBtn')) { more(); }
+    const next = tr || (e.key === 'ArrowDown' ? cell.parentElement.nextElementSibling : null);
+    if (next && next.querySelector('input')) { next.querySelector('input').focus(); askPreview(next); }
+    return;
+  }
   if (e.key !== 'Enter') return;
   const id = e.target.id;
   e.preventDefault();
@@ -603,7 +777,11 @@ document.addEventListener('click', e => {
   if (t.id === 'enter') enter();
   else if (t.id === 'go') go();
   else if (t.id === 'moreBtn') more();
-  else if (t.id === 'clear') { ['sName', 'sType', 'sText', 'sSince'].forEach(i => { $(i).value = ''; }); subset(); }
+  else if (t.id === 'clear') { ['sName', 'sType', 'sText', 'sSince'].forEach(i => { $(i).value = ''; }); $('sNeeds').checked = false; $('sLocked').checked = false; subset(); }
+  else if (t.id === 'sNeeds' || t.id === 'sLocked') subset();
+  else if (t.id === 'pvOn') { document.body.classList.toggle('pv', t.checked); pvKey = ''; }
+  else if (t.dataset.chip !== undefined) { $('sType').value = t.dataset.chip; subset(); }
+  else if (t.closest('tr[data-k]') && t.tagName !== 'INPUT') askPreview(t.closest('tr[data-k]'));
   else if (t.dataset.key) vscode.postMessage({ t: 'key', key: t.dataset.key });
   else if (t.dataset.sort) { sortDir = sort === t.dataset.sort ? -sortDir : 1; sort = t.dataset.sort; render(); }
   else if (t.dataset.goto === 'libraries') vscode.postMessage({ t: 'goto', level: 'libraries' });
@@ -617,6 +795,8 @@ window.addEventListener('message', ev => {
   const m = ev.data;
   if (m.t === 'data') { D = m; render(); const first = $('body').querySelector('input'); if (first) first.focus(); }
   else if (m.t === 'busy') document.body.classList.toggle('busy', !!m.on);
+  else if (m.t === 'note') { $('msg').textContent = m.text; }
+  else if (m.t === 'preview' && m.k === pvKey) { $('pvTitle').textContent = m.title; $('pvText').textContent = m.text; }
   else if (m.t === 'key') {
     if (m.key === 'F13') repeat();
     else if (m.key === 'F17') $('sName').focus();
@@ -711,7 +891,7 @@ export function registerPdm(context: vscode.ExtensionContext, manager: Connectio
     vscode.commands.registerCommand('vanthrex.pdm', guard(async (a?: unknown) => {
       const t = await target(manager, context.globalState, a);
       if (!t) { return; }
-      await PdmPanel.show(manager, context.globalState).go(t, true);
+      await PdmPanel.show(manager, context.globalState, context.globalStorageUri).go(t, true);
     })),
     vscode.commands.registerCommand('vanthrex.pdm.key', guard(async (key?: string) => { if (PdmPanel.current && key) { await PdmPanel.current.key2(key); } })),
     vscode.commands.registerCommand('vanthrex.pdm.userOptions', guard(() => editUserOptions('members'))),
