@@ -11,7 +11,7 @@ import { showReport } from './reportPanel';
 
 type Row = Record<string, unknown>;
 const s = (r: Row | undefined, k: string) => String(r?.[k] ?? '').trim();
-const ALLOWED = new Set(['vanthrex.objectInfo', 'vanthrex.compile', 'vanthrex.builtFrom', 'vanthrex.pdm']);
+const ALLOWED = new Set(['vanthrex.objectInfo', 'vanthrex.compile', 'vanthrex.builtFrom', 'vanthrex.pdm', 'vanthrex.changedSinceCompile']);
 
 function libraryList(conn: IbmiConnection): string[] {
   const p = conn.profile;
@@ -19,7 +19,7 @@ function libraryList(conn: IbmiConnection): string[] {
 }
 
 /** The member a command is about: a URI, a tree / PDM node, or the active editor. */
-function memberOf(a?: unknown): { library: string; file: string; member: string; type: string; uri: vscode.Uri } | undefined {
+export function memberOf(a?: unknown): { library: string; file: string; member: string; type: string; uri: vscode.Uri } | undefined {
   const n = a as { library?: string; file?: string; member?: string; type?: string; scheme?: string; path?: string } | undefined;
   let uri: vscode.Uri | undefined;
   if (a instanceof vscode.Uri) { uri = a; } else if (n?.library && n.file && n.member) { uri = memberUri(n.library, n.file, n.member, n.type ?? ''); }
@@ -78,7 +78,7 @@ async function findMember(manager: ConnectionManager, state: vscode.Memento): Pr
 
 // ================================================================ objects built from this source
 
-async function loadBuilt(conn: IbmiConnection, m: { library: string; file: string; member: string }): Promise<{ objects: BuiltObject[]; changed: string; lockedBy: string }> {
+export async function loadBuilt(conn: IbmiConnection, m: { library: string; file: string; member: string }): Promise<{ objects: BuiltObject[]; changed: string; lockedBy: string }> {
   const libs = [...libraryList(conn), m.library, (conn.profile.objectLibrary ?? '').toUpperCase()].filter(Boolean);
   const [mem, pgms, mods, locks] = await Promise.all([
     conn.rows<Row>(`SELECT VARCHAR(COALESCE(LAST_SOURCE_UPDATE_TIMESTAMP, LAST_CHANGE_TIMESTAMP)) AS C FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(m.library)} ` +
@@ -104,7 +104,7 @@ async function builtFrom(manager: ConnectionManager, a?: unknown): Promise<void>
       : stale ? vscode.l10n.t('{0} of {1} were compiled before the last change of the source — recompile them.', stale, r.objects.length)
       : vscode.l10n.t('{0} object(s), all compiled from the current source.', r.objects.length),
     facts: [[vscode.l10n.t('Source last changed'), r.changed], [vscode.l10n.t('In use by'), r.lockedBy || '—']],
-    actions: [{ label: vscode.l10n.t('Compile now'), command: 'vanthrex.compile', args: [{ resourceUri: m.uri }] }, { label: vscode.l10n.t('Refresh'), command: 'vanthrex.builtFrom', args: [m.uri] }],
+    actions: [{ label: vscode.l10n.t('Compile now'), command: 'vanthrex.compile', args: [{ resourceUri: m.uri }] }, { label: vscode.l10n.t('My changes since the last compile'), command: 'vanthrex.changedSinceCompile', args: [m.uri] }, { label: vscode.l10n.t('Refresh'), command: 'vanthrex.builtFrom', args: [m.uri] }],
     tables: [{
       title: vscode.l10n.t('Objects'), columns: [vscode.l10n.t('Object'), vscode.l10n.t('Type'), vscode.l10n.t('Module'), vscode.l10n.t('Compiled'), vscode.l10n.t('Source at compile'), vscode.l10n.t('Status')],
       rows: r.objects.map(o => [`${o.library}/${o.name}`, o.type, o.module ?? '', (o.created ?? '').slice(0, 19), (o.sourceAtCompile ?? '').slice(0, 19),

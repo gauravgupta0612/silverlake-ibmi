@@ -60,6 +60,11 @@
           "when": "vanthrex.connected"
         },
         {
+          "id": "vanthrex.pinned",
+          "name": "%views.vanthrex.pinned.name%",
+          "when": "vanthrex.connected"
+        },
+        {
           "id": "vanthrex.ifs",
           "name": "%views.vanthrex.ifs.name%",
           "when": "vanthrex.connected"
@@ -91,6 +96,10 @@
       {
         "view": "vanthrex.libraries",
         "contents": "%viewsWelcome.vanthrex.libraries.1%"
+      },
+      {
+        "view": "vanthrex.pinned",
+        "contents": "%viewsWelcome.pinned%"
       }
     ],
     "walkthroughs": [
@@ -1613,10 +1622,108 @@
         "title": "%command.builtFrom%",
         "category": "Vanthrex",
         "icon": "$(package)"
+      },
+      {
+        "command": "vanthrex.compileHistory",
+        "title": "%command.compileHistory%",
+        "category": "Vanthrex",
+        "icon": "$(history)"
+      },
+      {
+        "command": "vanthrex.compileHistory.open",
+        "title": "%command.compileHistory.open%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.compileHistory.clear",
+        "title": "%command.compileHistory.clear%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.compileHistory.recompileBroken",
+        "title": "%command.compileHistory.recompileBroken%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.changedSinceCompile",
+        "title": "%command.changedSinceCompile%",
+        "category": "Vanthrex",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "vanthrex.jobLogLive",
+        "title": "%command.jobLogLive%",
+        "category": "Vanthrex",
+        "icon": "$(output)"
+      },
+      {
+        "command": "vanthrex.jobLogLive.stop",
+        "title": "%command.jobLogLive.stop%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.pin",
+        "title": "%command.pin%",
+        "category": "Vanthrex",
+        "icon": "$(pin)"
+      },
+      {
+        "command": "vanthrex.unpin",
+        "title": "%command.unpin%",
+        "category": "Vanthrex",
+        "icon": "$(pinned)"
+      },
+      {
+        "command": "vanthrex.pin.open",
+        "title": "%command.pin.open%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.pin.moveUp",
+        "title": "%command.pin.moveUp%",
+        "category": "Vanthrex",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "vanthrex.pin.moveDown",
+        "title": "%command.pin.moveDown%",
+        "category": "Vanthrex",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "vanthrex.pin.ifsDir",
+        "title": "%command.pin.ifsDir%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.systemTracker",
+        "title": "%command.systemTracker%",
+        "category": "Vanthrex",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "vanthrex.tracker.addLibrary",
+        "title": "%command.tracker.addLibrary%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.tracker.cl",
+        "title": "%command.tracker.cl%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.tracker.copySummary",
+        "title": "%command.tracker.copySummary%",
+        "category": "Vanthrex"
       }
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "vanthrex.systemTracker",
+          "when": "view == vanthrex.connections && vanthrex.connected",
+          "group": "navigation@0"
+        },
         {
           "command": "vanthrex.openDocs",
           "when": "view == vanthrex.connections",
@@ -1756,6 +1863,11 @@
           "command": "vanthrex.pdm",
           "when": "view == vanthrex.libraries",
           "group": "navigation@0"
+        },
+        {
+          "command": "vanthrex.compileHistory",
+          "when": "view == vanthrex.libraries",
+          "group": "9_more@1"
         }
       ],
       "view/item/context": [
@@ -2313,6 +2425,51 @@
           "command": "vanthrex.builtFrom",
           "when": "view == vanthrex.libraries && viewItem == member",
           "group": "0_info@16"
+        },
+        {
+          "command": "vanthrex.pin",
+          "when": "view == vanthrex.libraries && viewItem =~ /^(member|srcfile|library|object.*)$/",
+          "group": "9_pin@1"
+        },
+        {
+          "command": "vanthrex.pin",
+          "when": "view == vanthrex.ifs && viewItem =~ /^ifs/",
+          "group": "9_pin@1"
+        },
+        {
+          "command": "vanthrex.unpin",
+          "when": "view == vanthrex.pinned && viewItem =~ /^pin/",
+          "group": "inline@2"
+        },
+        {
+          "command": "vanthrex.pin.moveUp",
+          "when": "view == vanthrex.pinned && viewItem =~ /^pin/",
+          "group": "9_move@1"
+        },
+        {
+          "command": "vanthrex.pin.moveDown",
+          "when": "view == vanthrex.pinned && viewItem =~ /^pin/",
+          "group": "9_move@2"
+        },
+        {
+          "command": "vanthrex.jobLogLive",
+          "when": "view == vanthrex.jobs && viewItem =~ /^job/",
+          "group": "1_job@-2"
+        },
+        {
+          "command": "vanthrex.changedSinceCompile",
+          "when": "view == vanthrex.libraries && viewItem == member",
+          "group": "0_info@17"
+        },
+        {
+          "command": "vanthrex.systemTracker",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "inline@0"
+        },
+        {
+          "command": "vanthrex.systemTracker",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "1_info@0"
         }
       ],
       "editor/title": [
@@ -2507,6 +2664,16 @@
           "command": "vanthrex.builtFrom",
           "when": "resourceScheme == vanthrex-member",
           "group": "vanthrex@31"
+        },
+        {
+          "command": "vanthrex.changedSinceCompile",
+          "when": "resourceScheme == vanthrex-member",
+          "group": "vanthrex@32"
+        },
+        {
+          "command": "vanthrex.pin",
+          "when": "resourceScheme == vanthrex-member",
+          "group": "vanthrex@33"
         }
       ],
       "commandPalette": [
@@ -2904,6 +3071,66 @@
         {
           "command": "vanthrex.builtFrom",
           "when": "resourceScheme == vanthrex-member"
+        },
+        {
+          "command": "vanthrex.compileHistory.open",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.compileHistory.clear",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.compileHistory.recompileBroken",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.pin.open",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.unpin",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.pin.moveUp",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.pin.moveDown",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.pin.ifsDir",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.changedSinceCompile",
+          "when": "resourceScheme == vanthrex-member"
+        },
+        {
+          "command": "vanthrex.jobLogLive",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.pin",
+          "when": "resourceScheme == vanthrex-member"
+        },
+        {
+          "command": "vanthrex.systemTracker",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.tracker.addLibrary",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.tracker.cl",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.tracker.copySummary",
+          "when": "vanthrex.connected"
         }
       ],
       "vanthrex.ai": [
@@ -3087,6 +3314,12 @@
         "command": "vanthrex.findMember",
         "key": "ctrl+alt+m",
         "mac": "cmd+alt+m",
+        "when": "vanthrex.connected"
+      },
+      {
+        "command": "vanthrex.systemTracker",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t",
         "when": "vanthrex.connected"
       }
     ],

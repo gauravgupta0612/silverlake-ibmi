@@ -655,11 +655,26 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 - **Member status bar:** up to date / out of date / never compiled, and who else has the member open.
 - **Compile on save** (`vanthrex.compileOnSave`) and **Find & Open Member…** (Ctrl+Alt+M) across the library list or all user libraries.
 
+### 71. History, live job log and pins — new in 2.2
+
+- **Compile History** with *Broken right now* and *Recompile the broken sources*.
+- **Show My Changes Since the Last Compile** (editor menu, PDM option SC).
+- **Live Job Log** (right-click a job): messages as they arrive, alerts for escape messages, stops when the job ends.
+- **Pinned** view for members, source files, libraries, objects and IFS files (right-click → Pin, PDM option PN).
+
+### 72. System Tracker — new in 2.2
+
+- **Health score** with reasons and trend; **Queues** (hold / release), **Network** (ports, services, encryption), **security system values** with advice; **Copy summary**.
+- **Scheduled jobs** (hold / release), **Journals** (cleanup candidates), **What changed** (objects changed or largest), **All systems** side by side, subsystems, failed sign-ons, **Save report** (HTML).
+- **System Tracker** (Connections toolbar, Ctrl+Alt+T): Overview with *Needs attention*, every library (with sizes on request), jobs, storage, QSYSOPR, users, PTFs and my work — with actions on every row.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
 |---|---|
 | Ctrl+Alt+I | Quick menu |
+| Ctrl+Alt+T | System Tracker |
+| Ctrl+Alt+M | Find & open member |
 | Ctrl+Alt+C | Compile |
 | Ctrl+Enter | Run SQL statement |
 | Ctrl+Alt+L | Run CL command |

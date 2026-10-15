@@ -7,12 +7,13 @@ import { IbmiConnection } from '../core/connection';
 import { errorMessage, logError } from '../core/log';
 import { sqlString } from '../core/util';
 import {
-  DEFAULT_USER_OPTIONS, isMultiFile, likePattern, PdmLevel, PdmRow, PdmTarget, Subset, addMemberCommand, changesSomething, clError, objectStatus, printMemberCommand, typeCounts, applySubset, changeMemberCommand, copyMemberCommand,
+  DEFAULT_USER_OPTIONS, isMultiFile, matchGeneric, likePattern, PdmLevel, PdmRow, PdmTarget, Subset, addMemberCommand, changesSomething, clError, objectStatus, printMemberCommand, typeCounts, applySubset, changeMemberCommand, copyMemberCommand,
   createLibraryCommand, createModuleCommand, deleteObjectCommand, duplicateObjectCommand, libraryTextCommand, moveObjectCommand,
   objectTextCommand, optionsFor, parseEntries, parsePdmCommand, removeMemberCommand, renameMemberCommand, renameObjectCommand, rowsToCsv,
   substitutePdm, validUserOptionCode,
 } from '../core/pdm';
 import { memberUri, memberViewUri } from './fileSystems';
+import { readLibraries } from './libraryLookup';
 import { showReport } from './reportPanel';
 import { escapeHtml, nonce } from './webviewUtil';
 
@@ -27,7 +28,7 @@ function optionLabel(label: string): string {
     'Edit': vscode.l10n.t('Edit'), 'Copy': vscode.l10n.t('Copy'), 'Delete': vscode.l10n.t('Delete'), 'Display': vscode.l10n.t('Display'),
     'Rename': vscode.l10n.t('Rename'), 'Display description': vscode.l10n.t('Display description'), 'Change text and type': vscode.l10n.t('Change text and type'),
     'Compile': vscode.l10n.t('Compile'), 'Create module': vscode.l10n.t('Create module'), 'Local history': vscode.l10n.t('Local history'),
-    'Find string': vscode.l10n.t('Find string'), 'Compare (two members)': vscode.l10n.t('Compare (two members)'), 'Git history': vscode.l10n.t('Git history'), 'Objects built from it': vscode.l10n.t('Objects built from it'),
+    'Find string': vscode.l10n.t('Find string'), 'Compare (two members)': vscode.l10n.t('Compare (two members)'), 'Git history': vscode.l10n.t('Git history'), 'Objects built from it': vscode.l10n.t('Objects built from it'), 'Changes since last compile': vscode.l10n.t('Changes since last compile'), 'Pin / unpin': vscode.l10n.t('Pin / unpin'),
     'Unused code': vscode.l10n.t('Unused code'), 'Hard-coded libraries': vscode.l10n.t('Hard-coded libraries'),
     'Display (object information)': vscode.l10n.t('Display (object information)'), 'Move': vscode.l10n.t('Move'),
     'Work with (members of a source file)': vscode.l10n.t('Work with (members)'), 'Change text': vscode.l10n.t('Change text'),
@@ -174,19 +175,19 @@ class PdmPanel {
 
   private async libraries(generic?: string): Promise<PdmRow[]> {
     const g = generic?.trim().toUpperCase();
-    if (g && g !== '*LIBL' && g !== '*USRLIBL') {
-      const like = g === '*ALL' || g === '*ALLUSR' ? '%' : g.replace(/\*/g, '%');
-      const rows = await this.conn.rows<Row>(`SELECT OBJNAME AS N, COALESCE(OBJATTRIBUTE, '') AS A, COALESCE(OBJTEXT, '') AS X FROM TABLE(QSYS2.OBJECT_STATISTICS('QSYS', '*LIB')) ` +
-        `WHERE OBJNAME LIKE ${sqlString(like)}${g === '*ALLUSR' ? " AND OBJNAME NOT LIKE 'Q%' AND OBJNAME NOT LIKE '#%'" : ''} ORDER BY 1`, 5000);
-      return rows.map(r => ({ name: s(r, 'N'), type: s(r, 'A') || '*PROD', text: s(r, 'X') }));
-    }
     const p = this.conn.profile;
+    if (g && g !== '*LIBL' && g !== '*USRLIBL') {
+      const all = await readLibraries(this.conn);
+      if (all.error) { throw new Error(all.error); }
+      return all.rows.map(r => ({ name: String(r.OBJNAME).trim(), type: String(r.OBJATTRIBUTE ?? '').trim() || 'PROD', text: String(r.OBJTEXT ?? '').trim() }))
+        .filter(r => (g === '*ALL' ? true : g === '*ALLUSR' ? !/^(Q|#|SYS)/.test(r.name) : matchGeneric(r.name, g)));
+    }
     const libs = [...new Set([p.currentLibrary, ...p.libraries].filter(Boolean).map(x => String(x).toUpperCase()))];
     if (!libs.length) { return []; }
-    const rows = await this.conn.rows<Row>(`SELECT OBJNAME AS N, COALESCE(OBJATTRIBUTE, '') AS A, COALESCE(OBJTEXT, '') AS X FROM TABLE(QSYS2.OBJECT_STATISTICS('QSYS', '*LIB')) ` +
-      `WHERE OBJNAME IN (${libs.map(sqlString).join(', ')})`, 500).catch(() => [] as Row[]);
-    return libs.map(n => { const r = rows.find(x => s(x, 'N') === n); return { name: n, type: n === p.currentLibrary?.toUpperCase() ? 'CUR' : (s(r, 'A') || 'USR'), text: s(r, 'X') }; });
+    const rows = (await readLibraries(this.conn, libs, 500)).rows;
+    return libs.map(n => { const r = rows.find(x => String(x.OBJNAME).trim() === n); return { name: n, type: n === p.currentLibrary?.toUpperCase() ? 'CUR' : (String(r?.OBJATTRIBUTE ?? '').trim() || (r ? 'USR' : vscode.l10n.t('not found'))), text: String(r?.OBJTEXT ?? '').trim() }; });
   }
+
 
   // ------------------------------------------------------------ webview
 
@@ -374,6 +375,8 @@ class PdmPanel {
             case '16': await vscode.commands.executeCommand('vanthrex.showHistory', uri); ok(r); break;
             case 'GH': await vscode.commands.executeCommand('vanthrex.git.memberHistory', uri); ok(r); break;
             case 'OB': await vscode.commands.executeCommand('vanthrex.builtFrom', uri); ok(r); break;
+            case 'SC': await vscode.commands.executeCommand('vanthrex.changedSinceCompile', uri); ok(r); break;
+            case 'PN': await vscode.commands.executeCommand('vanthrex.pin', { kind: 'member', library: l.library, file: this.f(r), member: r.name, type: r.type, text: r.text }); ok(r, '📌'); break;
             case 'UC': await vscode.window.showTextDocument(uri!, { preview: false }); await vscode.commands.executeCommand('vanthrex.unusedCode'); ok(r); break;
             case 'HL': await vscode.window.showTextDocument(uri!, { preview: false }); await vscode.commands.executeCommand('vanthrex.hardcodedLibraries'); ok(r); break;
           }
@@ -400,6 +403,7 @@ class PdmPanel {
             case '18': if (r.type !== '*FILE') { throw new Error(vscode.l10n.t('Option 18 works on files.')); } await vscode.commands.executeCommand('vanthrex.editData', obj); ok(r); break;
             case '34': if (r.type !== '*PGM') { throw new Error(vscode.l10n.t('Option 34 debugs programs.')); } await vscode.commands.executeCommand('vanthrex.debugProgram', obj); ok(r); break;
             case 'WU': await vscode.commands.executeCommand('vanthrex.whereUsed', obj); ok(r); break;
+            case 'PN': await vscode.commands.executeCommand('vanthrex.pin', r.attribute === 'PF-SRC' ? { kind: 'srcfile', library: l.library, file: r.name, text: r.text } : { kind: 'object', ...obj }); ok(r, '📌'); break;
             case 'LK': await vscode.commands.executeCommand('vanthrex.objectLocks', obj); ok(r); break;
             case 'DP': await vscode.commands.executeCommand('vanthrex.tableDependents', obj); ok(r); break;
           }
@@ -410,6 +414,7 @@ class PdmPanel {
             case 'AM': await this.go({ level: 'members', library: r.name, file: '*ALL' }); navigated = true; return;
             case '8': await vscode.commands.executeCommand('vanthrex.objectInfo', { library: 'QSYS', name: r.name, type: '*LIB' }); ok(r); break;
             case '13': { const text = await vscode.window.showInputBox({ title: vscode.l10n.t('Text of {0}', r.name), value: r.text, ignoreFocusOut: true }); if (text !== undefined) { await run(r, libraryTextCommand(r.name, text)); } break; }
+            case 'PN': await vscode.commands.executeCommand('vanthrex.pin', { kind: 'library', library: r.name }); ok(r, '📌'); break;
             case 'LL': await this.manager.updateActiveProfile(p => { if (!p.libraries.map(x => x.toUpperCase()).includes(r.name)) { p.libraries = [r.name, ...p.libraries]; } }); ok(r); break;
             case 'CL': await vscode.commands.executeCommand('vanthrex.setCurrentLibrary', { kind: 'library', library: r.name, current: false }); ok(r); break;
           }

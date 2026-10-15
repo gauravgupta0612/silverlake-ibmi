@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { readLibraries } from './libraryLookup';
 import { ConnectionManager } from '../core/manager';
 import { IbmiConnection } from '../core/connection';
 import { errorMessage, log, logError } from '../core/log';
@@ -28,11 +29,11 @@ export async function runSelfCheck(conn: IbmiConnection): Promise<{ results: Che
   const ruLib = vscode.workspace.getConfiguration('vanthrex.rpgunit').get<string>('library', 'RPGUNIT') || 'RPGUNIT';
   const names = SERVICES.map(x => sqlString(x.name)).join(', ');
   const [libRows, env, db2, user, ru, dbg, found] = await Promise.all([
-    libs.length ? q(`SELECT OBJNAME AS L FROM TABLE(QSYS2.OBJECT_STATISTICS('QSYS', '*LIB')) X WHERE OBJNAME IN (${libs.map(sqlString).join(', ')})`, 500) : Promise.resolve([] as Row[]),
+    libs.length ? readLibraries(conn, libs, 500).then(r => r.rows.map(x => ({ L: x.OBJNAME }) as Row)) : Promise.resolve([] as Row[]),
     q(`SELECT OS_VERSION, OS_RELEASE FROM SYSIBMADM.ENV_SYS_INFO`, 1),
     q(`SELECT PTF_GROUP_NAME AS G, PTF_GROUP_LEVEL AS L FROM QSYS2.GROUP_PTF_INFO WHERE PTF_GROUP_DESCRIPTION LIKE '%DB2%' AND PTF_GROUP_STATUS = 'INSTALLED' ORDER BY PTF_GROUP_LEVEL DESC FETCH FIRST 1 ROW ONLY`, 1),
     q(`SELECT COALESCE(SPECIAL_AUTHORITIES, '*NONE') AS SPC, CCSID FROM QSYS2.USER_INFO WHERE AUTHORIZATION_NAME = ${sqlString(conn.user)}`, 1),
-    q(`SELECT 1 AS X FROM TABLE(QSYS2.OBJECT_STATISTICS('QSYS', '*LIB', ${sqlString(ruLib.toUpperCase())})) X`, 1),
+    readLibraries(conn, [ruLib.toUpperCase()], 1).then(r => (r.rows.length ? [{ X: 1 } as Row] : [] as Row[])),
     q(`SELECT 1 AS X FROM QSYS2.NETSTAT_INFO WHERE LOCAL_PORT = 8005 AND TCP_STATE = 'LISTEN' FETCH FIRST 1 ROW ONLY`, 1),
     q<{ N: string }>(`SELECT TRIM(ROUTINE_SCHEMA) || '.' || TRIM(ROUTINE_NAME) AS N FROM QSYS2.SYSROUTINES WHERE ROUTINE_SCHEMA IN ('QSYS2', 'SYSTOOLS') AND ROUTINE_NAME IN (${names}) ` +
       `UNION SELECT TRIM(TABLE_SCHEMA) || '.' || TRIM(TABLE_NAME) AS N FROM QSYS2.SYSTABLES WHERE TABLE_SCHEMA IN ('QSYS2', 'SYSTOOLS', 'SYSIBMADM') AND TABLE_NAME IN (${names})`, 500),

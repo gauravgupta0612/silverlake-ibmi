@@ -106,13 +106,14 @@ export function registerSourceDates(context: vscode.ExtensionContext): void {
       vscode.window.setStatusBarMessage(`Source dates: ${value === 'off' ? 'hidden' : value === 'date' ? 'dates' : 'sequence numbers and dates'}`, 3000);
     }),
 
-    vscode.commands.registerCommand('vanthrex.changedSince', async () => {
+    vscode.commands.registerCommand('vanthrex.changedSince', async (sinceDay?: string, title?: string) => {
       const editor = vscode.window.activeTextEditor;
       if (!editor || editor.document.uri.scheme !== MEMBER_SCHEME || !sourceRecords.has(editor.document.uri.toString())) {
         vscode.window.showInformationMessage(vscode.l10n.t('Open a source member (with source dates available) first.'));
         return;
       }
-      const pick = await vscode.window.showQuickPick([
+      const preset = typeof sinceDay === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(sinceDay) ? sinceDay : undefined;
+      const pick = preset ? { label: title ?? preset, days: -2 } : await vscode.window.showQuickPick([
         { label: vscode.l10n.t('Last 7 days'), days: 7 }, { label: vscode.l10n.t('Last 30 days'), days: 30 }, { label: vscode.l10n.t('Last 90 days'), days: 90 },
         { label: vscode.l10n.t('Since a date…'), days: -1 }, { label: vscode.l10n.t('Clear highlight'), days: 0 },
       ], { title: vscode.l10n.t('Highlight lines changed since…') });
@@ -122,6 +123,8 @@ export function registerSourceDates(context: vscode.ExtensionContext): void {
       let from: Date;
       if (pick.days > 0) {
         from = new Date(Date.now() - pick.days * 86_400_000);
+      } else if (preset) {
+        from = new Date(`${preset}T00:00:00`);
       } else {
         const v = await vscode.window.showInputBox({
           title: vscode.l10n.t('Since date'), placeHolder: 'YYYY-MM-DD',
@@ -139,7 +142,7 @@ export function registerSourceDates(context: vscode.ExtensionContext): void {
         description: x.r ? formatSrcDate(x.r.date, 'iso') : 'unsaved change',
         detail: editor.document.lineAt(x.i).text.trim() || '(blank)',
         line: x.i,
-      })), { title: vscode.l10n.t('{0} line(s) changed since {1} — pick one to jump to it', lines.length, from.toISOString().slice(0, 10)), matchOnDetail: true });
+      })), { title: title ? `${title} — ${vscode.l10n.t('{0} line(s)', lines.length)}` : vscode.l10n.t('{0} line(s) changed since {1} — pick one to jump to it', lines.length, from.toISOString().slice(0, 10)), matchOnDetail: true });
       if (go) {
         const pos = new vscode.Position(go.line, 0);
         editor.selection = new vscode.Selection(pos, pos);

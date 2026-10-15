@@ -76,6 +76,10 @@ export class Compiler {
 
     const errorCount = errors.filter(e => e.severity >= 30).length;
     const warnCount = errors.filter(e => e.severity >= 20 && e.severity < 30).length;
+    compileFinished.fire({
+      uri, name: isMember ? `${vars.LIB}/${vars.SRCFILE}(${vars.NAME})` : uri.path, object: `${vars.OBJLIB}/${vars.NAME}`, ok: result.ok,
+      errors: errorCount, warnings: warnCount, command, message: result.ok ? undefined : (result.messages.slice(-1)[0] ?? ''), system: conn.profile.name,
+    });
     if (result.ok) {
       const extra = warnCount ? ` with ${warnCount} warning(s)` : '';
       vscode.window.showInformationMessage(vscode.l10n.t('✔ {0} compiled into {1}{2}.', String(vars.NAME), String(vars.OBJLIB), extra),
@@ -83,10 +87,12 @@ export class Compiler {
         .then(c => { if (c) { vscode.commands.executeCommand('workbench.actions.view.problems'); } });
     } else {
       const summary = errorCount ? `${errorCount} error(s)` : (result.messages.slice(-1)[0] ?? 'see log');
-      const choice = await vscode.window.showErrorMessage(vscode.l10n.t('✖ {0} failed to compile: {1}.', String(vars.NAME), summary),
-        vscode.l10n.t('Show Problems'), vscode.l10n.t('Show Log'));
-      if (choice === vscode.l10n.t('Show Problems')) { vscode.commands.executeCommand('workbench.actions.view.problems'); }
-      if (choice === vscode.l10n.t('Show Log')) { showLog(); }
+      // Not awaited: a batch (PDM option 14, compile on save) must not stop until someone closes the message.
+      void vscode.window.showErrorMessage(vscode.l10n.t('✖ {0} failed to compile: {1}.', String(vars.NAME), summary),
+        vscode.l10n.t('Show Problems'), vscode.l10n.t('Show Log')).then(choice => {
+        if (choice === vscode.l10n.t('Show Problems')) { vscode.commands.executeCommand('workbench.actions.view.problems'); }
+        if (choice === vscode.l10n.t('Show Log')) { showLog(); }
+      });
     }
   }
 
@@ -173,6 +179,10 @@ function toSeverity(sev: number): vscode.DiagnosticSeverity {
   if (sev >= 10) { return vscode.DiagnosticSeverity.Information; }
   return vscode.DiagnosticSeverity.Hint;
 }
+
+/** Fired after every compile (history, PDM, status bar). */
+export interface CompileFinished { uri: vscode.Uri; name: string; object: string; ok: boolean; errors: number; warnings: number; command: string; message?: string; system: string }
+export const compileFinished = new vscode.EventEmitter<CompileFinished>();
 
 export function registerCompile(context: vscode.ExtensionContext, manager: ConnectionManager): Compiler {
   const compiler = new Compiler(manager, context.globalState);

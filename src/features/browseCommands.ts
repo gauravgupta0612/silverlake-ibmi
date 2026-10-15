@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { readLibraries } from './libraryLookup';
 import { ConnectionManager } from '../core/manager';
 import { ConnectionProfile } from '../core/profiles';
 import { errorMessage, logError, showLog } from '../core/log';
@@ -161,7 +162,10 @@ export function registerBrowseCommands(
       { label: vscode.l10n.t('$(symbol-variable) Data area…'), cmd: 'vanthrex.dataArea' },
       { label: vscode.l10n.t('$(pulse) PTF & system health…'), cmd: 'vanthrex.systemHealth' },
       { label: vscode.l10n.t('$(search) Find & open member…'), cmd: 'vanthrex.findMember' },
+      { label: vscode.l10n.t('$(pulse) System Tracker — everything in one place'), cmd: 'vanthrex.systemTracker' },
       { label: vscode.l10n.t('$(list-selection) Work with using PDM…'), cmd: 'vanthrex.pdm' },
+      { label: vscode.l10n.t('$(history) Compile history'), cmd: 'vanthrex.compileHistory' },
+      { label: vscode.l10n.t('$(output) Live job log…'), cmd: 'vanthrex.jobLogLive' },
       { label: vscode.l10n.t('$(library) Add library to list…'), cmd: 'vanthrex.addLibrary' },
       { label: vscode.l10n.t('$(folder-opened) Go to IFS directory…'), cmd: 'vanthrex.ifsChangeRoot' },
       { label: vscode.l10n.t('$(output) Show output log'), cmd: 'vanthrex.showOutput' },
@@ -189,8 +193,8 @@ export function registerBrowseCommands(
     const conn = manager.require();
     const lib = await askName('Add library', 'Library to add to the top of your list');
     if (!lib) { return; }
-    const exists = await conn.rows(`SELECT 1 AS X FROM TABLE(QSYS2.OBJECT_STATISTICS('QSYS', '*LIB', ${sqlString(lib)})) FETCH FIRST 1 ROW ONLY`)
-      .catch(() => [{}]);
+    const found = await readLibraries(conn, [lib], 1);
+    const exists = found.error ? [{}] : found.rows;
     if (!exists.length) {
       const go = await vscode.window.showWarningMessage(vscode.l10n.t('Library {0} was not found. Add it anyway?', lib), 'Add', vscode.l10n.t('Cancel'));
       if (go !== 'Add') { return; }
@@ -306,8 +310,9 @@ export function registerBrowseCommands(
 
   // ------------------------------------------------------------ IFS
   reg('vanthrex.refreshIfs', () => ifs.refresh());
-  reg('vanthrex.ifsChangeRoot', async () => {
+  reg('vanthrex.ifsChangeRoot', async (to?: unknown) => {
     manager.require();
+    if (typeof to === 'string' && to.startsWith('/')) { ifs.setRoot(to); return; }
     const path = await vscode.window.showInputBox({ title: vscode.l10n.t('Go to IFS directory'), value: ifs.rootPath ?? '/home', ignoreFocusOut: true });
     if (path?.trim()) { ifs.setRoot(path.trim()); }
   });
