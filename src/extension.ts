@@ -57,6 +57,7 @@ import { registerV24 } from './features/v24View';
 import { registerV25 } from './features/v25View';
 import { registerTracker } from './features/trackerView';
 import { registerV26 } from './features/v26View';
+import { registerV27 } from './features/v27View';
 
 let manager: ConnectionManager | undefined;
 
@@ -149,6 +150,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('2.2 history, live job log, pins', () => registerV25(context, m));
   step('System Tracker', () => registerTracker(context, m));
   step('2.3 tools', () => registerV26(context, m));
+  step('2.3 stability', () => registerV27(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))
@@ -173,5 +175,5 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export async function deactivate(): Promise<void> {
-  await manager?.disconnectAll();
+  await manager?.disconnectAll(false);
 }

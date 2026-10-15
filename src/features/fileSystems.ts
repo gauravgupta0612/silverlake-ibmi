@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../core/manager';
 import { errorMessage, log, logError } from '../core/log';
+import { saveOrKeep } from './pendingSaves';
 import { parseMemberPath, clString, memberPath } from '../core/util';
 import { SourceRecord, mergeRecords, tooLongLines } from '../core/sourceDates';
 import type { MemberLock } from '../core/connection';
@@ -174,6 +175,10 @@ export class MemberFileSystem extends BaseFs {
   }
 
   async writeFile(uri: vscode.Uri, content: Uint8Array): Promise<void> {
+    return saveOrKeep(uri, content, documentOrigin.get(uri.toString())?.name, () => this.writeNow(uri, content));
+  }
+
+  private async writeNow(uri: vscode.Uri, content: Uint8Array): Promise<void> {
     const { library, file, member } = parseMemberPath(uri.path);
     const conn = this.conn();
     this.checkOrigin(uri);
@@ -293,6 +298,10 @@ export class IfsFileSystem extends BaseFs {
   }
 
   async writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean }): Promise<void> {
+    return saveOrKeep(uri, content, documentOrigin.get(uri.toString())?.name, () => this.writeNow(uri, content, options));
+  }
+
+  private async writeNow(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean }): Promise<void> {
     const conn = this.conn();
     this.checkOrigin(uri);
     let exists = true;

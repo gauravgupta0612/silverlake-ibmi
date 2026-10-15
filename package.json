@@ -1756,6 +1756,30 @@
         "title": "%command.compareSystemValues%",
         "category": "Vanthrex",
         "icon": "$(diff)"
+      },
+      {
+        "command": "vanthrex.connection.health",
+        "title": "%command.connection.health%",
+        "category": "Vanthrex",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "vanthrex.connection.reconnectNow",
+        "title": "%command.connection.reconnectNow%",
+        "category": "Vanthrex",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "vanthrex.pendingSaves",
+        "title": "%command.pendingSaves%",
+        "category": "Vanthrex",
+        "icon": "$(save-all)"
+      },
+      {
+        "command": "vanthrex.copyToSystem",
+        "title": "%command.copyToSystem%",
+        "category": "Vanthrex",
+        "icon": "$(arrow-swap)"
       }
     ],
     "menus": {
@@ -2551,6 +2575,26 @@
           "command": "vanthrex.libraryListFromJobd",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "1_info@5"
+        },
+        {
+          "command": "vanthrex.copyToSystem",
+          "when": "view == vanthrex.libraries && viewItem == member && vanthrex.multipleConnections",
+          "group": "5_compare@22"
+        },
+        {
+          "command": "vanthrex.copyToSystem",
+          "when": "view == vanthrex.ifs && viewItem == ifs.file && vanthrex.multipleConnections",
+          "group": "1_open@9"
+        },
+        {
+          "command": "vanthrex.connection.health",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "1_info@6"
+        },
+        {
+          "command": "vanthrex.connection.reconnectNow",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "1_info@7"
         }
       ],
       "editor/title": [
@@ -2755,6 +2799,11 @@
           "command": "vanthrex.pin",
           "when": "resourceScheme == vanthrex-member",
           "group": "vanthrex@33"
+        },
+        {
+          "command": "vanthrex.copyToSystem",
+          "when": "resourceScheme =~ /^vanthrex-(member|ifs)$/ && vanthrex.multipleConnections",
+          "group": "vanthrex@34"
         }
       ],
       "commandPalette": [
@@ -3239,6 +3288,18 @@
         },
         {
           "command": "vanthrex.compareSystemValues",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.copyToSystem",
+          "when": "vanthrex.multipleConnections"
+        },
+        {
+          "command": "vanthrex.connection.health",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.connection.reconnectNow",
           "when": "vanthrex.connected"
         }
       ],
@@ -4054,6 +4115,17 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "%config.memberStatusBar%"
+        },
+        "vanthrex.connections.autoReconnect": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.connections.autoReconnect%"
+        },
+        "vanthrex.connections.healthCheckSeconds": {
+          "type": "number",
+          "default": 60,
+          "minimum": 0,
+          "markdownDescription": "%config.connections.healthCheckSeconds%"
         }
       }
     },

@@ -392,5 +392,11 @@
   "command.libraryListFromJobd": "Library List from a Job Description or User Profile…",
   "command.publicAuthorityScan": "*PUBLIC Authority Scan",
   "command.publicAuthority.set": "Set *PUBLIC Authority",
-  "command.compareSystemValues": "Compare System Values with Another System…"
+  "command.compareSystemValues": "Compare System Values with Another System…",
+  "command.connection.health": "Check Connection Health",
+  "command.connection.reconnectNow": "Reconnect Now",
+  "command.pendingSaves": "Changes Kept While Offline…",
+  "command.copyToSystem": "Copy to Another System…",
+  "config.connections.autoReconnect": "When a connection drops (network, VPN, sleep), reconnect by itself with the saved sign-on: 5 attempts over about 2 minutes. Changes that could not be saved meanwhile are kept on this computer and saved when the system is back.",
+  "config.connections.healthCheckSeconds": "Check every N seconds that the active system still answers (a tiny query). A slow answer shows in the status bar; two misses in a row reconnect. `0` turns it off."
 }

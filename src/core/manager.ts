@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { IbmiConnection } from './connection';
 import { ConnectionProfile, ProfileStore } from './profiles';
 import { errorMessage, log, logError, showLog } from './log';
+import { reconnectDelay, RECONNECT_DELAYS } from './v27';
 
 /**
  * Owns the IBM i connections. Several systems can be connected at the same time; one of them is
@@ -14,6 +15,10 @@ export class ConnectionManager implements vscode.Disposable {
   private readonly _onDidChange = new vscode.EventEmitter<IbmiConnection | undefined>();
   readonly onDidChange = this._onDidChange.event;
   private readonly statusItem: vscode.StatusBarItem;
+  private readonly _onDidReconnect = new vscode.EventEmitter<IbmiConnection>();
+  /** Fired after a dropped connection came back by itself. */
+  readonly onDidReconnect = this._onDidReconnect.event;
+  private readonly reconnecting = new Map<string, { attempt: number; cancelled: boolean }>();
 
   constructor(readonly profiles: ProfileStore) {
     this.statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
@@ -74,12 +79,11 @@ export class ConnectionManager implements vscode.Disposable {
       if (remember?.startsWith('Yes')) { await this.profiles.setPassword(profile.id, password); }
     }
 
-    const conn = new IbmiConnection(profile);
+    let conn: IbmiConnection;
     try {
-      await vscode.window.withProgress(
+      conn = await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: `Connecting to ${profile.name}…` },
-        () => conn.connect(password),
-      );
+        () => this.openConnection(profile, password));
     } catch (e) {
       logError(e);
       const msg = errorMessage(e);
@@ -89,26 +93,72 @@ export class ConnectionManager implements vscode.Disposable {
       if (choice === 'Edit Connection') { vscode.commands.executeCommand('vanthrex.editConnection', profile); }
       if (choice === 'Forget Saved Password') { await this.profiles.setPassword(profile.id, undefined); }
       if (choice === 'Show Log') { showLog(); }
-      conn.ssh.dispose();
       return undefined;
     }
-
-    this.open.set(profile.id, conn);
     this.activeId = profile.id;
-    conn.ssh.connection?.on('close', () => {
-      if (this.open.get(profile.id) !== conn) { return; }
-      log(`SSH connection to ${profile.host} closed by the remote system`);
-      this.open.delete(profile.id);
-      if (this.activeId === profile.id) { this.activeId = [...this.open.values()].find(c => c.isConnected)?.profile.id; }
-      this.fire();
-      vscode.window.showWarningMessage(`Connection to ${profile.name} was closed.`, 'Reconnect')
-        .then(c => { if (c) { this.connect(profile); } });
-    });
     await this.profiles.setLastUsed(profile.id);
     this.fire();
     const others = this.openConnections.length - 1;
     vscode.window.setStatusBarMessage(`$(check) Connected to ${profile.name}${others ? ` (${others} other system${others > 1 ? 's' : ''} still open)` : ''}`, 4000);
     return conn;
+  }
+
+  /** Sign on and register the connection, with the handler that notices when it drops. */
+  private async openConnection(profile: ConnectionProfile, password: string | undefined): Promise<IbmiConnection> {
+    const conn = new IbmiConnection(profile);
+    try { await conn.connect(password); } catch (e) { conn.ssh.dispose(); throw e; }
+    this.open.set(profile.id, conn);
+    conn.ssh.connection?.on('close', () => {
+      if (this.open.get(profile.id) !== conn) { return; }     // closed on purpose (disconnect)
+      log(`SSH connection to ${profile.host} closed by the remote system`);
+      const wasActive = this.activeId === profile.id;
+      this.open.delete(profile.id);
+      if (wasActive) { this.activeId = [...this.open.values()].find(c => c.isConnected)?.profile.id; }
+      this.fire();
+      void this.reconnect(profile, wasActive);
+    });
+    return conn;
+  }
+
+  /** Bring a dropped connection back: a few attempts with growing pauses, using the saved password. */
+  private async reconnect(profile: ConnectionProfile, makeActive: boolean): Promise<void> {
+    const auto = vscode.workspace.getConfiguration('vanthrex').get<boolean>('connections.autoReconnect', true);
+    const password = await this.profiles.getPassword(profile.id);
+    const askUser = () => vscode.window.showWarningMessage(`Connection to ${profile.name} was closed.`, 'Reconnect')
+      .then(c => { if (c) { this.connect(profile); } });
+    if (!auto || (profile.authType === 'password' && !password) || this.reconnecting.has(profile.id)) { if (!this.reconnecting.has(profile.id)) { void askUser(); } return; }
+    const state = { attempt: 1, cancelled: false };
+    this.reconnecting.set(profile.id, state);
+    this.updateStatus();
+    try {
+      for (let attempt = 1; ; attempt++) {
+        const wait = reconnectDelay(attempt);
+        if (wait === undefined || state.cancelled) { break; }
+        state.attempt = attempt;
+        this.updateStatus();
+        await new Promise(r => setTimeout(r, wait * 1000));
+        if (state.cancelled || this.open.get(profile.id)?.isConnected) { return; }
+        try {
+          const conn = await this.openConnection(profile, password);
+          if (makeActive || !this.activeId) { this.activeId = profile.id; }
+          log(`Reconnected to ${profile.host} (attempt ${attempt})`);
+          this.reconnecting.delete(profile.id);
+          this.fire();
+          vscode.window.setStatusBarMessage(`$(check) Reconnected to ${profile.name}`, 5000);
+          this._onDidReconnect.fire(conn);
+          return;
+        } catch (e) { log(`Reconnect to ${profile.host}, attempt ${attempt}/${RECONNECT_DELAYS.length}: ${errorMessage(e)}`); }
+      }
+    } finally {
+      if (this.reconnecting.get(profile.id) === state) { this.reconnecting.delete(profile.id); this.updateStatus(); }
+    }
+    if (!state.cancelled) { void askUser(); }
+  }
+
+  /** The connection looks dead although SSH did not say so: drop it, which starts the automatic reconnect. */
+  forceReconnect(profileId = this.activeId): void {
+    const c = profileId ? this.open.get(profileId) : undefined;
+    if (c) { log(`Connection to ${c.profile.host} is not answering — reconnecting`); c.ssh.dispose(); }
   }
 
   /** Make another open connection the active one. */
@@ -123,8 +173,10 @@ export class ConnectionManager implements vscode.Disposable {
   }
 
   /** Disconnect one system (the active one by default). Another open system becomes active. */
-  async disconnect(profileId = this.activeId): Promise<void> {
+  async disconnect(profileId = this.activeId, askUnsaved = true): Promise<void> {
     if (!profileId) { this.fire(); return; }
+    const r = this.reconnecting.get(profileId); if (r) { r.cancelled = true; this.reconnecting.delete(profileId); }
+    if (askUnsaved && !(await this.saveRemoteEditsFirst())) { return; }
     const conn = this.open.get(profileId);
     this.open.delete(profileId);
     if (this.activeId === profileId) {
@@ -134,12 +186,26 @@ export class ConnectionManager implements vscode.Disposable {
     this.fire();
   }
 
-  async disconnectAll(): Promise<void> {
+  async disconnectAll(askUnsaved = true): Promise<void> {
+    for (const r of this.reconnecting.values()) { r.cancelled = true; }
+    this.reconnecting.clear();
+    if (askUnsaved && !(await this.saveRemoteEditsFirst())) { return; }
     const all = [...this.open.values()];
     this.open.clear();
     this.activeId = undefined;
     for (const c of all) { await c.dispose(); }
     this.fire();
+  }
+
+  /** Unsaved members or IFS files would lose their way back: offer to save them before disconnecting. */
+  private async saveRemoteEditsFirst(): Promise<boolean> {
+    const dirty = vscode.workspace.textDocuments.filter(d => d.isDirty && /^vanthrex-(member|ifs)$/.test(d.uri.scheme));
+    if (!dirty.length) { return true; }
+    const save = 'Save and Disconnect'; const discard = 'Disconnect Anyway';
+    const c = await vscode.window.showWarningMessage(`${dirty.length} member(s) or IFS file(s) have unsaved changes.`,
+      { modal: true, detail: dirty.map(d => d.uri.path.split('/').slice(-2).join('/')).join('\n') }, save, discard);
+    if (c === save) { for (const d of dirty) { if (!(await d.save())) { return false; } } return true; }
+    return c === discard;
   }
 
   /** Persist a changed profile and apply it to the live connection. */
@@ -172,6 +238,12 @@ export class ConnectionManager implements vscode.Disposable {
         (count > 1 ? `Also connected: ${this.openConnections.slice(1).map(o => o.profile.name).join(', ')} — switch from the quick menu\n\n` : '') +
         'Click for the IBM i quick menu');
       this.statusItem.backgroundColor = prot === 'none' ? undefined : new vscode.ThemeColor(prot === 'readOnly' ? 'statusBarItem.warningBackground' : 'statusBarItem.errorBackground');
+    } else if (this.reconnecting.size) {
+      const [id, st] = [...this.reconnecting.entries()][0];
+      const name = this.profiles.get(id)?.name ?? '';
+      this.statusItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+      this.statusItem.text = `$(sync~spin) ${name}: reconnecting (${st.attempt}/${RECONNECT_DELAYS.length})`;
+      this.statusItem.tooltip = `The connection to ${name} dropped. Vanthrex is reconnecting with your saved sign-on; your open members stay as they are.`;
     } else {
       this.statusItem.backgroundColor = undefined;
       this.statusItem.text = '$(plug) IBM i: not connected';
@@ -182,7 +254,9 @@ export class ConnectionManager implements vscode.Disposable {
   dispose(): void {
     for (const c of this.open.values()) { c.dispose(); }
     this.open.clear();
+    for (const r of this.reconnecting.values()) { r.cancelled = true; }
     this.statusItem.dispose();
     this._onDidChange.dispose();
+    this._onDidReconnect.dispose();
   }
 }

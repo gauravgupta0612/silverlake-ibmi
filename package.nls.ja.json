@@ -392,5 +392,11 @@
   "command.libraryListFromJobd": "ジョブ記述またはユーザー・プロファイルからのライブラリー・リスト…",
   "command.publicAuthorityScan": "*PUBLIC 権限スキャン",
   "command.publicAuthority.set": "*PUBLIC 権限の設定",
-  "command.compareSystemValues": "別のシステムとシステム値を比較…"
+  "command.compareSystemValues": "別のシステムとシステム値を比較…",
+  "command.connection.health": "接続の正常性の確認",
+  "command.connection.reconnectNow": "今すぐ再接続",
+  "command.pendingSaves": "オフライン中に保持された変更…",
+  "command.copyToSystem": "別のシステムへのコピー…",
+  "config.connections.autoReconnect": "接続が切断された場合 (ネットワーク、VPN、スリープ)、保存されたサインオン情報で自動的に再接続します: 約 2 分間に 5 回試行します。その間に保存できなかった変更はこのコンピューターに保持され、システムが戻ったときに保存されます。",
+  "config.connections.healthCheckSeconds": "アクティブなシステムがまだ応答するかどうかを N 秒ごとに確認します (ごく小さな照会)。応答が遅い場合はステータス・バーに表示され、2 回続けて応答がない場合は再接続します。`0` でオフになります。"
 }

@@ -392,5 +392,11 @@
   "command.libraryListFromJobd": "Lista de bibliotecas desde una descripción de trabajo o un perfil de usuario…",
   "command.publicAuthorityScan": "Análisis de autorización *PUBLIC",
   "command.publicAuthority.set": "Establecer autorización *PUBLIC",
-  "command.compareSystemValues": "Comparar valores del sistema con otro sistema…"
+  "command.compareSystemValues": "Comparar valores del sistema con otro sistema…",
+  "command.connection.health": "Comprobar estado de la conexión",
+  "command.connection.reconnectNow": "Reconectar ahora",
+  "command.pendingSaves": "Cambios conservados sin conexión…",
+  "command.copyToSystem": "Copiar a otro sistema…",
+  "config.connections.autoReconnect": "Cuando se pierde una conexión (red, VPN, suspensión), volver a conectar automáticamente con el inicio de sesión guardado: 5 intentos durante unos 2 minutos. Los cambios que no se hayan podido guardar mientras tanto se conservan en este equipo y se guardan cuando el sistema vuelve.",
+  "config.connections.healthCheckSeconds": "Comprobar cada N segundos que el sistema activo sigue respondiendo (una consulta mínima). Una respuesta lenta se muestra en la barra de estado; dos fallos seguidos provocan la reconexión. `0` lo desactiva."
 }

@@ -674,6 +674,11 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 - **Source Quality Report** (right-click a source file): scores and grades A–E per RPG member.
 - **Library list from a job description or user profile**, **\*PUBLIC Authority Scan** with one-click fix, **Compare System Values** between two systems.
 
+### 74. Stable connections — new in 2.3
+
+- **Automatic reconnect** with the saved sign-on, **connection health** in the status bar, **no lost saves** while offline, editors that reopen by themselves, and a warning before disconnecting with unsaved changes.
+- **Copy to Another System…** for members and IFS files, with a preview of what changes.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
