@@ -56,6 +56,7 @@ import { registerPdm } from './features/pdmView';
 import { registerV24 } from './features/v24View';
 import { registerV25 } from './features/v25View';
 import { registerTracker } from './features/trackerView';
+import { registerV26 } from './features/v26View';
 
 let manager: ConnectionManager | undefined;
 
@@ -147,6 +148,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('2.2 editing helpers', () => registerV24(context, m));
   step('2.2 history, live job log, pins', () => registerV25(context, m));
   step('System Tracker', () => registerTracker(context, m));
+  step('2.3 tools', () => registerV26(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

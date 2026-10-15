@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -1715,6 +1715,47 @@
         "command": "vanthrex.tracker.copySummary",
         "title": "%command.tracker.copySummary%",
         "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.createLibrary",
+        "title": "%command.createLibrary%",
+        "category": "Vanthrex",
+        "icon": "$(repo-create)"
+      },
+      {
+        "command": "vanthrex.createIfs",
+        "title": "%command.createIfs%",
+        "category": "Vanthrex",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "vanthrex.sourceQuality",
+        "title": "%command.sourceQuality%",
+        "category": "Vanthrex",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "vanthrex.libraryListFromJobd",
+        "title": "%command.libraryListFromJobd%",
+        "category": "Vanthrex",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "vanthrex.publicAuthorityScan",
+        "title": "%command.publicAuthorityScan%",
+        "category": "Vanthrex",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "vanthrex.publicAuthority.set",
+        "title": "%command.publicAuthority.set%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.compareSystemValues",
+        "title": "%command.compareSystemValues%",
+        "category": "Vanthrex",
+        "icon": "$(diff)"
       }
     ],
     "menus": {
@@ -1868,6 +1909,26 @@
           "command": "vanthrex.compileHistory",
           "when": "view == vanthrex.libraries",
           "group": "9_more@1"
+        },
+        {
+          "command": "vanthrex.createLibrary",
+          "when": "view == vanthrex.libraries && vanthrex.connected",
+          "group": "navigation@1"
+        },
+        {
+          "command": "vanthrex.libraryListFromJobd",
+          "when": "view == vanthrex.libraries && vanthrex.connected",
+          "group": "9_tools@2"
+        },
+        {
+          "command": "vanthrex.createIfs",
+          "when": "view == vanthrex.ifs && vanthrex.connected",
+          "group": "navigation@0"
+        },
+        {
+          "command": "vanthrex.compareSystemValues",
+          "when": "view == vanthrex.connections && vanthrex.multipleConnections",
+          "group": "1_connections@5"
         }
       ],
       "view/item/context": [
@@ -2470,6 +2531,26 @@
           "command": "vanthrex.systemTracker",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "1_info@0"
+        },
+        {
+          "command": "vanthrex.sourceQuality",
+          "when": "view == vanthrex.libraries && viewItem == srcfile",
+          "group": "5_compare@20"
+        },
+        {
+          "command": "vanthrex.publicAuthorityScan",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "5_compare@21"
+        },
+        {
+          "command": "vanthrex.createIfs",
+          "when": "view == vanthrex.ifs && viewItem == ifs.dir",
+          "group": "1_open@0"
+        },
+        {
+          "command": "vanthrex.libraryListFromJobd",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "1_info@5"
         }
       ],
       "editor/title": [
@@ -3130,6 +3211,34 @@
         },
         {
           "command": "vanthrex.tracker.copySummary",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.publicAuthority.set",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.createLibrary",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.createIfs",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.sourceQuality",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.libraryListFromJobd",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.publicAuthorityScan",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.compareSystemValues",
           "when": "vanthrex.connected"
         }
       ],

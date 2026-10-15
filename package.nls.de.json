@@ -385,5 +385,12 @@
   "command.systemTracker": "System-Tracker (alles an einem Ort)",
   "command.tracker.addLibrary": "Bibliothek zur Bibliotheksliste hinzufügen",
   "command.tracker.cl": "Warteschlangenbefehl ausführen",
-  "command.tracker.copySummary": "Systemzusammenfassung kopieren"
+  "command.tracker.copySummary": "Systemzusammenfassung kopieren",
+  "command.createLibrary": "Bibliothek erstellen…",
+  "command.createIfs": "IFS-Ordner oder -Datei erstellen…",
+  "command.sourceQuality": "Quellenqualitätsbericht",
+  "command.libraryListFromJobd": "Bibliotheksliste aus einer Jobbeschreibung oder einem Benutzerprofil…",
+  "command.publicAuthorityScan": "*PUBLIC-Berechtigungsprüfung",
+  "command.publicAuthority.set": "*PUBLIC-Berechtigung festlegen",
+  "command.compareSystemValues": "Systemwerte mit einem anderen System vergleichen…"
 }

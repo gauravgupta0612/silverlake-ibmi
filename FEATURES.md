@@ -668,6 +668,12 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 - **Scheduled jobs** (hold / release), **Journals** (cleanup candidates), **What changed** (objects changed or largest), **All systems** side by side, subsystems, failed sign-ons, **Save report** (HTML).
 - **System Tracker** (Connections toolbar, Ctrl+Alt+T): Overview with *Needs attention*, every library (with sizes on request), jobs, storage, QSYSOPR, users, PTFs and my work — with actions on every row.
 
+### 73. Create from anywhere and new checks — new in 2.3
+
+- **Create Library…** (with library list, current library and standard source files) and **Create IFS Folder or File…** (UTF-8, permissions) from the toolbars, quick menu and System Tracker.
+- **Source Quality Report** (right-click a source file): scores and grades A–E per RPG member.
+- **Library list from a job description or user profile**, **\*PUBLIC Authority Scan** with one-click fix, **Compare System Values** between two systems.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

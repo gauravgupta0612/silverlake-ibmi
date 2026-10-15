@@ -385,5 +385,12 @@
   "command.systemTracker": "System Tracker (Everything in One Place)",
   "command.tracker.addLibrary": "Add Library to Library List",
   "command.tracker.cl": "Run Queue Command",
-  "command.tracker.copySummary": "Copy System Summary"
+  "command.tracker.copySummary": "Copy System Summary",
+  "command.createLibrary": "Create Library…",
+  "command.createIfs": "Create IFS Folder or File…",
+  "command.sourceQuality": "Source Quality Report",
+  "command.libraryListFromJobd": "Library List from a Job Description or User Profile…",
+  "command.publicAuthorityScan": "*PUBLIC Authority Scan",
+  "command.publicAuthority.set": "Set *PUBLIC Authority",
+  "command.compareSystemValues": "Compare System Values with Another System…"
 }

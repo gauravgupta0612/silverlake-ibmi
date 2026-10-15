@@ -21,7 +21,7 @@ interface Tab { hero?: Hero; id: string; title: string; badge?: number; badgeTon
 const ALLOWED = new Set([
   'vanthrex.tracker.tab', 'vanthrex.pdm', 'vanthrex.jobDetails', 'vanthrex.jobLog', 'vanthrex.jobLogLive', 'vanthrex.messageQueue', 'vanthrex.explainMessage',
   'vanthrex.performanceMonitor', 'vanthrex.compileHistory', 'vanthrex.compileHistory.open', 'vanthrex.editConnection', 'vanthrex.storageAdvisor', 'vanthrex.installedSoftware',
-  'vanthrex.ptfLookup', 'vanthrex.securityCenter', 'vanthrex.tracker.cl', 'vanthrex.tracker.copySummary', 'vanthrex.tracker.switch', 'vanthrex.journals', 'vanthrex.objectInfo', 'vanthrex.spool.focus', 'vanthrex.secadm.inactive', 'vanthrex.secadm.powerful', 'vanthrex.findMember', 'vanthrex.pin', 'vanthrex.pin.open',
+  'vanthrex.ptfLookup', 'vanthrex.securityCenter', 'vanthrex.tracker.cl', 'vanthrex.tracker.copySummary', 'vanthrex.tracker.switch', 'vanthrex.journals', 'vanthrex.objectInfo', 'vanthrex.createLibrary', 'vanthrex.createIfs', 'vanthrex.publicAuthorityScan', 'vanthrex.compareSystemValues', 'vanthrex.libraryListFromJobd', 'vanthrex.spool.focus', 'vanthrex.secadm.inactive', 'vanthrex.secadm.powerful', 'vanthrex.findMember', 'vanthrex.pin', 'vanthrex.pin.open',
   'vanthrex.historyLog', 'vanthrex.activeSql', 'vanthrex.journals', 'vanthrex.openDashboard', 'vanthrex.tracker.addLibrary', 'vanthrex.objectLocks', 'vanthrex.exitPoints',
 ]);
 
@@ -232,6 +232,7 @@ class Tracker {
         buttons: [
           { label: vscode.l10n.t('PDM'), command: 'vanthrex.pdm' }, { label: vscode.l10n.t('Find member'), command: 'vanthrex.findMember' }, { label: vscode.l10n.t('Performance monitor'), command: 'vanthrex.performanceMonitor' },
           { label: vscode.l10n.t('Running SQL'), command: 'vanthrex.activeSql' }, { label: vscode.l10n.t('History log (QHST)'), command: 'vanthrex.historyLog' }, { label: vscode.l10n.t('Exit points'), command: 'vanthrex.exitPoints' },
+          { label: vscode.l10n.t('Create library'), command: 'vanthrex.createLibrary' }, { label: vscode.l10n.t('Create IFS folder or file'), command: 'vanthrex.createIfs' },
           { label: vscode.l10n.t('Copy summary'), command: 'vanthrex.tracker.copySummary' },
         ],
         tables: [],
@@ -251,6 +252,7 @@ class Tracker {
           { label: vscode.l10n.t('Size known'), value: knownSizes.length ? bytes(knownSizes.reduce((a, z) => a + (z.size ?? 0), 0)) : '—', sub: vscode.l10n.t('{0} libraries measured', knownSizes.length) },
           { label: vscode.l10n.t('Your special authorities'), value: auth.split(/\s+/).filter(x => /^\*(ALLOBJ|SECADM|AUDIT|SERVICE|IOSYSCFG|JOBCTL|SPLCTL|SAVSYS)$/.test(x)).filter((x, k, a) => a.indexOf(x) === k).join(' ') || '*NONE', tone: allObj ? 'info' : undefined },
         ],
+        buttons: [{ label: vscode.l10n.t('Create library'), command: 'vanthrex.createLibrary' }, { label: vscode.l10n.t('Library list from a job description'), command: 'vanthrex.libraryListFromJobd' }],
         tables: [{
           id: 'libs', title: vscode.l10n.t('Every library on the system'), filter: true, numeric: [6, 7],
           columns: [vscode.l10n.t('Library'), vscode.l10n.t('Type'), vscode.l10n.t('Text'), vscode.l10n.t('Owner'), vscode.l10n.t('Created'), vscode.l10n.t('Last used'), vscode.l10n.t('Objects'), vscode.l10n.t('Size'), vscode.l10n.t('Library list')],
@@ -260,6 +262,7 @@ class Tracker {
             ...(l.inList ? [] : [{ label: vscode.l10n.t('+ list'), command: 'vanthrex.tracker.addLibrary', args: [l.name] }]),
             { label: vscode.l10n.t('Pin'), command: 'vanthrex.pin', args: [{ kind: 'library', library: l.name }] },
             { label: vscode.l10n.t('Storage'), command: 'vanthrex.storageAdvisor', args: [l.name] },
+            { label: '*PUBLIC', command: 'vanthrex.publicAuthorityScan', args: [l.name] },
           ]),
           tones: libRows.map(l => (l.inList ? 'info' : unused.includes(l) ? 'warn' : undefined)),
           empty: libs.error ?? vscode.l10n.t('No libraries.'),
@@ -445,7 +448,7 @@ class Tracker {
       // ---- all connected systems
       const others = this.manager.openConnections;
       tabs.push({
-        id: 'systems', title: vscode.l10n.t('All systems'), badge: others.length > 1 ? others.length : undefined, badgeTone: 'info',
+        id: 'systems', title: vscode.l10n.t('All systems'), buttons: others.length > 1 ? [{ label: vscode.l10n.t('Compare system values'), command: 'vanthrex.compareSystemValues' }] : [], badge: others.length > 1 ? others.length : undefined, badgeTone: 'info',
         tables: [{ title: vscode.l10n.t('Connected systems'), numeric: [1, 2, 3, 4, 5], columns: [vscode.l10n.t('System'), vscode.l10n.t('Health'), 'CPU %', 'ASP %', 'MSGW', vscode.l10n.t('QSYSOPR replies')],
           rows: [], id: 'systems', empty: vscode.l10n.t('Loading the other systems…') }],
         note: others.length > 1 ? vscode.l10n.t('Every system you are connected to, read in parallel.') : vscode.l10n.t('Connect to more systems (Connections view) to compare them here.'),

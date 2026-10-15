@@ -385,5 +385,12 @@
   "command.systemTracker": "系统跟踪器（一站式查看）",
   "command.tracker.addLibrary": "将库添加到库列表",
   "command.tracker.cl": "运行队列命令",
-  "command.tracker.copySummary": "复制系统摘要"
+  "command.tracker.copySummary": "复制系统摘要",
+  "command.createLibrary": "创建库…",
+  "command.createIfs": "创建 IFS 文件夹或文件…",
+  "command.sourceQuality": "源代码质量报告",
+  "command.libraryListFromJobd": "从作业描述或用户概要文件获取库列表…",
+  "command.publicAuthorityScan": "*PUBLIC 权限扫描",
+  "command.publicAuthority.set": "设置 *PUBLIC 权限",
+  "command.compareSystemValues": "与另一个系统比较系统值…"
 }

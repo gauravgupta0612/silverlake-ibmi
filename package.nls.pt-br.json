@@ -385,5 +385,12 @@
   "command.systemTracker": "Rastreador do sistema (tudo em um só lugar)",
   "command.tracker.addLibrary": "Adicionar biblioteca à lista de bibliotecas",
   "command.tracker.cl": "Executar comando de fila",
-  "command.tracker.copySummary": "Copiar resumo do sistema"
+  "command.tracker.copySummary": "Copiar resumo do sistema",
+  "command.createLibrary": "Criar biblioteca…",
+  "command.createIfs": "Criar pasta ou arquivo IFS…",
+  "command.sourceQuality": "Relatório de qualidade dos fontes",
+  "command.libraryListFromJobd": "Lista de bibliotecas a partir de uma descrição de job ou perfil de usuário…",
+  "command.publicAuthorityScan": "Análise de autorização *PUBLIC",
+  "command.publicAuthority.set": "Definir autorização *PUBLIC",
+  "command.compareSystemValues": "Comparar valores do sistema com outro sistema…"
 }

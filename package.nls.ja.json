@@ -385,5 +385,12 @@
   "command.systemTracker": "システム・トラッカー (すべてを 1 か所で)",
   "command.tracker.addLibrary": "ライブラリーをライブラリー・リストに追加",
   "command.tracker.cl": "待ち行列コマンドの実行",
-  "command.tracker.copySummary": "システム要約のコピー"
+  "command.tracker.copySummary": "システム要約のコピー",
+  "command.createLibrary": "ライブラリーの作成…",
+  "command.createIfs": "IFS フォルダーまたはファイルの作成…",
+  "command.sourceQuality": "ソース品質レポート",
+  "command.libraryListFromJobd": "ジョブ記述またはユーザー・プロファイルからのライブラリー・リスト…",
+  "command.publicAuthorityScan": "*PUBLIC 権限スキャン",
+  "command.publicAuthority.set": "*PUBLIC 権限の設定",
+  "command.compareSystemValues": "別のシステムとシステム値を比較…"
 }
