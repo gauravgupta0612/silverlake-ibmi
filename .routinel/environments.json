@@ -1,0 +1,15 @@
+{
+  "active": "Local",
+  "environments": [
+    {
+      "name": "Local",
+      "variables": {
+        "baseUrl": "http://localhost:5265"
+      },
+      "auth": {
+        "type": "none"
+      }
+    }
+  ],
+  "globals": {}
+}

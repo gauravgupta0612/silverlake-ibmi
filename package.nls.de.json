@@ -358,5 +358,9 @@
   "command.ifsCcsid": "Zeichensatz (CCSID)…",
   "command.ifsCcsid.change": "Zeichensatz (CCSID) ändern…",
   "command.networkTest": "Kann das IBM i diesen Host erreichen? (ping)…",
-  "command.callWebApi": "Web-API vom IBM i aufrufen…"
+  "command.callWebApi": "Web-API vom IBM i aufrufen…",
+  "command.pdm": "Mit PDM arbeiten…",
+  "command.pdm.key": "PDM-Funktionstaste",
+  "command.pdm.userOptions": "PDM: Benutzerdefinierte Auswahl (F16)…",
+  "config.pdm.userOptions": "Benutzerdefinierte PDM-Auswahl (F16): Auswahlcode → CL-Befehl. Variablen: `&L` Bibliothek, `&F` Datei, `&N` Name, `&T` Art, `&A` Attribut, `&O` Objektbibliothek, `&U` Benutzer, `&X` Text. Integriert: CB, CS, CC, DF, PF (zum Ausblenden auf eine leere Zeichenfolge setzen)."
 }

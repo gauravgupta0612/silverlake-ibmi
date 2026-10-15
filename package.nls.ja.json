@@ -358,5 +358,9 @@
   "command.ifsCcsid": "文字セット (CCSID)…",
   "command.ifsCcsid.change": "文字セット (CCSID) の変更…",
   "command.networkTest": "IBM i からこのホストに到達できますか？ (ping)…",
-  "command.callWebApi": "IBM i から Web API を呼び出す…"
+  "command.callWebApi": "IBM i から Web API を呼び出す…",
+  "command.pdm": "PDM を使用した処理…",
+  "command.pdm.key": "PDM 機能キー",
+  "command.pdm.userOptions": "PDM: ユーザー定義オプション (F16)…",
+  "config.pdm.userOptions": "PDM ユーザー定義オプション (F16): オプション・コード → CL コマンド。変数: `&L` ライブラリー、`&F` ファイル、`&N` 名前、`&T` タイプ、`&A` 属性、`&O` オブジェクト・ライブラリー、`&U` ユーザー、`&X` テキスト。組み込み: CB、CS、CC、DF、PF (非表示にするには空ストリングを設定)。"
 }

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { isPdmCommand } from './pdmView';
 import { ConnectionManager } from '../core/manager';
 import { SqlResult } from '../core/sql';
 import { errorMessage, logError, showLog } from '../core/log';
@@ -207,6 +208,7 @@ export function registerSql(context: vscode.ExtensionContext, manager: Connectio
         }
         cmd = cmd?.trim();
         if (!cmd) { return; }
+        if (isPdmCommand(cmd)) { await vscode.commands.executeCommand('vanthrex.pdm', cmd); return; }
         const r = await vscode.window.withProgress(
           { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Running {0}…', cmd.split(/\s|\(/)[0]) },
           () => conn.runCL(cmd!));

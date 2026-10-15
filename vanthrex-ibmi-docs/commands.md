@@ -7,7 +7,7 @@ parent: "Reference"
 
 # Commands
 
-All 250 commands contributed by Vanthrex for IBM i 2.1.0. Run any of them from the
+All 253 commands contributed by Vanthrex for IBM i 2.2.0. Run any of them from the
 Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-click menus and view toolbars.
 
 | Command | ID | Keys |
@@ -162,6 +162,8 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Open Spooled File | `vanthrex.spoolOpen` |  |
 | Open System Dashboard | `vanthrex.openDashboard` |  |
 | Options | `vanthrex.extras.row` |  |
+| PDM Function Key | `vanthrex.pdm.key` | F12 / F13 / F16 / F17 / F21 / F23 / F3 / F5 / F6 / Shift+F1 / Shift+F11 / Shift+F4 / Shift+F5 / Shift+F9 |
+| PDM: User-Defined Options (F16)… | `vanthrex.pdm.userOptions` |  |
 | Performance Monitor | `vanthrex.performanceMonitor` |  |
 | Permissions… | `vanthrex.ifsPermissions` |  |
 | Powerful User Profiles | `vanthrex.secadm.powerful` |  |
@@ -260,6 +262,7 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Work with TCP/IP Connections (NETSTAT) | `vanthrex.wrkConnections` |  |
 | Work with TCP/IP Servers | `vanthrex.wrkTcpServers` |  |
 | Work with User Profiles | `vanthrex.wrkUserProfiles` |  |
+| Work with Using PDM… | `vanthrex.pdm` |  |
 | Work with: Options | `vanthrex.ww.row` |  |
 | Write CREATE INDEX for Advised Index | `vanthrex.explain.createIndexSql` |  |
 

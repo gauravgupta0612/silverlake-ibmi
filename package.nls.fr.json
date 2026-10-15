@@ -358,5 +358,9 @@
   "command.ifsCcsid": "Jeu de caractères (CCSID)…",
   "command.ifsCcsid.change": "Modifier le jeu de caractères (CCSID)…",
   "command.networkTest": "L'IBM i peut-il joindre cet hôte ? (ping)…",
-  "command.callWebApi": "Appeler une API Web depuis l'IBM i…"
+  "command.callWebApi": "Appeler une API Web depuis l'IBM i…",
+  "command.pdm": "Gérer avec PDM…",
+  "command.pdm.key": "Touche de fonction PDM",
+  "command.pdm.userOptions": "PDM : options définies par l'utilisateur (F16)…",
+  "config.pdm.userOptions": "Options PDM définies par l'utilisateur (F16) : code option → commande CL. Variables : `&L` bibliothèque, `&F` fichier, `&N` nom, `&T` type, `&A` attribut, `&O` bibliothèque d'objets, `&U` utilisateur, `&X` texte. Prédéfinies : CB, CS, CC, DF, PF (définissez-en une sur une chaîne vide pour la masquer)."
 }

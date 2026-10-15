@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -1590,6 +1590,23 @@
         "title": "%command.callWebApi%",
         "category": "Vanthrex",
         "icon": "$(globe)"
+      },
+      {
+        "command": "vanthrex.pdm",
+        "title": "%command.pdm%",
+        "category": "Vanthrex",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "title": "%command.pdm.key%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.pdm.userOptions",
+        "title": "%command.pdm.userOptions%",
+        "category": "Vanthrex",
+        "icon": "$(settings-gear)"
       }
     ],
     "menus": {
@@ -1728,6 +1745,11 @@
           "command": "vanthrex.activeSql",
           "when": "view == vanthrex.jobs",
           "group": "navigation@5"
+        },
+        {
+          "command": "vanthrex.pdm",
+          "when": "view == vanthrex.libraries",
+          "group": "navigation@0"
         }
       ],
       "view/item/context": [
@@ -2290,6 +2312,11 @@
           "command": "vanthrex.ifsCcsid",
           "when": "view == vanthrex.ifs && viewItem =~ /^ifs/",
           "group": "1_open@8"
+        },
+        {
+          "command": "vanthrex.pdm",
+          "when": "view == vanthrex.libraries && viewItem =~ /^(library|srcfile|folder\\..*|object\\.file)$/",
+          "group": "0_pdm@0"
         }
       ],
       "editor/title": [
@@ -2857,6 +2884,17 @@
         {
           "command": "vanthrex.callWebApi",
           "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.pdm",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.pdm.key",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.pdm.userOptions"
         }
       ],
       "vanthrex.ai": [
@@ -2951,6 +2989,90 @@
         "key": "ctrl+alt+g",
         "mac": "cmd+alt+g",
         "when": "vanthrex.connected && editorLangId =~ /^(rpgle|cl)$/"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "f3",
+        "args": "F3",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "f5",
+        "args": "F5",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "f6",
+        "args": "F6",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "f12",
+        "args": "F12",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "f13",
+        "args": "F13",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "shift+f1",
+        "args": "F13",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "f16",
+        "args": "F16",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "shift+f4",
+        "args": "F16",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "f17",
+        "args": "F17",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "shift+f5",
+        "args": "F17",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "f21",
+        "args": "F21",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "shift+f9",
+        "args": "F21",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "f23",
+        "args": "F23",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.pdm.key",
+        "key": "shift+f11",
+        "args": "F23",
+        "when": "activeWebviewPanelId == 'vanthrex.pdm'"
       }
     ],
     "languages": [
@@ -3544,6 +3666,14 @@
           },
           "default": [],
           "description": "%config.scan.allowedLibraries%"
+        },
+        "vanthrex.pdm.userOptions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "markdownDescription": "%config.pdm.userOptions%"
         }
       }
     },

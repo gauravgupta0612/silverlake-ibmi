@@ -358,5 +358,9 @@
   "command.ifsCcsid": "Character Set (CCSID)…",
   "command.ifsCcsid.change": "Change Character Set (CCSID)…",
   "command.networkTest": "Can the IBM i Reach This Host? (Ping)…",
-  "command.callWebApi": "Call a Web API from the IBM i…"
+  "command.callWebApi": "Call a Web API from the IBM i…",
+  "command.pdm": "Work with Using PDM…",
+  "command.pdm.key": "PDM Function Key",
+  "command.pdm.userOptions": "PDM: User-Defined Options (F16)…",
+  "config.pdm.userOptions": "PDM user-defined options (F16): option code → CL command. Variables: `&L` library, `&F` file, `&N` name, `&T` type, `&A` attribute, `&O` object library, `&U` user, `&X` text. Built-in: CB, CS, CC, DF, PF (set one to an empty string to hide it)."
 }

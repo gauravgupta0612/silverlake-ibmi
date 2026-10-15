@@ -161,6 +161,7 @@ export function registerBrowseCommands(
       { label: vscode.l10n.t('$(symbol-variable) Data area…'), cmd: 'vanthrex.dataArea' },
       { label: vscode.l10n.t('$(pulse) PTF & system health…'), cmd: 'vanthrex.systemHealth' },
       { label: vscode.l10n.t('$(search) Find & open member…'), cmd: 'vanthrex.findMember' },
+      { label: vscode.l10n.t('$(list-selection) Work with using PDM…'), cmd: 'vanthrex.pdm' },
       { label: vscode.l10n.t('$(library) Add library to list…'), cmd: 'vanthrex.addLibrary' },
       { label: vscode.l10n.t('$(folder-opened) Go to IFS directory…'), cmd: 'vanthrex.ifsChangeRoot' },
       { label: vscode.l10n.t('$(output) Show output log'), cmd: 'vanthrex.showOutput' },

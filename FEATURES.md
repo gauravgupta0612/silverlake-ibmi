@@ -643,6 +643,12 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 - **Character Set (CCSID)…** on an IFS file or folder: see, tag or convert the CCSID.
 - **Can the IBM i Reach This Host? (Ping)…** and **Call a Web API from the IBM i…**: test connectivity and REST services from the system itself.
 
+### 69. PDM in one screen — new in 2.2
+
+- **Work with Using PDM…** (right-click a library, source file or file; Libraries view toolbar; quick menu; or `WRKMBRPDM` / `WRKOBJPDM` / `WRKLIBPDM` / `STRPDM` in Run CL Command): libraries, objects and members in one screen with the PDM option numbers, typed on many rows and run with Enter.
+- **F-keys:** F3, F5, F6 create, F12 back, F13 repeat, F16 user-defined options, F17 subset, F21 CSV export, F23 more options (Shift+F1…F12 = F13…F24).
+- **User-defined options** with &L &F &N &T &A &O &U &X (`vanthrex.pdm.userOptions`), plus extra options PDM never had: GH, UC, HL, WU, LK, DP, SF, LL, CL.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
