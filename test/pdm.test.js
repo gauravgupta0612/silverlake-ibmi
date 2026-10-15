@@ -94,3 +94,11 @@ test('subset by compile status and locks, type counts', () => {
   assert.deepStrictEqual(p.applySubset(rows, { locked: true }).map(r => r.name), ['B']);
   assert.deepStrictEqual(p.typeCounts(rows), [['RPGLE', 2], ['CLLE', 1]]);
 });
+
+test('several source files', () => {
+  assert.ok(p.isMultiFile('*ALL') && p.isMultiFile('q*src') && !p.isMultiFile('QRPGLESRC') && !p.isMultiFile(undefined));
+  assert.strictEqual(p.likePattern('*ALL'), '%');
+  assert.strictEqual(p.likePattern('q*src'), 'Q%SRC');
+  assert.throws(() => p.likePattern("A' OR 1=1"));
+  assert.ok(p.optionsFor('libraries').some(o => o.code === 'AM'));
+});

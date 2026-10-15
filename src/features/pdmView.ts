@@ -7,7 +7,7 @@ import { IbmiConnection } from '../core/connection';
 import { errorMessage, logError } from '../core/log';
 import { sqlString } from '../core/util';
 import {
-  DEFAULT_USER_OPTIONS, PdmLevel, PdmRow, PdmTarget, Subset, addMemberCommand, changesSomething, clError, objectStatus, printMemberCommand, typeCounts, applySubset, changeMemberCommand, copyMemberCommand,
+  DEFAULT_USER_OPTIONS, isMultiFile, likePattern, PdmLevel, PdmRow, PdmTarget, Subset, addMemberCommand, changesSomething, clError, objectStatus, printMemberCommand, typeCounts, applySubset, changeMemberCommand, copyMemberCommand,
   createLibraryCommand, createModuleCommand, deleteObjectCommand, duplicateObjectCommand, libraryTextCommand, moveObjectCommand,
   objectTextCommand, optionsFor, parseEntries, parsePdmCommand, removeMemberCommand, renameMemberCommand, renameObjectCommand, rowsToCsv,
   substitutePdm, validUserOptionCode,
@@ -36,7 +36,7 @@ function optionLabel(label: string): string {
     'Who has it locked': vscode.l10n.t('Who has it locked'), 'What depends on this file': vscode.l10n.t('What depends on this file'),
     'Display objects': vscode.l10n.t('Display objects'), 'Work with objects': vscode.l10n.t('Work with objects'),
     'Work with source files': vscode.l10n.t('Work with source files'), 'Add to library list': vscode.l10n.t('Add to library list'),
-    'Set as current library': vscode.l10n.t('Set as current library'),
+    'Set as current library': vscode.l10n.t('Set as current library'), 'Work with all members': vscode.l10n.t('Work with all members'),
   };
   return t[label] ?? label;
 }
@@ -75,7 +75,10 @@ class PdmPanel {
   }
 
   private get conn(): IbmiConnection { return this.manager.require(); }
-  private key(r: PdmRow): string { return `${r.name}|${r.type}`; }
+  private key(r: PdmRow): string { return `${r.file ? `${r.file}/` : ''}${r.name}|${r.type}`; }
+  /** Source file of a member row (the list can span several source files). */
+  private f(r: PdmRow): string { return r.file ?? this.loc.file!; }
+  private get multi(): boolean { return this.loc.level === 'members' && isMultiFile(this.loc.file); }
 
   // ------------------------------------------------------------ navigation
 
@@ -83,6 +86,7 @@ class PdmPanel {
     const lib = t.library?.trim().toUpperCase();
     const file = t.file?.trim().toUpperCase();
     const next: Loc = { level: t.level, library: lib, file, subset: { name: t.name, type: t.type } };
+    if (next.level === 'members' && isMultiFile(file) && (!lib || lib === '*LIBL')) { throw new Error(vscode.l10n.t('With FILE(*ALL) or a generic file name, enter the library too, e.g. MYLIB/*ALL.')); }
     if (next.level === 'members' && (!lib || lib === '*LIBL' || lib === '*CURLIB')) { next.library = await this.resolveFile(file ?? '', lib); }
     if (next.level === 'objects' && (!lib || lib === '*CURLIB')) { next.library = this.conn.profile.currentLibrary?.toUpperCase() || 'QGPL'; }
     if (remember && this.rowsLoaded()) { this.back.push(this.loc); }
@@ -130,22 +134,33 @@ class PdmPanel {
   }
 
   private async members(lib: string, file: string): Promise<PdmRow[]> {
+    const multi = isMultiFile(file);
+    // One source file, or every source file matching *ALL / a generic name.
+    const files = multi
+      ? `IN (SELECT SYSTEM_TABLE_NAME FROM QSYS2.SYSTABLES WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND FILE_TYPE = 'S' AND SYSTEM_TABLE_NAME LIKE ${sqlString(likePattern(file))})`
+      : `= ${sqlString(file)}`;
     const rows = await this.conn.rows<Row>(
-      `SELECT SYSTEM_TABLE_MEMBER AS N, COALESCE(SOURCE_TYPE, '') AS T, COALESCE(PARTITION_TEXT, '') AS X, ` +
+      `SELECT SYSTEM_TABLE_NAME AS F, SYSTEM_TABLE_MEMBER AS N, COALESCE(SOURCE_TYPE, '') AS T, COALESCE(PARTITION_TEXT, '') AS X, ` +
       `VARCHAR(COALESCE(LAST_SOURCE_UPDATE_TIMESTAMP, LAST_CHANGE_TIMESTAMP)) AS C, NUMBER_ROWS AS R ` +
-      `FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND SYSTEM_TABLE_NAME = ${sqlString(file)} ORDER BY 1`, 50000);
+      `FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND SYSTEM_TABLE_NAME ${files} ORDER BY ${multi ? '2, 1' : '2'}`, 100000);
+    if (!rows.length) {
+      // Say why the list is empty: no such file, not a source file, or simply no members.
+      const f = await this.conn.rows<Row>(`SELECT FILE_TYPE AS T FROM QSYS2.SYSTABLES WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND SYSTEM_TABLE_NAME ${multi ? `LIKE ${sqlString(likePattern(file))}` : `= ${sqlString(file)}`}`, 5).catch(() => [] as Row[]);
+      if (!f.length) { this.message = multi ? vscode.l10n.t('No source files match {0} in {1}.', file, lib) : vscode.l10n.t('File {0} was not found in {1}. Tip: type *ALL in File to see the members of every source file.', file, lib); }
+      else if (multi && !f.some(x => s(x, 'T') === 'S')) { this.message = vscode.l10n.t('No source files match {0} in {1}.', file, lib); }
+    }
     const objLib = (this.conn.profile.objectLibrary || lib).toUpperCase();
     const [locks, objs] = await Promise.all([
-      this.conn.rows<Row>(`SELECT SYSTEM_TABLE_MEMBER AS M, MAX(JOB_NAME) AS J FROM QSYS2.OBJECT_LOCK_INFO WHERE SYSTEM_OBJECT_SCHEMA = ${sqlString(lib)} ` +
-        `AND SYSTEM_OBJECT_NAME = ${sqlString(file)} AND OBJECT_TYPE = '*FILE' AND SYSTEM_TABLE_MEMBER IS NOT NULL GROUP BY SYSTEM_TABLE_MEMBER`, 5000).catch(() => [] as Row[]),
+      this.conn.rows<Row>(`SELECT SYSTEM_OBJECT_NAME AS F, SYSTEM_TABLE_MEMBER AS M, MAX(JOB_NAME) AS J FROM QSYS2.OBJECT_LOCK_INFO WHERE SYSTEM_OBJECT_SCHEMA = ${sqlString(lib)} ` +
+        `AND SYSTEM_OBJECT_NAME ${files} AND OBJECT_TYPE = '*FILE' AND SYSTEM_TABLE_MEMBER IS NOT NULL GROUP BY SYSTEM_OBJECT_NAME, SYSTEM_TABLE_MEMBER`, 5000).catch(() => [] as Row[]),
       this.conn.rows<Row>(`SELECT OBJNAME AS N, OBJTYPE AS T, VARCHAR(OBJCREATED) AS C FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(objLib)}, '*PGM *MODULE *FILE *CMD *MENU')) X`, 50000).catch(() => [] as Row[]),
     ]);
-    const lockBy = new Map(locks.map(r => [s(r, 'M'), s(r, 'J')]));
+    const lockBy = new Map(locks.map(r => [`${s(r, 'F') || file}/${s(r, 'M')}`, s(r, 'J')]));
     const byName = new Map<string, { type: string; created: string }[]>();
     for (const o of objs) { const k = s(o, 'N'); if (!byName.has(k)) { byName.set(k, []); } byName.get(k)!.push({ type: s(o, 'T'), created: s(o, 'C') }); }
     return rows.map(r => ({
-      name: s(r, 'N'), type: s(r, 'T'), text: s(r, 'X'), changed: s(r, 'C').slice(0, 16), size: Number(r.R ?? 0),
-      lockedBy: lockBy.get(s(r, 'N')) ?? '', objStatus: objectStatus(s(r, 'T'), s(r, 'C'), byName.get(s(r, 'N')) ?? []),
+      name: s(r, 'N'), type: s(r, 'T'), file: s(r, 'F') || file, text: s(r, 'X'), changed: s(r, 'C').slice(0, 16), size: Number(r.R ?? 0),
+      lockedBy: lockBy.get(`${s(r, 'F') || file}/${s(r, 'N')}`) ?? '', objStatus: objectStatus(s(r, 'T'), s(r, 'C'), byName.get(s(r, 'N')) ?? []),
     }));
   }
 
@@ -185,7 +200,7 @@ class PdmPanel {
     const user = Object.keys(userOptions()).filter(k => validUserOptionCode(k, l.level)).sort();
     this.post({
       t: 'data', level: l.level, library: l.library ?? '', file: l.file ?? '', subset: l.subset, canBack: this.back.length > 0,
-      rows: view.map(r => ({ k: this.key(r), name: r.name, type: r.type, attribute: r.attribute ?? '', text: r.text, changed: r.changed ?? '', size: r.size ?? '', lock: r.lockedBy ?? '', obj: r.objStatus ?? '' })),
+      multi: this.multi, rows: view.map(r => ({ k: this.key(r), name: r.name, file: r.file ?? '', type: r.type, attribute: r.attribute ?? '', text: r.text, changed: r.changed ?? '', size: r.size ?? '', lock: r.lockedBy ?? '', obj: r.objStatus ?? '' })),
       total: this.rows.length, options: opts, user, statuses: this.statuses, message: this.message, retry: this.retry,
       types: typeCounts(this.rows), canUndo: this.lastDeleted.length > 0,
       objLib: l.level === 'members' ? (this.conn.profile.objectLibrary || l.library || '').toUpperCase() : '',
@@ -269,7 +284,7 @@ class PdmPanel {
     // Options that act on the whole batch first.
     const deletes = list.filter(e => e.option === '4');
     if (deletes.length) {
-      const names = deletes.map(e => (l.level === 'objects' ? `${e.row.name} ${e.row.type}` : e.row.name)).join(', ');
+      const names = deletes.map(e => (l.level === 'objects' ? `${e.row.name} ${e.row.type}` : this.multi ? `${this.f(e.row)}/${e.row.name}` : e.row.name)).join(', ');
       const yes = vscode.l10n.t('Delete');
       const go = await vscode.window.showWarningMessage(vscode.l10n.t('Delete {0} item(s) from {1}? {2}', deletes.length, l.level === 'members' ? `${l.library}/${l.file}` : l.library ?? '', names.slice(0, 600)), { modal: true }, yes);
       if (go === yes && l.level === 'members') { this.lastDeleted = []; }
@@ -280,16 +295,16 @@ class PdmPanel {
             if (e.row.lockedBy) { throw new Error(vscode.l10n.t('In use by {0}.', e.row.lockedBy)); }
             // Keep a copy first, so F9 can bring it back.
             let source: string | undefined;
-            try { source = await this.conn.readMember(l.library!, l.file!, e.row.name); } catch (x) {
+            try { source = await this.conn.readMember(l.library!, this.f(e.row), e.row.name); } catch (x) {
               const anyway = vscode.l10n.t('Delete anyway');
               if (await vscode.window.showWarningMessage(vscode.l10n.t('{0} could not be backed up ({1}). Delete it anyway?', e.row.name, errorMessage(x).split('\n')[0]), { modal: true }, anyway) !== anyway) {
                 this.statuses[this.key(e.row)] = vscode.l10n.t('not deleted'); continue;
               }
             }
-            await run(e.row, removeMemberCommand(l.library!, l.file!, e.row.name));
+            await run(e.row, removeMemberCommand(l.library!, this.f(e.row), e.row.name));
             if (source !== undefined) {
-              this.lastDeleted.push({ library: l.library!, file: l.file!, name: e.row.name, type: e.row.type, text: e.row.text, source });
-              await this.backupToDisk(l.library!, l.file!, e.row.name, e.row.type, source);
+              this.lastDeleted.push({ library: l.library!, file: this.f(e.row), name: e.row.name, type: e.row.type, text: e.row.text, source });
+              await this.backupToDisk(l.library!, this.f(e.row), e.row.name, e.row.type, source);
             }
           } else {
             await run(e.row, deleteObjectCommand(l.library!, e.row.name, e.row.type));
@@ -301,8 +316,8 @@ class PdmPanel {
     const compare = list.filter(e => e.option === '54');
     if (compare.length) {
       if (compare.length !== 2) { this.message = vscode.l10n.t('Option 54 compares two members: type it on exactly two rows.'); } else {
-        const [a, b] = compare.map(e => memberUri(l.library!, l.file!, e.row.name, e.row.type));
-        await vscode.commands.executeCommand('vscode.diff', a, b, `${compare[0].row.name} ↔ ${compare[1].row.name}`);
+        const [a, b] = compare.map(e => memberUri(l.library!, this.f(e.row), e.row.name, e.row.type));
+        await vscode.commands.executeCommand('vscode.diff', a, b, `${this.multi ? `${this.f(compare[0].row)}/` : ''}${compare[0].row.name} ↔ ${this.multi ? `${this.f(compare[1].row)}/` : ''}${compare[1].row.name}`);
         compare.forEach(e => ok(e.row));
       }
     }
@@ -315,10 +330,10 @@ class PdmPanel {
       if (tok?.isCancellationRequested) { this.statuses[this.key(r)] = vscode.l10n.t('cancelled'); this.retry[this.key(r)] = option; continue; }
       progress?.report({ message: `${option} ${r.name}`, increment: 100 / rest.length });
       try {
-        const uri = l.level === 'members' ? memberUri(l.library!, l.file!, r.name, r.type) : undefined;
+        const uri = l.level === 'members' ? memberUri(l.library!, this.f(r), r.name, r.type) : undefined;
         const obj = { library: l.library!, name: r.name, type: r.type, attribute: r.attribute ?? '', text: r.text };
         if (userCodes.includes(option)) {
-          const cmd = substitutePdm(user[option], { library: l.level === 'libraries' ? r.name : l.library!, file: l.file, name: r.name, type: r.type, attribute: r.attribute,
+          const cmd = substitutePdm(user[option], { library: l.level === 'libraries' ? r.name : l.library!, file: l.level === 'members' ? this.f(r) : l.file, name: r.name, type: r.type, attribute: r.attribute,
             objectLibrary: this.conn.profile.objectLibrary || this.conn.profile.currentLibrary || l.library || 'QGPL', user: this.conn.user, text: r.text });
           await run(r, `${cmd}${params.trim() ? ` ${params.trim()}` : ''}`);
           continue;
@@ -328,23 +343,23 @@ class PdmPanel {
             case '2': await vscode.window.showTextDocument(uri!, { preview: false }); ok(r); break;
             case '5': await vscode.window.showTextDocument(uri!, { preview: true }); await vscode.commands.executeCommand('workbench.action.files.setActiveEditorReadonlyInSession'); ok(r); break;
             case '3': {
-              copyTo = copyTo ?? await ask(vscode.l10n.t('Copy members to (LIBRARY/FILE)'), `${l.library}/${l.file}`);
+              copyTo = copyTo ?? await ask(vscode.l10n.t('Copy members to (LIBRARY/FILE)'), `${l.library}/${this.f(r)}`);
               if (!copyTo) { return; }
               const [tl, tf] = copyTo.toUpperCase().split('/');
-              const same = tl === l.library && tf === l.file;
+              const same = tl === l.library && tf === this.f(r);
               const to = await ask(vscode.l10n.t('Copy {0} as', r.name), same ? '' : r.name, true);
               if (!to) { continue; }
               const exists = await this.conn.rows(`SELECT 1 AS X FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(tl)} AND SYSTEM_TABLE_NAME = ${sqlString(tf ?? '')} AND SYSTEM_TABLE_MEMBER = ${sqlString(to.toUpperCase())}`, 1).catch(() => []);
               if (exists.length && await vscode.window.showWarningMessage(vscode.l10n.t('{0} already exists in {1}. Replace it?', to.toUpperCase(), copyTo.toUpperCase()), { modal: true }, vscode.l10n.t('Replace')) !== vscode.l10n.t('Replace')) { continue; }
-              await run(r, copyMemberCommand(l.library!, l.file!, r.name, tl, tf ?? '', to)); break;
+              await run(r, copyMemberCommand(l.library!, this.f(r), r.name, tl, tf ?? '', to)); break;
             }
-            case '6': await run(r, printMemberCommand(l.library!, l.file!, r.name)); this.message = vscode.l10n.t('Printed to your output queue — see the Spooled Files view.'); break;
+            case '6': await run(r, printMemberCommand(l.library!, this.f(r), r.name)); this.message = vscode.l10n.t('Printed to your output queue — see the Spooled Files view.'); break;
             case '7': {
               const to = await ask(vscode.l10n.t('Rename {0} to', r.name), r.name, true);
               if (!to || to.toUpperCase() === r.name) { break; }
-              if (this.rows.some(x => x.name === to.toUpperCase())) { throw new Error(vscode.l10n.t('{0} already exists.', to.toUpperCase())); }
+              if (this.rows.some(x => x.name === to.toUpperCase() && this.f(x) === this.f(r))) { throw new Error(vscode.l10n.t('{0} already exists.', to.toUpperCase())); }
               if (r.lockedBy) { throw new Error(vscode.l10n.t('In use by {0}.', r.lockedBy)); }
-              await run(r, renameMemberCommand(l.library!, l.file!, r.name, to)); break;
+              await run(r, renameMemberCommand(l.library!, this.f(r), r.name, to)); break;
             }
             case '8': await this.describeMember(r); ok(r); break;
             case '13': {
@@ -352,10 +367,10 @@ class PdmPanel {
               if (text === undefined) { continue; }
               const type = await vscode.window.showInputBox({ title: vscode.l10n.t('Source type of {0}', r.name), value: r.type, ignoreFocusOut: true });
               if (type === undefined) { continue; }
-              await run(r, changeMemberCommand(l.library!, l.file!, r.name, text, type)); break;
+              await run(r, changeMemberCommand(l.library!, this.f(r), r.name, text, type)); break;
             }
             case '14': await vscode.commands.executeCommand('vanthrex.compile', { resourceUri: uri }); ok(r); break;
-            case '15': await run(r, createModuleCommand(l.library!, l.file!, r.name, r.type, this.conn.profile.objectLibrary || this.conn.profile.currentLibrary || l.library!)); break;
+            case '15': await run(r, createModuleCommand(l.library!, this.f(r), r.name, r.type, this.conn.profile.objectLibrary || this.conn.profile.currentLibrary || l.library!)); break;
             case '16': await vscode.commands.executeCommand('vanthrex.showHistory', uri); ok(r); break;
             case 'GH': await vscode.commands.executeCommand('vanthrex.git.memberHistory', uri); ok(r); break;
             case 'UC': await vscode.window.showTextDocument(uri!, { preview: false }); await vscode.commands.executeCommand('vanthrex.unusedCode'); ok(r); break;
@@ -391,6 +406,7 @@ class PdmPanel {
           switch (option) {
             case '5': case '12': await this.go({ level: 'objects', library: r.name }); navigated = true; return;
             case 'SF': await this.go({ level: 'objects', library: r.name, type: 'PF-SRC' }); navigated = true; return;
+            case 'AM': await this.go({ level: 'members', library: r.name, file: '*ALL' }); navigated = true; return;
             case '8': await vscode.commands.executeCommand('vanthrex.objectInfo', { library: 'QSYS', name: r.name, type: '*LIB' }); ok(r); break;
             case '13': { const text = await vscode.window.showInputBox({ title: vscode.l10n.t('Text of {0}', r.name), value: r.text, ignoreFocusOut: true }); if (text !== undefined) { await run(r, libraryTextCommand(r.name, text)); } break; }
             case 'LL': await this.manager.updateActiveProfile(p => { if (!p.libraries.map(x => x.toUpperCase()).includes(r.name)) { p.libraries = [r.name, ...p.libraries]; } }); ok(r); break;
@@ -429,16 +445,23 @@ class PdmPanel {
   private async create(): Promise<void> {
     const l = this.loc;
     if (l.level === 'members') {
-      const name = await ask(vscode.l10n.t('New member in {0}/{1}', l.library!, l.file!), '', true);
+      let file = l.file!;
+      if (this.multi) {
+        const files = [...new Set(this.rows.map(r => this.f(r)))].sort();
+        const pickd = await vscode.window.showQuickPick(files.length ? files : ['QRPGLESRC'], { title: vscode.l10n.t('New member: which source file?') });
+        if (!pickd) { return; }
+        file = pickd;
+      }
+      const name = await ask(vscode.l10n.t('New member in {0}/{1}', l.library!, file), '', true);
       if (!name) { return; }
-      const types = [...new Set(this.rows.map(r => r.type).filter(Boolean))];
+      const types = [...new Set(this.rows.filter(r => this.f(r) === file).map(r => r.type).filter(Boolean))];
       const type = await vscode.window.showInputBox({ title: vscode.l10n.t('Source type'), value: types[0] ?? 'RPGLE', ignoreFocusOut: true });
       if (type === undefined) { return; }
       const text = await vscode.window.showInputBox({ title: vscode.l10n.t('Text (optional)'), ignoreFocusOut: true }) ?? '';
-      const r = await this.conn.runCL(addMemberCommand(l.library!, l.file!, name, type, text));
+      const r = await this.conn.runCL(addMemberCommand(l.library!, file, name, type, text));
       if (!r.ok) { throw new Error((r.stderr || r.stdout).trim()); }
       await this.load();
-      await vscode.window.showTextDocument(memberUri(l.library!, l.file!, name.toUpperCase(), type), { preview: false });
+      await vscode.window.showTextDocument(memberUri(l.library!, file, name.toUpperCase(), type), { preview: false });
     } else if (l.level === 'objects') {
       await vscode.commands.executeCommand('vanthrex.newSourceFile', { kind: 'library', library: l.library, current: false });
       await this.load();
@@ -477,7 +500,7 @@ class PdmPanel {
         const r = await this.conn.runCL(addMemberCommand(d.library, d.file, d.name, d.type, d.text));
         if (!r.ok) { throw new Error(clError(r.stdout, r.stderr)); }
         await this.conn.writeMember(d.library, d.file, d.name, d.source);
-        this.statuses[`${d.name}|${d.type}`] = vscode.l10n.t('✓ restored');
+        this.statuses[`${d.file}/${d.name}|${d.type}`] = vscode.l10n.t('✓ restored');
       } catch (e) { failed.push(`${d.name}: ${errorMessage(e).split('\n')[0]}`); }
     }
     this.lastDeleted = failed.length ? list.filter(d => failed.some(f => f.startsWith(`${d.name}:`))) : [];
@@ -490,15 +513,15 @@ class PdmPanel {
     const l = this.loc;
     const r = this.rows.find(x => this.key(x) === k);
     if (!r || l.level !== 'members') { return; }
-    const ck = `${l.library}/${l.file}/${k}/${r.changed}`;
+    const ck = `${l.library}/${k}/${r.changed}`;
     try {
       let text = this.previewCache.get(ck);
       if (text === undefined) {
-        text = (await this.conn.readMember(l.library!, l.file!, r.name)).split(/\r?\n/).slice(0, 300).join('\n');
+        text = (await this.conn.readMember(l.library!, this.f(r), r.name)).split(/\r?\n/).slice(0, 300).join('\n');
         if (this.previewCache.size > 200) { this.previewCache.clear(); }
         this.previewCache.set(ck, text);
       }
-      this.post({ t: 'preview', k, title: `${r.name}.${r.type.toLowerCase()} — ${r.text}`, text });
+      this.post({ t: 'preview', k, title: `${this.multi ? `${this.f(r)}/` : ''}${r.name}.${r.type.toLowerCase()} — ${r.text}`, text });
     } catch (e) {
       this.post({ t: 'preview', k, title: r.name, text: `✗ ${errorMessage(e).split('\n')[0]}` });
     }
@@ -506,10 +529,10 @@ class PdmPanel {
 
   private async describeMember(r: PdmRow): Promise<void> {
     const l = this.loc;
-    const rows = await this.conn.rows<Row>(`SELECT * FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(l.library!)} AND SYSTEM_TABLE_NAME = ${sqlString(l.file!)} AND SYSTEM_TABLE_MEMBER = ${sqlString(r.name)}`, 1);
+    const rows = await this.conn.rows<Row>(`SELECT * FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(l.library!)} AND SYSTEM_TABLE_NAME = ${sqlString(this.f(r))} AND SYSTEM_TABLE_MEMBER = ${sqlString(r.name)}`, 1);
     const d = rows[0];
     showReport('pdmMember', {
-      title: `${l.library}/${l.file}(${r.name})`, subtitle: r.text,
+      title: `${l.library}/${this.f(r)}(${r.name})`, subtitle: r.text,
       facts: [[vscode.l10n.t('Source type'), r.type], [vscode.l10n.t('Lines'), s(d, 'NUMBER_ROWS')], [vscode.l10n.t('Size (bytes)'), s(d, 'DATA_SIZE')],
         [vscode.l10n.t('Created'), s(d, 'CREATE_TIMESTAMP')], [vscode.l10n.t('Source last changed'), s(d, 'LAST_SOURCE_UPDATE_TIMESTAMP')],
         [vscode.l10n.t('Last changed'), s(d, 'LAST_CHANGE_TIMESTAMP')], [vscode.l10n.t('Last used'), s(d, 'LAST_USED_TIMESTAMP')], [vscode.l10n.t('Days used'), s(d, 'DAYS_USED_COUNT')]],
@@ -527,7 +550,7 @@ class PdmPanel {
         if (tok.isCancellationRequested) { break; }
         p.report({ message: m.name, increment: 100 / rows.length });
         try {
-          const src = await this.conn.readMember(l.library!, l.file!, m.name);
+          const src = await this.conn.readMember(l.library!, this.f(m), m.name);
           src.split(/\r?\n/).forEach((x, i) => { if (x.toLowerCase().includes(needle)) { hits.push({ m, line: i, src: x.trim().slice(0, 160) }); } });
           this.statuses[this.key(m)] = '✓';
         } catch (e) { this.statuses[this.key(m)] = `✗ ${errorMessage(e).split('\n')[0]}`; }
@@ -537,8 +560,8 @@ class PdmPanel {
       title: vscode.l10n.t('"{0}" in {1}/{2}', text.trim(), l.library!, l.file!),
       subtitle: vscode.l10n.t('{0} line(s) in {1} member(s). Click a line to open it.', hits.length, new Set(hits.map(h => h.m.name)).size),
       tables: [{ title: vscode.l10n.t('Lines'), filter: true, columns: [vscode.l10n.t('Member'), vscode.l10n.t('Line'), vscode.l10n.t('Source')],
-        rows: hits.map(h => [h.m.name, h.line + 1, h.src]),
-        rowActions: hits.map(h => ({ label: vscode.l10n.t('Open'), command: 'vanthrex.v22.gotoLine', args: [memberUri(l.library!, l.file!, h.m.name, h.m.type).toString(), h.line] })),
+        rows: hits.map(h => [this.multi ? `${this.f(h.m)}/${h.m.name}` : h.m.name, h.line + 1, h.src]),
+        rowActions: hits.map(h => ({ label: vscode.l10n.t('Open'), command: 'vanthrex.v22.gotoLine', args: [memberUri(l.library!, this.f(h.m), h.m.name, h.m.type).toString(), h.line] })),
         empty: vscode.l10n.t('Not found.') }],
     }, ALLOWED);
   }
@@ -565,7 +588,7 @@ class PdmPanel {
       size: vscode.l10n.t('Size / lines'), status: vscode.l10n.t('Status'), opt: vscode.l10n.t('Opt'), typeOptions: vscode.l10n.t('Type options, press Enter.'),
       params: vscode.l10n.t('Parameters or command'), enter: vscode.l10n.t('Enter'), user: vscode.l10n.t('User options'), of: vscode.l10n.t('of'),
       more: vscode.l10n.t('More…'), empty: vscode.l10n.t('(No items match)'), go: vscode.l10n.t('Go'), clear: vscode.l10n.t('Clear'),
-      obj: vscode.l10n.t('Object'), lock: vscode.l10n.t('In use by'), needsCompile: vscode.l10n.t('Needs compile'), locked: vscode.l10n.t('In use'),
+      fileTip: vscode.l10n.t('A source file, *ALL for every source file of the library, or a generic name like Q*SRC'), obj: vscode.l10n.t('Object'), lock: vscode.l10n.t('In use by'), needsCompile: vscode.l10n.t('Needs compile'), locked: vscode.l10n.t('In use'),
       preview: vscode.l10n.t('Preview'), stale: vscode.l10n.t('source newer'), none: vscode.l10n.t('not compiled'), current: vscode.l10n.t('up to date'),
       objIn: vscode.l10n.t('Objects in'), types: vscode.l10n.t('Types'), all: vscode.l10n.t('All'),
       keys: [['F3', vscode.l10n.t('Exit')], ['F5', vscode.l10n.t('Refresh')], ['F6', vscode.l10n.t('Create')], ['F9', vscode.l10n.t('Undo delete')], ['F12', vscode.l10n.t('Back')], ['F13', vscode.l10n.t('Repeat')],
@@ -616,7 +639,7 @@ class PdmPanel {
 <div class="hdr mono">
   <span class="crumb" id="crumb"></span>
   <label>${escapeHtml(L.library)} <input class="n" id="lib"></label>
-  <label id="fileBox">${escapeHtml(L.file)} <input class="n" id="file"></label>
+  <label id="fileBox">${escapeHtml(L.file)} <input class="n" id="file" placeholder="*ALL" title="${escapeHtml(L.fileTip)}"></label>
   <button id="go">${escapeHtml(L.go)}</button>
   <label>${escapeHtml(L.position)} <input class="n" id="pos"></label>
   <span id="objLib" class="dim"></span>
@@ -653,7 +676,7 @@ const PAGE = 400;
 
 function cols() {
   if (!D) return [];
-  if (D.level === 'members') return [['name', L.name], ['type', L.type], ['text', L.text], ['changed', L.changed], ['size', L.size], ['obj', L.obj], ['lock', L.lock]];
+  if (D.level === 'members') return [['name', L.name], ...(D.multi ? [['file', L.file]] : []), ['type', L.type], ['text', L.text], ['changed', L.changed], ['size', L.size], ['obj', L.obj], ['lock', L.lock]];
   if (D.level === 'objects') return [['name', L.name], ['type', L.type], ['attribute', L.attribute], ['text', L.text], ['changed', L.changed], ['size', L.size]];
   return [['name', L.library], ['type', L.type], ['text', L.text]];
 }

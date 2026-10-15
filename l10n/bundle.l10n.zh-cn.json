@@ -1662,5 +1662,11 @@
   "Objects in": "对象所在库",
   "Types": "类型",
   "All": "全部",
-  "Undo delete": "撤销删除"
+  "Undo delete": "撤销删除",
+  "Work with all members": "处理所有成员",
+  "With FILE(*ALL) or a generic file name, enter the library too, e.g. MYLIB/*ALL.": "使用 FILE(*ALL) 或通用文件名时，还需输入库，例如 MYLIB/*ALL。",
+  "No source files match {0} in {1}.": "{1} 中没有与 {0} 匹配的源文件。",
+  "File {0} was not found in {1}. Tip: type *ALL in File to see the members of every source file.": "在 {1} 中找不到文件 {0}。提示：在“文件”中输入 *ALL 可查看所有源文件的成员。",
+  "New member: which source file?": "新成员：放在哪个源文件中？",
+  "A source file, *ALL for every source file of the library, or a generic name like Q*SRC": "一个源文件、*ALL 表示库中的所有源文件，或类似 Q*SRC 的通用名称"
 }

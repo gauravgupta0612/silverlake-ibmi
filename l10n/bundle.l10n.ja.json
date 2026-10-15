@@ -1662,5 +1662,11 @@
   "Objects in": "オブジェクト:",
   "Types": "タイプ",
   "All": "すべて",
-  "Undo delete": "削除の取り消し"
+  "Undo delete": "削除の取り消し",
+  "Work with all members": "すべてのメンバーの処理",
+  "With FILE(*ALL) or a generic file name, enter the library too, e.g. MYLIB/*ALL.": "FILE(*ALL) または総称ファイル名の場合は、ライブラリーも指定してください (例: MYLIB/*ALL)。",
+  "No source files match {0} in {1}.": "{1} に {0} と一致するソース・ファイルはありません。",
+  "File {0} was not found in {1}. Tip: type *ALL in File to see the members of every source file.": "ファイル {0} が {1} に見つかりません。ヒント: ファイルに *ALL を入力すると、すべてのソース・ファイルのメンバーが表示されます。",
+  "New member: which source file?": "新規メンバー: どのソース・ファイルですか?",
+  "A source file, *ALL for every source file of the library, or a generic name like Q*SRC": "ソース・ファイル、ライブラリーのすべてのソース・ファイルの場合は *ALL、または Q*SRC のような総称名"
 }

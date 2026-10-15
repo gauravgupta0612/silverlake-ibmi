@@ -28,7 +28,7 @@ export const OBJECT_OPTIONS: PdmOption[] = [
 
 export const LIBRARY_OPTIONS: PdmOption[] = [
   { code: '5', label: 'Display objects' }, { code: '8', label: 'Display description' }, { code: '12', label: 'Work with objects' },
-  { code: '13', label: 'Change text', asks: true }, { code: 'SF', label: 'Work with source files' },
+  { code: '13', label: 'Change text', asks: true }, { code: 'SF', label: 'Work with source files' }, { code: 'AM', label: 'Work with all members' },
   { code: 'LL', label: 'Add to library list' }, { code: 'CL', label: 'Set as current library' },
 ];
 
@@ -53,7 +53,7 @@ export function matchGeneric(name: string, pattern: string): boolean {
   return re.test(name.trim());
 }
 
-export interface PdmRow { name: string; type: string; attribute?: string; text: string; changed?: string; size?: number; lockedBy?: string; objStatus?: ObjStatus }
+export interface PdmRow { name: string; type: string; /** Source file of a member (lists over several source files). */ file?: string; attribute?: string; text: string; changed?: string; size?: number; lockedBy?: string; objStatus?: ObjStatus }
 /** '' = not something you compile, none = no object yet, current = object newer than the source, stale = source changed after the object. */
 export type ObjStatus = '' | 'none' | 'current' | 'stale';
 export interface Subset { name?: string; type?: string; text?: string; since?: string; needsCompile?: boolean; locked?: boolean }
@@ -269,4 +269,20 @@ export function typeCounts(rows: PdmRow[]): [string, number][] {
   const m = new Map<string, number>();
   for (const r of rows) { const t = (r.attribute === 'PF-SRC' ? 'PF-SRC' : r.type) || '—'; m.set(t, (m.get(t) ?? 0) + 1); }
   return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 12);
+}
+
+// ---------------------------------------------------------------- members of several source files
+
+/** FILE(*ALL) or a generic name like Q*SRC: list members of every matching source file. */
+export function isMultiFile(file: string | undefined): boolean {
+  const f = (file ?? '').trim().toUpperCase();
+  return f === '*ALL' || f.includes('*');
+}
+
+/** SQL LIKE pattern for a PDM generic name (*ALL → %). */
+export function likePattern(generic: string): string {
+  const g = generic.trim().toUpperCase();
+  if (!g || g === '*ALL') { return '%'; }
+  if (!/^[A-Z0-9$#@_.*]{1,11}$/.test(g)) { throw new Error(`"${generic}" is not a valid generic name.`); }
+  return g.replace(/\*/g, '%');   // _ stays a one-character wildcard: harmless for a list
 }

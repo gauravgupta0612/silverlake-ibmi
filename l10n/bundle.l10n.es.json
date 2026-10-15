@@ -1662,5 +1662,11 @@
   "Objects in": "Objetos en",
   "Types": "Tipos",
   "All": "Todos",
-  "Undo delete": "Deshacer supr."
+  "Undo delete": "Deshacer supr.",
+  "Work with all members": "Trabajar con todos los miembros",
+  "With FILE(*ALL) or a generic file name, enter the library too, e.g. MYLIB/*ALL.": "Con FILE(*ALL) o un nombre de archivo genérico, indique también la biblioteca, p. ej. MYLIB/*ALL.",
+  "No source files match {0} in {1}.": "Ningún archivo fuente coincide con {0} en {1}.",
+  "File {0} was not found in {1}. Tip: type *ALL in File to see the members of every source file.": "No se encontró el archivo {0} en {1}. Consejo: escriba *ALL en Archivo para ver los miembros de todos los archivos fuente.",
+  "New member: which source file?": "Nuevo miembro: ¿en qué archivo fuente?",
+  "A source file, *ALL for every source file of the library, or a generic name like Q*SRC": "Un archivo fuente, *ALL para todos los archivos fuente de la biblioteca, o un nombre genérico como Q*SRC"
 }

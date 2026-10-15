@@ -1662,5 +1662,11 @@
   "Objects in": "Oggetti in",
   "Types": "Tipi",
   "All": "Tutti",
-  "Undo delete": "Annulla elim."
+  "Undo delete": "Annulla elim.",
+  "Work with all members": "Gestione di tutti i membri",
+  "With FILE(*ALL) or a generic file name, enter the library too, e.g. MYLIB/*ALL.": "Con FILE(*ALL) o un nome file generico, indicare anche la libreria, ad es. MYLIB/*ALL.",
+  "No source files match {0} in {1}.": "Nessun file origine corrisponde a {0} in {1}.",
+  "File {0} was not found in {1}. Tip: type *ALL in File to see the members of every source file.": "File {0} non trovato in {1}. Suggerimento: digitare *ALL in File per vedere i membri di tutti i file origine.",
+  "New member: which source file?": "Nuovo membro: in quale file origine?",
+  "A source file, *ALL for every source file of the library, or a generic name like Q*SRC": "Un file origine, *ALL per tutti i file origine della libreria, o un nome generico come Q*SRC"
 }
