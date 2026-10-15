@@ -6,7 +6,7 @@ import { ConnectionTreeProvider } from './views/connectionTree';
 import { LibraryTreeProvider } from './views/libraryTree';
 import { IfsTreeProvider } from './views/ifsTree';
 import { SpoolTreeProvider } from './views/spoolTree';
-import { IFS_SCHEME, IfsFileSystem, MEMBER_SCHEME, MemberFileSystem } from './features/fileSystems';
+import { IFS_SCHEME, IfsFileSystem, MEMBER_SCHEME, MEMBER_VIEW_SCHEME, MemberFileSystem } from './features/fileSystems';
 import { registerBrowseCommands } from './features/browseCommands';
 import { registerCompile } from './features/compile';
 import { registerSql } from './features/sqlRunner';
@@ -53,6 +53,7 @@ import { registerV21 } from './features/v21View';
 import { registerV22 } from './features/v22View';
 import { registerV23 } from './features/v23View';
 import { registerPdm } from './features/pdmView';
+import { registerV24 } from './features/v24View';
 
 let manager: ConnectionManager | undefined;
 
@@ -86,6 +87,13 @@ export function activate(context: vscode.ExtensionContext): void {
   ));
   step('file systems', () => context.subscriptions.push(
     vscode.workspace.registerFileSystemProvider(MEMBER_SCHEME, new MemberFileSystem(m), { isCaseSensitive: false }),
+    vscode.workspace.registerFileSystemProvider(MEMBER_VIEW_SCHEME, new MemberFileSystem(m), { isCaseSensitive: false,
+      isReadonly: new vscode.MarkdownString(vscode.l10n.t('Opened for display (PDM option 5). Use option 2 to edit.')) }),
+    // A member opened for editing must never stay read-only: earlier builds marked members read-only for the session
+    // when they were displayed with PDM option 5, which made later edits impossible to save (issue #3).
+    vscode.window.onDidChangeActiveTextEditor(ed => {
+      if (ed?.document.uri.scheme === MEMBER_SCHEME) { void vscode.commands.executeCommand('workbench.action.files.resetActiveEditorReadonlyInSession').then(undefined, () => undefined); }
+    }),
     vscode.workspace.registerFileSystemProvider(IFS_SCHEME, new IfsFileSystem(m), { isCaseSensitive: true }),
   ));
   step('compile', () => registerCompile(context, m));
@@ -134,6 +142,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('2.1 more tools', () => registerV22(context, m));
   step('2.1 batch 4', () => registerV23(context, m));
   step('PDM', () => registerPdm(context, m));
+  step('2.2 editing helpers', () => registerV24(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

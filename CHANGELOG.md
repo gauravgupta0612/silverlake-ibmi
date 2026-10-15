@@ -2,6 +2,19 @@
 
 ## 2.2.0 (not released yet)
 
+**Fixed**
+
+- **Members could not be saved after PDM option 5** (issue #3): *Display* marked the member read-only for the whole VS Code session, so editing it later (option 2 or the Libraries view) showed a 🔒 and Ctrl+S did nothing. Option 5 now opens a separate read-only view; members already stuck are made editable again as soon as you switch to them.
+- **A save no longer fails when the source-date save hits a technical problem** (QTEMP, SQL job…): the member is saved without source dates and you are told. Data problems (line too long, characters the CCSID cannot hold) still stop the save, so nothing is lost.
+- **PDM option 14 compiled the active editor** instead of the member on the row; it now compiles each member you typed 14 on.
+
+**New: knowing what your source became**
+
+- **Objects Built from This Source** (right-click a member or in the editor, or PDM option **OB**): every program and service program compiled from the member (QSYS2.PROGRAM_INFO for OPM, BOUND_MODULE_INFO for ILE modules), when, and whether the source changed after the compile — with *Compile now*.
+- **Member status bar:** while you edit a member, the status bar shows ✓ the program it went into, ⚠ how many objects are out of date with your source, or that it was never compiled — and 🔒 who else has the member open. Click for details (`vanthrex.memberStatusBar`).
+- **Compile on save** (`vanthrex.compileOnSave`: off / ask / always, optionally only for some source types): copy members are never compiled.
+- **Find & Open Member…** (Ctrl+Alt+M) now searches your library list or every user library, accepts a source type (`ORD* RPGLE`), sorts by library-list order (first = what *LIBL would use) and opens the result in the editor, in PDM, or shows the objects built from it.
+
 **New: PDM in one screen — Work with Libraries, Objects and Members using PDM**
 
 - **The PDM you know, in VS Code:** right-click a library, a source file or a file and choose *Work with Using PDM…* (or the list button on the Libraries view, the quick menu, or type `WRKMBRPDM FILE(LIB/QRPGLESRC)`, `WRKOBJPDM LIB(X)`, `WRKLIBPDM LIB(A*)` or `STRPDM` in *Run CL Command*).

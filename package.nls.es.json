@@ -362,5 +362,9 @@
   "command.pdm": "Trabajar con utilizando PDM…",
   "command.pdm.key": "Tecla de función PDM",
   "command.pdm.userOptions": "PDM: opciones definidas por el usuario (F16)…",
-  "config.pdm.userOptions": "Opciones de PDM definidas por el usuario (F16): código de opción → mandato CL. Variables: `&L` biblioteca, `&F` archivo, `&N` nombre, `&T` tipo, `&A` atributo, `&O` biblioteca de objetos, `&U` usuario, `&X` texto. Predefinidas: CB, CS, CC, DF, PF, RS (establezca una en una serie vacía para ocultarla)."
+  "config.pdm.userOptions": "Opciones de PDM definidas por el usuario (F16): código de opción → mandato CL. Variables: `&L` biblioteca, `&F` archivo, `&N` nombre, `&T` tipo, `&A` atributo, `&O` biblioteca de objetos, `&U` usuario, `&X` texto. Predefinidas: CB, CS, CC, DF, PF, RS (establezca una en una serie vacía para ocultarla).",
+  "command.builtFrom": "Objetos creados a partir de este fuente",
+  "config.compileOnSave": "Compilar un miembro fuente después de guardarlo: `off`, `ask` (una notificación con Compilar / Siempre / Ahora no) o `always`. Los miembros de copia (INC, RPGLEINC…) nunca se compilan.",
+  "config.compileOnSave.types": "Compilar al guardar solo estos tipos de fuente (por ejemplo, `RPGLE`, `SQLRPGLE`). Vacío = todos los tipos que se pueden compilar.",
+  "config.memberStatusBar": "Mostrar, para el miembro que está editando, si su programa está al día con el fuente y quién más lo tiene abierto (barra de estado; pulse para ver detalles)."
 }

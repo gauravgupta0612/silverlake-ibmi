@@ -92,6 +92,7 @@ export class Compiler {
 
   private resolveUri(target?: vscode.Uri | { resourceUri?: vscode.Uri; path?: string; kind?: string }): vscode.Uri | undefined {
     if (target instanceof vscode.Uri) { return target; }
+    if (target && 'resourceUri' in target && target.resourceUri instanceof vscode.Uri) { return target.resourceUri; }
     if (target && 'kind' in target && target.kind === 'member') {
       const m = target as unknown as { library: string; file: string; member: string; type: string };
       return memberUri(m.library, m.file, m.member, m.type);

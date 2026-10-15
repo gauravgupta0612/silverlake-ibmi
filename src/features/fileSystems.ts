@@ -7,6 +7,8 @@ import type { MemberLock } from '../core/connection';
 
 export const MEMBER_SCHEME = 'vanthrex-member';
 export const IFS_SCHEME = 'vanthrex-ifs';
+/** Read-only view of a member (PDM option 5): same content, a separate document, never saved. */
+export const MEMBER_VIEW_SCHEME = 'vanthrex-member-view';
 
 /** Fired after a member / stream file is read from or written to the IBM i (used by local history). */
 export interface FsTransfer { uri: vscode.Uri; content: Uint8Array; kind: 'read' | 'write'; }
@@ -29,6 +31,10 @@ class SaveCancelled extends Error {}
 export function memberUri(lib: string, file: string, member: string, type: string): vscode.Uri {
   const ext = (type || 'mbr').toLowerCase();
   return vscode.Uri.from({ scheme: MEMBER_SCHEME, path: `/${lib}/${file}/${member}.${ext}` });
+}
+
+export function memberViewUri(lib: string, file: string, member: string, type: string): vscode.Uri {
+  return memberUri(lib, file, member, type).with({ scheme: MEMBER_VIEW_SCHEME });
 }
 
 export function ifsUri(path: string): vscode.Uri {
@@ -79,6 +85,7 @@ abstract class BaseFs implements vscode.FileSystemProvider {
 /** Source members as editable documents: vanthrex-member:/LIB/FILE/MEMBER.TYPE */
 export class MemberFileSystem extends BaseFs {
   private readonly meta = new Map<string, { mtime: number; size: number }>();
+  private readonly dateFallbackWarned = new Set<string>();
 
   stat(uri: vscode.Uri): vscode.FileStat {
     this.conn();
@@ -189,12 +196,27 @@ export class MemberFileSystem extends BaseFs {
           `SELECT VARCHAR_FORMAT(CURRENT TIMESTAMP, 'YYMMDD') AS D FROM SYSIBM.SYSDUMMY1`, 1))[0]?.D);
         if (!today) { throw new Error(vscode.l10n.t('Could not read the IBM i date.')); }
         const merged = mergeRecords(original, lines, today);
-        await conn.writeMemberRecords(library, file, member, merged);
-        sourceRecords.set(uri.toString(), merged);
-        sourceRecordsChanged.fire(uri);
+        try {
+          await conn.writeMemberRecords(library, file, member, merged);
+          sourceRecords.set(uri.toString(), merged);
+          sourceRecordsChanged.fire(uri);
+        } catch (e) {
+          // Never lose a save because the source-date path failed for a technical reason (QTEMP, SQL job…):
+          // save the text the plain way. Data problems (line too long, CCSID) and protection answers still stop the save.
+          if (/could not be stored|reached the IBM i|Read-only connection|cancelled|protected/i.test(errorMessage(e))) { throw e; }
+          logError(e);
+          await conn.writeMember(library, file, member, lines.join('\n'));
+          sourceRecords.delete(uri.toString());
+          sourceRecordsChanged.fire(uri);
+          if (!this.dateFallbackWarned.has(uri.toString())) {
+            this.dateFallbackWarned.add(uri.toString());
+            vscode.window.showWarningMessage(vscode.l10n.t('{0}/{1}({2}) was saved, but without source dates (the source-date save failed: {3}).', library, file, member, errorMessage(e).split('\n')[0]));
+          }
+        }
       } else {
         await conn.writeMember(library, file, member, lines.join('\n'));
       }
+      this.dateFallbackWarned.delete(uri.toString());
       this.openedAt.set(uri.toString(), (await conn.memberState(library, file, member)).changed);
     } catch (e) {
       if (e instanceof SaveCancelled) { throw vscode.FileSystemError.NoPermissions(e.message); }

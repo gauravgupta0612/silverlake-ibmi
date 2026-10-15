@@ -12,7 +12,7 @@ import {
   objectTextCommand, optionsFor, parseEntries, parsePdmCommand, removeMemberCommand, renameMemberCommand, renameObjectCommand, rowsToCsv,
   substitutePdm, validUserOptionCode,
 } from '../core/pdm';
-import { memberUri } from './fileSystems';
+import { memberUri, memberViewUri } from './fileSystems';
 import { showReport } from './reportPanel';
 import { escapeHtml, nonce } from './webviewUtil';
 
@@ -27,7 +27,7 @@ function optionLabel(label: string): string {
     'Edit': vscode.l10n.t('Edit'), 'Copy': vscode.l10n.t('Copy'), 'Delete': vscode.l10n.t('Delete'), 'Display': vscode.l10n.t('Display'),
     'Rename': vscode.l10n.t('Rename'), 'Display description': vscode.l10n.t('Display description'), 'Change text and type': vscode.l10n.t('Change text and type'),
     'Compile': vscode.l10n.t('Compile'), 'Create module': vscode.l10n.t('Create module'), 'Local history': vscode.l10n.t('Local history'),
-    'Find string': vscode.l10n.t('Find string'), 'Compare (two members)': vscode.l10n.t('Compare (two members)'), 'Git history': vscode.l10n.t('Git history'),
+    'Find string': vscode.l10n.t('Find string'), 'Compare (two members)': vscode.l10n.t('Compare (two members)'), 'Git history': vscode.l10n.t('Git history'), 'Objects built from it': vscode.l10n.t('Objects built from it'),
     'Unused code': vscode.l10n.t('Unused code'), 'Hard-coded libraries': vscode.l10n.t('Hard-coded libraries'),
     'Display (object information)': vscode.l10n.t('Display (object information)'), 'Move': vscode.l10n.t('Move'),
     'Work with (members of a source file)': vscode.l10n.t('Work with (members)'), 'Change text': vscode.l10n.t('Change text'),
@@ -341,7 +341,7 @@ class PdmPanel {
         if (l.level === 'members') {
           switch (option) {
             case '2': await vscode.window.showTextDocument(uri!, { preview: false }); ok(r); break;
-            case '5': await vscode.window.showTextDocument(uri!, { preview: true }); await vscode.commands.executeCommand('workbench.action.files.setActiveEditorReadonlyInSession'); ok(r); break;
+            case '5': await vscode.window.showTextDocument(memberViewUri(l.library!, this.f(r), r.name, r.type), { preview: true }); ok(r); break;
             case '3': {
               copyTo = copyTo ?? await ask(vscode.l10n.t('Copy members to (LIBRARY/FILE)'), `${l.library}/${this.f(r)}`);
               if (!copyTo) { return; }
@@ -373,6 +373,7 @@ class PdmPanel {
             case '15': await run(r, createModuleCommand(l.library!, this.f(r), r.name, r.type, this.conn.profile.objectLibrary || this.conn.profile.currentLibrary || l.library!)); break;
             case '16': await vscode.commands.executeCommand('vanthrex.showHistory', uri); ok(r); break;
             case 'GH': await vscode.commands.executeCommand('vanthrex.git.memberHistory', uri); ok(r); break;
+            case 'OB': await vscode.commands.executeCommand('vanthrex.builtFrom', uri); ok(r); break;
             case 'UC': await vscode.window.showTextDocument(uri!, { preview: false }); await vscode.commands.executeCommand('vanthrex.unusedCode'); ok(r); break;
             case 'HL': await vscode.window.showTextDocument(uri!, { preview: false }); await vscode.commands.executeCommand('vanthrex.hardcodedLibraries'); ok(r); break;
           }

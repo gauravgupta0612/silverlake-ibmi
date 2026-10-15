@@ -362,5 +362,9 @@
   "command.pdm": "使用 PDM 处理…",
   "command.pdm.key": "PDM 功能键",
   "command.pdm.userOptions": "PDM：用户定义的选项 (F16)…",
-  "config.pdm.userOptions": "PDM 用户定义的选项 (F16)：选项代码 → CL 命令。变量：`&L` 库，`&F` 文件，`&N` 名称，`&T` 类型，`&A` 属性，`&O` 对象库，`&U` 用户，`&X` 文本。内置：CB、CS、CC、DF、PF、RS（设置为空字符串可将其隐藏）。"
+  "config.pdm.userOptions": "PDM 用户定义的选项 (F16)：选项代码 → CL 命令。变量：`&L` 库，`&F` 文件，`&N` 名称，`&T` 类型，`&A` 属性，`&O` 对象库，`&U` 用户，`&X` 文本。内置：CB、CS、CC、DF、PF、RS（设置为空字符串可将其隐藏）。",
+  "command.builtFrom": "基于此源构建的对象",
+  "config.compileOnSave": "保存源成员后编译该成员：`off`、`ask`（显示包含“编译 / 始终 / 暂不”的通知）或 `always`。复制成员（INC、RPGLEINC…）从不编译。",
+  "config.compileOnSave.types": "保存时仅编译这些源类型（例如 `RPGLE`、`SQLRPGLE`）。为空 = 所有可编译的类型。",
+  "config.memberStatusBar": "针对正在编辑的成员，显示其程序是否与源保持同步，以及还有谁打开了该成员（状态栏；单击查看详细信息）。"
 }

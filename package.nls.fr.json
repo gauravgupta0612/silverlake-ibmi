@@ -362,5 +362,9 @@
   "command.pdm": "Gérer avec PDM…",
   "command.pdm.key": "Touche de fonction PDM",
   "command.pdm.userOptions": "PDM : options définies par l'utilisateur (F16)…",
-  "config.pdm.userOptions": "Options PDM définies par l'utilisateur (F16) : code option → commande CL. Variables : `&L` bibliothèque, `&F` fichier, `&N` nom, `&T` type, `&A` attribut, `&O` bibliothèque d'objets, `&U` utilisateur, `&X` texte. Prédéfinies : CB, CS, CC, DF, PF, RS (définissez-en une sur une chaîne vide pour la masquer)."
+  "config.pdm.userOptions": "Options PDM définies par l'utilisateur (F16) : code option → commande CL. Variables : `&L` bibliothèque, `&F` fichier, `&N` nom, `&T` type, `&A` attribut, `&O` bibliothèque d'objets, `&U` utilisateur, `&X` texte. Prédéfinies : CB, CS, CC, DF, PF, RS (définissez-en une sur une chaîne vide pour la masquer).",
+  "command.builtFrom": "Objets générés à partir de ce source",
+  "config.compileOnSave": "Compiler un membre source après son enregistrement : `off`, `ask` (une notification avec Compiler / Toujours / Pas maintenant) ou `always`. Les membres copie (INC, RPGLEINC…) ne sont jamais compilés.",
+  "config.compileOnSave.types": "Ne compiler à l'enregistrement que ces types de source (par exemple `RPGLE`, `SQLRPGLE`). Vide = tous les types compilables.",
+  "config.memberStatusBar": "Indiquer, pour le membre en cours d'édition, si son programme est à jour par rapport au source et qui d'autre l'a ouvert (barre d'état ; cliquez pour plus de détails)."
 }

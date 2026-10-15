@@ -275,33 +275,7 @@ export function registerBrowseCommands(
     libraries.refresh();
   });
 
-  reg('vanthrex.findMember', async () => {
-    const conn = manager.require();
-    const pattern = await vscode.window.showInputBox({
-      title: vscode.l10n.t('Find member'), prompt: vscode.l10n.t('Member name or pattern (use * as a wildcard), searched across your library list'),
-      placeHolder: 'ORD*', ignoreFocusOut: true,
-    });
-    if (!pattern?.trim()) { return; }
-    const libs = [...new Set([conn.profile.currentLibrary, ...conn.profile.libraries].filter(Boolean) as string[])];
-    if (!libs.length) { throw new Error(vscode.l10n.t('Your library list is empty – add a library first.')); }
-    const like = pattern.trim().toUpperCase().replace(/\*/g, '%');
-    const rows = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: vscode.l10n.t('Searching members…') }, () =>
-      conn.rows<{ LIB: string; FILE: string; MBR: string; TYPE: string; TEXT: string }>(
-        `SELECT SYSTEM_TABLE_SCHEMA AS LIB, SYSTEM_TABLE_NAME AS FILE, SYSTEM_TABLE_MEMBER AS MBR, ` +
-        `COALESCE(SOURCE_TYPE, '') AS TYPE, COALESCE(PARTITION_TEXT, '') AS TEXT FROM QSYS2.SYSPARTITIONSTAT ` +
-        `WHERE SYSTEM_TABLE_SCHEMA IN (${libs.map(sqlString).join(', ')}) AND SOURCE_TYPE IS NOT NULL ` +
-        `AND SYSTEM_TABLE_MEMBER LIKE ${sqlString(like)} ORDER BY 3, 1, 2 FETCH FIRST 500 ROWS ONLY`, 500));
-    if (!rows.length) { return vscode.window.showInformationMessage(vscode.l10n.t('No members matching "{0}" in {1}.', pattern, libs.join(', '))); }
-    const pick = await vscode.window.showQuickPick(rows.map(r => ({
-      label: vscode.l10n.t('$(file-code) {0}.{1}', String(r.MBR).trim(), String(r.TYPE).trim().toLowerCase()),
-      description: `${String(r.LIB).trim()}/${String(r.FILE).trim()}`,
-      detail: String(r.TEXT ?? '').trim() || undefined, r,
-    })), { title: vscode.l10n.t('{0} member(s) found', rows.length), matchOnDescription: true, matchOnDetail: true });
-    if (pick) {
-      const r = pick.r;
-      await vscode.window.showTextDocument(memberUri(String(r.LIB).trim(), String(r.FILE).trim(), String(r.MBR).trim(), String(r.TYPE).trim()));
-    }
-  });
+  // vanthrex.findMember lives in v24View.ts (library list or all user libraries, PDM and built-from buttons).
 
   // ------------------------------------------------------------ objects
   reg('vanthrex.objectCall', async (n: ObjectNode) => {

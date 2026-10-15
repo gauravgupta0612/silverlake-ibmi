@@ -14,7 +14,7 @@ export const MEMBER_OPTIONS: PdmOption[] = [
   { code: '5', label: 'Display' }, { code: '6', label: 'Print' }, { code: '7', label: 'Rename', asks: true }, { code: '8', label: 'Display description' },
   { code: '13', label: 'Change text and type', asks: true }, { code: '14', label: 'Compile' }, { code: '15', label: 'Create module' },
   { code: '16', label: 'Local history' }, { code: '25', label: 'Find string', asks: true }, { code: '54', label: 'Compare (two members)' },
-  { code: 'GH', label: 'Git history' }, { code: 'UC', label: 'Unused code' }, { code: 'HL', label: 'Hard-coded libraries' },
+  { code: 'OB', label: 'Objects built from it' }, { code: 'GH', label: 'Git history' }, { code: 'UC', label: 'Unused code' }, { code: 'HL', label: 'Hard-coded libraries' },
 ];
 
 export const OBJECT_OPTIONS: PdmOption[] = [

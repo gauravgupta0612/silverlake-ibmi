@@ -1607,6 +1607,12 @@
         "title": "%command.pdm.userOptions%",
         "category": "Vanthrex",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "vanthrex.builtFrom",
+        "title": "%command.builtFrom%",
+        "category": "Vanthrex",
+        "icon": "$(package)"
       }
     ],
     "menus": {
@@ -1794,11 +1800,6 @@
           "group": "inline"
         },
         {
-          "command": "vanthrex.newMember",
-          "when": "view == vanthrex.libraries && viewItem == srcfile",
-          "group": "1@1"
-        },
-        {
           "command": "vanthrex.compile",
           "when": "view == vanthrex.libraries && viewItem == member",
           "group": "1@1"
@@ -1889,11 +1890,6 @@
           "group": "inline"
         },
         {
-          "command": "vanthrex.replyMessage",
-          "when": "view == vanthrex.messages && viewItem == message.inquiry",
-          "group": "1@1"
-        },
-        {
           "command": "vanthrex.removeMessage",
           "when": "view == vanthrex.messages && viewItem =~ /^message/",
           "group": "9@1"
@@ -1977,11 +1973,6 @@
           "command": "vanthrex.debugProgram",
           "when": "view == vanthrex.libraries && viewItem == object.pgm",
           "group": "inline"
-        },
-        {
-          "command": "vanthrex.debugProgram",
-          "when": "view == vanthrex.libraries && viewItem == object.pgm",
-          "group": "0_info@0"
         },
         {
           "command": "vanthrex.disconnect",
@@ -2317,6 +2308,11 @@
           "command": "vanthrex.pdm",
           "when": "view == vanthrex.libraries && viewItem =~ /^(library|srcfile|folder\\..*|object\\.file)$/",
           "group": "0_pdm@0"
+        },
+        {
+          "command": "vanthrex.builtFrom",
+          "when": "view == vanthrex.libraries && viewItem == member",
+          "group": "0_info@16"
         }
       ],
       "editor/title": [
@@ -2506,6 +2502,11 @@
           "command": "vanthrex.indicatorUsage",
           "when": "editorLangId =~ /rpgle|dds/",
           "group": "vanthrex@30"
+        },
+        {
+          "command": "vanthrex.builtFrom",
+          "when": "resourceScheme == vanthrex-member",
+          "group": "vanthrex@31"
         }
       ],
       "commandPalette": [
@@ -2895,6 +2896,14 @@
         },
         {
           "command": "vanthrex.pdm.userOptions"
+        },
+        {
+          "command": "vanthrex.findMember",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.builtFrom",
+          "when": "resourceScheme == vanthrex-member"
         }
       ],
       "vanthrex.ai": [
@@ -3073,6 +3082,12 @@
         "key": "shift+f11",
         "args": "F23",
         "when": "activeWebviewPanelId == 'vanthrex.pdm'"
+      },
+      {
+        "command": "vanthrex.findMember",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m",
+        "when": "vanthrex.connected"
       }
     ],
     "languages": [
@@ -3674,6 +3689,29 @@
           },
           "default": {},
           "markdownDescription": "%config.pdm.userOptions%"
+        },
+        "vanthrex.compileOnSave": {
+          "type": "string",
+          "enum": [
+            "off",
+            "ask",
+            "always"
+          ],
+          "default": "off",
+          "markdownDescription": "%config.compileOnSave%"
+        },
+        "vanthrex.compileOnSave.types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "%config.compileOnSave.types%"
+        },
+        "vanthrex.memberStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.memberStatusBar%"
         }
       }
     },

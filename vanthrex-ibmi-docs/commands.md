@@ -7,7 +7,7 @@ parent: "Reference"
 
 # Commands
 
-All 253 commands contributed by Vanthrex for IBM i 2.2.0. Run any of them from the
+All 254 commands contributed by Vanthrex for IBM i 2.2.0. Run any of them from the
 Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-click menus and view toolbars.
 
 | Command | ID | Keys |
@@ -94,7 +94,7 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Extract to Procedure… | `vanthrex.extractProcedure` |  |
 | Field Finder… | `vanthrex.fieldFinder` |  |
 | Filter Members by Last Change… | `vanthrex.filterMembersByDate` |  |
-| Find & Open Member… | `vanthrex.findMember` |  |
+| Find & Open Member… | `vanthrex.findMember` | Ctrl+Alt+M |
 | Find a CL Command… | `vanthrex.findCommand` |  |
 | Find and Replace in Source File… | `vanthrex.replaceInSourceFile` |  |
 | Find Duplicate Rows… | `vanthrex.findDuplicates` |  |
@@ -152,6 +152,7 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | New Source File… | `vanthrex.newSourceFile` |  |
 | New SQL Scratchpad | `vanthrex.newSqlScratchpad` |  |
 | Object Information | `vanthrex.objectInfo` |  |
+| Objects Built from This Source | `vanthrex.builtFrom` |  |
 | Objects Out of Sync with Source | `vanthrex.outOfSync` |  |
 | Open ALTER Script | `vanthrex.compareStructure.script` |  |
 | Open Documentation | `vanthrex.openDocs` |  |

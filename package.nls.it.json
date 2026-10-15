@@ -362,5 +362,9 @@
   "command.pdm": "Gestione mediante PDM…",
   "command.pdm.key": "Tasto funzione PDM",
   "command.pdm.userOptions": "PDM: opzioni definite dall'utente (F16)…",
-  "config.pdm.userOptions": "Opzioni PDM definite dall'utente (F16): codice opzione → comando CL. Variabili: `&L` libreria, `&F` file, `&N` nome, `&T` tipo, `&A` attributo, `&O` libreria oggetti, `&U` utente, `&X` testo. Predefinite: CB, CS, CC, DF, PF, RS (impostarne una su una stringa vuota per nasconderla)."
+  "config.pdm.userOptions": "Opzioni PDM definite dall'utente (F16): codice opzione → comando CL. Variabili: `&L` libreria, `&F` file, `&N` nome, `&T` tipo, `&A` attributo, `&O` libreria oggetti, `&U` utente, `&X` testo. Predefinite: CB, CS, CC, DF, PF, RS (impostarne una su una stringa vuota per nasconderla).",
+  "command.builtFrom": "Oggetti creati da questo sorgente",
+  "config.compileOnSave": "Compilare un membro sorgente dopo il salvataggio: `off`, `ask` (una notifica con Compila / Sempre / Non ora) o `always`. I membri copy (INC, RPGLEINC…) non vengono mai compilati.",
+  "config.compileOnSave.types": "Compilare al salvataggio solo questi tipi di sorgente (ad esempio `RPGLE`, `SQLRPGLE`). Vuoto = tutti i tipi compilabili.",
+  "config.memberStatusBar": "Mostrare, per il membro in modifica, se il relativo programma è aggiornato rispetto al sorgente e chi altro lo ha aperto (barra di stato; fare clic per i dettagli)."
 }

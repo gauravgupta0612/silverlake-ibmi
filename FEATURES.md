@@ -649,6 +649,12 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 - **F-keys:** F3, F5, F6 create, F12 back, F13 repeat, F16 user-defined options, F17 subset, F21 CSV export, F23 more options (Shift+F1…F12 = F13…F24).
 - **User-defined options** with &L &F &N &T &A &O &U &X (`vanthrex.pdm.userOptions`), plus extra options PDM never had: GH, UC, HL, WU, LK, DP, SF, LL, CL.
 
+### 70. What did my source become? — new in 2.2
+
+- **Objects Built from This Source** (right-click a member, editor menu, or PDM option OB): programs and service programs compiled from it, and whether each is out of date.
+- **Member status bar:** up to date / out of date / never compiled, and who else has the member open.
+- **Compile on save** (`vanthrex.compileOnSave`) and **Find & Open Member…** (Ctrl+Alt+M) across the library list or all user libraries.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

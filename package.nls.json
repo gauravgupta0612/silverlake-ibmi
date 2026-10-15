@@ -362,5 +362,9 @@
   "command.pdm": "Work with Using PDM…",
   "command.pdm.key": "PDM Function Key",
   "command.pdm.userOptions": "PDM: User-Defined Options (F16)…",
-  "config.pdm.userOptions": "PDM user-defined options (F16): option code → CL command. Variables: `&L` library, `&F` file, `&N` name, `&T` type, `&A` attribute, `&O` object library, `&U` user, `&X` text. Built-in: CB, CS, CC, DF, PF, RS (set one to an empty string to hide it)."
+  "config.pdm.userOptions": "PDM user-defined options (F16): option code → CL command. Variables: `&L` library, `&F` file, `&N` name, `&T` type, `&A` attribute, `&O` object library, `&U` user, `&X` text. Built-in: CB, CS, CC, DF, PF, RS (set one to an empty string to hide it).",
+  "command.builtFrom": "Objects Built from This Source",
+  "config.compileOnSave": "Compile a source member after you save it: `off`, `ask` (a notification with Compile / Always / Not now) or `always`. Copy members (INC, RPGLEINC…) are never compiled.",
+  "config.compileOnSave.types": "Only compile on save these source types (for example `RPGLE`, `SQLRPGLE`). Empty = every type that can be compiled.",
+  "config.memberStatusBar": "Show, for the member you are editing, whether its program is up to date with the source and who else has it open (status bar; click for details)."
 }
