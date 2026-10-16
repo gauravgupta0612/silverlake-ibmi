@@ -415,5 +415,12 @@
   "command.signatureCheck.rebindAll": "重新绑定所有失败对象",
   "command.failedJobs": "失败的作业（异常结束）",
   "command.failedJobs.row": "失败作业的选项",
-  "config.dsLayout.hover": "将鼠标悬停在数据结构子字段的定义上时，显示其位置和长度。"
+  "config.dsLayout.hover": "将鼠标悬停在数据结构子字段的定义上时，显示其位置和长度。",
+  "command.ai.errors": "AI: 解释编译错误",
+  "command.ai.dependencies": "AI: 解释程序依赖项",
+  "command.ai.jobLog": "AI: 此作业为何失败？",
+  "command.ai.openAt": "在行处打开源代码",
+  "chat.vanthrex.errors": "结合 IBM 帮助文本和相关行解释编译错误",
+  "chat.vanthrex.depends": "解释程序的依赖项：LIB/PGM",
+  "chat.vanthrex.joblog": "查找作业失败的原因及修复方法：编号/用户/名称"
 }

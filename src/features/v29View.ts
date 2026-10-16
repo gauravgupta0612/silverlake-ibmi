@@ -266,8 +266,10 @@ async function failedJobRow(manager: ConnectionManager, job: string): Promise<vo
   const o = await vscode.window.showQuickPick([
     { label: vscode.l10n.t('$(output) Open the job log'), description: spools.length ? 'QPJOBLOG' : vscode.l10n.t('pending job log'), k: 'log' },
     { label: vscode.l10n.t('$(list-unordered) All spooled files of the job'), k: 'spool' },
+    ...(vscode.workspace.getConfiguration('vanthrex').get<boolean>('ai.enabled', true) ? [{ label: vscode.l10n.t('$(sparkle) Ask AI why it failed and how to fix it'), description: vscode.l10n.t('job log + failing source statement'), k: 'ai' }] : []),
     { label: vscode.l10n.t('$(copy) Copy the job name'), k: 'copy' },
   ], { title: job });
+  if (o?.k === 'ai') { await vscode.commands.executeCommand('vanthrex.ai.jobLog', job); return; }
   if (!o) { return; }
   if (o.k === 'copy') { await vscode.env.clipboard.writeText(job); return; }
   if (o.k === 'log') {

@@ -17,7 +17,7 @@ const s = (r: Record<string, unknown>, k: string) => String(r[k] ?? '').trim();
 const ALLOWED = new Set([
   'vanthrex.createAdvisedIndex', 'vanthrex.indexAdvisor', 'vanthrex.activeQueries', 'vanthrex.objectInfo',
   'vanthrex.openProgramSource', 'vanthrex.compareData', 'vanthrex.exportDataCompare',
-  'vanthrex.jobLog', 'vanthrex.analyzeJobLog', 'vanthrex.explainMessage',
+  'vanthrex.jobLog', 'vanthrex.analyzeJobLog', 'vanthrex.explainMessage', 'vanthrex.ai.jobLog',
 ]);
 
 function requireSystemNaming(conn: IbmiConnection): void {
@@ -215,7 +215,8 @@ async function analyzeJobLogCmd(manager: ConnectionManager, job?: string): Promi
       ['Sent by', rootCause.program ?? ''],
       ['What to do', rootCause.hint ?? formatHelp(rootCause.help ?? '').split('\n\n').find(p => /recovery/i.test(p)) ?? 'Read the IBM help text below.'],
     ] : [],
-    actions: [{ label: vscode.l10n.t('Open the full job log'), command: 'vanthrex.jobLog', args: [{ job: j }] }],
+    actions: [{ label: vscode.l10n.t('Open the full job log'), command: 'vanthrex.jobLog', args: [{ job: j }] },
+      ...(/^\d{6}\//.test(j) && vscode.workspace.getConfiguration('vanthrex').get<boolean>('ai.enabled', true) ? [{ label: vscode.l10n.t('Ask AI why it failed and how to fix it'), command: 'vanthrex.ai.jobLog', args: [j] }] : [])],
     tables: [{
       title: vscode.l10n.t('Problems (worst first)'), columns: ['Message', 'Times', 'Sev', 'Text', 'Program', 'What to do'], filter: true,
       rows: findings.map(f => [f.id, f.count, f.severity, f.text, f.program ?? '', f.hint ?? '']),

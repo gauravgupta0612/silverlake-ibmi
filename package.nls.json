@@ -415,5 +415,12 @@
   "command.signatureCheck.rebindAll": "Re-bind All Failing Objects",
   "command.failedJobs": "Failed Jobs (Ended Abnormally)",
   "command.failedJobs.row": "Failed Job Options",
-  "config.dsLayout.hover": "Show the position and length of a data structure subfield when you hover over its definition."
+  "config.dsLayout.hover": "Show the position and length of a data structure subfield when you hover over its definition.",
+  "command.ai.errors": "AI: Explain Compile Errors",
+  "command.ai.dependencies": "AI: Explain Program Dependencies",
+  "command.ai.jobLog": "AI: Why Did This Job Fail?",
+  "command.ai.openAt": "Open Source at Line",
+  "chat.vanthrex.errors": "Explain the compile errors with IBM's help text and the lines involved",
+  "chat.vanthrex.depends": "Explain a program's dependencies: LIB/PGM",
+  "chat.vanthrex.joblog": "Find why a job failed and how to fix it: number/user/name"
 }

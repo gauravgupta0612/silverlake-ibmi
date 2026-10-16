@@ -415,5 +415,12 @@
   "command.signatureCheck.rebindAll": "Relier tous les objets en échec",
   "command.failedJobs": "Travaux en échec (arrêt anormal)",
   "command.failedJobs.row": "Options du travail en échec",
-  "config.dsLayout.hover": "Affiche la position et la longueur d'une sous-zone de structure de données lorsque vous survolez sa définition."
+  "config.dsLayout.hover": "Affiche la position et la longueur d'une sous-zone de structure de données lorsque vous survolez sa définition.",
+  "command.ai.errors": "IA : Expliquer les erreurs de compilation",
+  "command.ai.dependencies": "IA : Expliquer les dépendances du programme",
+  "command.ai.jobLog": "IA : Pourquoi ce travail a-t-il échoué ?",
+  "command.ai.openAt": "Ouvrir le source à la ligne",
+  "chat.vanthrex.errors": "Expliquer les erreurs de compilation avec le texte d'aide IBM et les lignes concernées",
+  "chat.vanthrex.depends": "Expliquer les dépendances d'un programme : BIB/PGM",
+  "chat.vanthrex.joblog": "Trouver pourquoi un travail a échoué et comment le corriger : numéro/utilisateur/nom"
 }

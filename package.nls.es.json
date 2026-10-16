@@ -415,5 +415,12 @@
   "command.signatureCheck.rebindAll": "Volver a enlazar todos los objetos con error",
   "command.failedJobs": "Trabajos con error (finalización anómala)",
   "command.failedJobs.row": "Opciones del trabajo con error",
-  "config.dsLayout.hover": "Muestra la posición y la longitud de un subcampo de estructura de datos al pasar el puntero sobre su definición."
+  "config.dsLayout.hover": "Muestra la posición y la longitud de un subcampo de estructura de datos al pasar el puntero sobre su definición.",
+  "command.ai.errors": "IA: Explicar errores de compilación",
+  "command.ai.dependencies": "IA: Explicar dependencias del programa",
+  "command.ai.jobLog": "IA: ¿Por qué ha fallado este trabajo?",
+  "command.ai.openAt": "Abrir fuente en la línea",
+  "chat.vanthrex.errors": "Explicar los errores de compilación con el texto de ayuda de IBM y las líneas implicadas",
+  "chat.vanthrex.depends": "Explicar las dependencias de un programa: BIB/PGM",
+  "chat.vanthrex.joblog": "Averiguar por qué ha fallado un trabajo y cómo solucionarlo: número/usuario/nombre"
 }

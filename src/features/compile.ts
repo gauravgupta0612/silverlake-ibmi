@@ -88,9 +88,11 @@ export class Compiler {
     } else {
       const summary = errorCount ? `${errorCount} error(s)` : (result.messages.slice(-1)[0] ?? 'see log');
       // Not awaited: a batch (PDM option 14, compile on save) must not stop until someone closes the message.
+      const ai = errorCount > 0 && vscode.workspace.getConfiguration('vanthrex').get<boolean>('ai.enabled', true);
       void vscode.window.showErrorMessage(vscode.l10n.t('✖ {0} failed to compile: {1}.', String(vars.NAME), summary),
-        vscode.l10n.t('Show Problems'), vscode.l10n.t('Show Log')).then(choice => {
+        vscode.l10n.t('Show Problems'), ...(ai ? [vscode.l10n.t('Explain with AI')] : []), vscode.l10n.t('Show Log')).then(choice => {
         if (choice === vscode.l10n.t('Show Problems')) { vscode.commands.executeCommand('workbench.actions.view.problems'); }
+        if (choice === vscode.l10n.t('Explain with AI')) { vscode.commands.executeCommand('vanthrex.ai.errors', uri); }
         if (choice === vscode.l10n.t('Show Log')) { showLog(); }
       });
     }

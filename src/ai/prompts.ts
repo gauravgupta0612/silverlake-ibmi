@@ -1,6 +1,6 @@
 // Prompt building for the IBM i AI assistant (pure module, unit tested — no vscode import).
 
-export type AiCommand = 'explain' | 'document' | 'sql' | 'fix' | 'modernize' | 'test' | 'object' | 'review';
+export type AiCommand = 'explain' | 'document' | 'sql' | 'fix' | 'modernize' | 'test' | 'object' | 'review' | 'errors' | 'depends' | 'joblog';
 
 export const COMMAND_HELP: Record<AiCommand, string> = {
   explain: 'Explain the selected code or the open source in plain language',
@@ -11,6 +11,9 @@ export const COMMAND_HELP: Record<AiCommand, string> = {
   test: 'Generate RPGUnit unit tests for a procedure',
   object: 'Explain an object: LIB/NAME *TYPE — what it is, where it is used, what it touches',
   review: 'Review the code for bugs, performance and maintainability issues',
+  errors: 'Explain the compile errors of the open source in plain language, with the IBM help text and the lines involved',
+  depends: 'Explain the dependencies of a program: LIB/PGM — modules, service programs, files, called programs and who uses it',
+  joblog: 'Find why a job failed and recommend a fix: number/user/name — reads the job log and the failing source statement',
 };
 
 const BASE = [
@@ -25,12 +28,15 @@ const BASE = [
 
 const BY_COMMAND: Record<AiCommand, string> = {
   explain: 'Explain what the code does for a developer new to it: purpose, inputs and outputs, files and programs used, main flow, and anything surprising. Use short sections and bullet points. Refer to line numbers when useful.',
-  document: 'Write documentation comments for the code: a header comment block for the program/module (purpose, parameters, files used, change history placeholder) and a comment above each procedure (purpose, each parameter, return value, errors). Return the complete code with the comments added, in one fenced block, without changing any logic.',
+  document: 'Write documentation comments for the code: a header comment block for the program/module (purpose, parameters, files used and how — use the real dependency facts when they are given —, programs called, change history placeholder) and a comment above each procedure and subroutine (purpose, each parameter, return value, errors). Use the comment style of the source (// in free form, * in column 7 in fixed form). Return the complete code with the comments added, in one fenced block, without changing any logic. After the block, add a short Markdown summary of the program that can go into a wiki.',
   sql: 'Write a Db2 for i SQL statement for the request. First look up the real tables and columns with the tools (search objects, describe the table) instead of guessing. Use the library names from the library list when unqualified. Return the statement in one ```sql block, then explain it in two or three lines. Prefer SELECT; if the request needs a change (UPDATE/DELETE/INSERT) write it but warn clearly and include a WHERE clause.',
   fix: 'The compiler reported the errors listed. For each error explain the cause in one or two sentences, then give the corrected code. When the fix is local, show only the changed lines with their line numbers; otherwise show the corrected procedure.',
   modernize: 'Rewrite the code as modern, fully free-form RPG (**FREE): dcl-s/dcl-ds/dcl-pr/dcl-pi declarations, BIFs instead of MOVE/MOVEL, %found/%eof instead of indicators, qualified data structures, procedures instead of subroutines where it helps, and embedded SQL where it clearly simplifies native I/O. Keep the behaviour identical. Return the full rewritten source in one block, then list behaviour points the developer should check.',
-  test: 'Write RPGUnit tests (TESTCASE service program, **FREE) for the procedure(s) in the code: setUp/tearDown when useful, one test per behaviour, assert with aEqual/iEqual/nEqual/assert, and mock data clearly marked. Also give the RUCRTRPG command to build it.',
+  test: 'Suggest and write RPGUnit tests (TESTCASE service program, **FREE) for the procedure(s) in the code. First list the behaviours worth testing for each procedure (normal cases, boundaries, error paths, each IF/SELECT branch), using the procedure signatures and data structure layouts given. Then write the test source: the prototypes (or the /COPY that has them), setUp/tearDown when useful, one test procedure per behaviour named after it, assertions with aEqual/iEqual/nEqual/assert, and test data clearly marked; procedures that read files or call programs need a note on the data to prepare. Also give the RUCRTRPG command to build it and RUCALLTST to run it.',
   object: 'Explain the IBM i object described in the context: what it is, what it is for (from its text, source and references), who uses it and what it uses, and any risks (e.g. last used long ago, large size, journaling). Use the tools to look up more if needed.',
+  errors: 'The compiler reported the errors listed, with the source lines around each one (marked >>) and IBM\'s help text. For each error, worst first: say in plain words what the compiler is complaining about, why it happens at that line (refer to the line numbers and names), and the smallest change that fixes it, as a short code snippet. Group errors that have the same cause (one missing definition often causes many errors) and say which errors will disappear when the first one is fixed. Do not rewrite the whole source.',
+  depends: 'Explain the dependencies of the program described in the context, for a developer who has to change or move it: what it is, how it is built (modules and their sources, service programs, binding directories, activation group), which files it reads or updates, which programs and data areas it calls or uses, and who uses it. Then list the impact of typical changes: what must be recompiled or re-bound if a file or a service program it uses changes, and what to promote together. Base everything on the facts given; say when something is unknown. Finish with a small text diagram of the main call / use relationships.',
+  joblog: 'A job failed. You get the job log (the most likely cause first, grouped errors, the last messages in order) and, when it was found, the source of the failing program with the failing statement marked >>. Explain what happened in order, the root cause (not just the last message), and recommend a concrete fix: the code change at the failing statement (with line numbers), or the operational fix (authority, library list, lock, data, recompile after a level check). If the statement mapping is approximate, say so. End with how to prevent it (MONITOR, error handling, checks).',
   review: 'Review the code like a senior IBM i developer: correctness bugs, error handling (MONITOR, %error, SQLSTATE), performance (I/O in loops, SQL), security (dynamic SQL injection, *ALLOBJ assumptions), and maintainability. Give a prioritised list with line references and concrete fixes.',
 };
 
@@ -95,6 +101,9 @@ export function defaultQuestion(command?: AiCommand): string {
     case 'review': return 'Review this code.';
     case 'sql': return 'Write the SQL.';
     case 'object': return 'Explain this object.';
+    case 'errors': return 'Explain the compile errors.';
+    case 'depends': return 'Explain the dependencies of this program.';
+    case 'joblog': return 'Why did this job fail, and how do I fix it?';
     default: return 'Help me with this.';
   }
 }

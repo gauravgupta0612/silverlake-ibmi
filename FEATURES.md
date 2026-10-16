@@ -687,6 +687,10 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 
 - **Data Structure Layout** with positions and lengths (also on hover), **Show Source with /COPY Expanded**, **Check Service Program Signatures** with one-click re-bind, and **Failed Jobs** from the history log with end codes and job logs.
 
+### 77. AI-powered development — new in 2.3
+
+- `@vanthrex /errors` explains compile errors with IBM's help text and the lines involved; `/document` and `/test` use the real dependencies, procedure signatures and data structure layouts; `/depends LIB/PGM` explains a program's dependencies and the impact of a change; `/joblog number/user/name` finds the failing statement from the job log and recommends a fix.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

@@ -415,5 +415,12 @@
   "command.signatureCheck.rebindAll": "失敗するすべてのオブジェクトを再バインド",
   "command.failedJobs": "失敗したジョブ (異常終了)",
   "command.failedJobs.row": "失敗したジョブのオプション",
-  "config.dsLayout.hover": "データ構造のサブフィールドの定義にカーソルを合わせると、その位置と長さを表示します。"
+  "config.dsLayout.hover": "データ構造のサブフィールドの定義にカーソルを合わせると、その位置と長さを表示します。",
+  "command.ai.errors": "AI: コンパイル・エラーの説明",
+  "command.ai.dependencies": "AI: プログラムの依存関係の説明",
+  "command.ai.jobLog": "AI: このジョブが失敗した理由は?",
+  "command.ai.openAt": "ソースを行で開く",
+  "chat.vanthrex.errors": "IBM のヘルプ・テキストと関連する行を使ってコンパイル・エラーを説明します",
+  "chat.vanthrex.depends": "プログラムの依存関係を説明します: LIB/PGM",
+  "chat.vanthrex.joblog": "ジョブが失敗した理由と修正方法を調べます: 番号/ユーザー/名前"
 }

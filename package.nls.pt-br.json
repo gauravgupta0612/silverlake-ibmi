@@ -415,5 +415,12 @@
   "command.signatureCheck.rebindAll": "Revincular todos os objetos com falha",
   "command.failedJobs": "Jobs com falha (encerrados de forma anormal)",
   "command.failedJobs.row": "Opções do job com falha",
-  "config.dsLayout.hover": "Mostra a posição e o comprimento de um subcampo da estrutura de dados ao passar o mouse sobre sua definição."
+  "config.dsLayout.hover": "Mostra a posição e o comprimento de um subcampo da estrutura de dados ao passar o mouse sobre sua definição.",
+  "command.ai.errors": "IA: Explicar erros de compilação",
+  "command.ai.dependencies": "IA: Explicar dependências do programa",
+  "command.ai.jobLog": "IA: Por que este job falhou?",
+  "command.ai.openAt": "Abrir origem na linha",
+  "chat.vanthrex.errors": "Explicar os erros de compilação com o texto de ajuda da IBM e as linhas envolvidas",
+  "chat.vanthrex.depends": "Explicar as dependências de um programa: BIB/PGM",
+  "chat.vanthrex.joblog": "Descobrir por que um job falhou e como corrigir: número/usuário/nome"
 }

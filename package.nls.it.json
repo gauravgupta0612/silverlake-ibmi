@@ -415,5 +415,12 @@
   "command.signatureCheck.rebindAll": "Riassocia tutti gli oggetti con errori",
   "command.failedJobs": "Lavori non riusciti (terminati in modo anomalo)",
   "command.failedJobs.row": "Opzioni del lavoro non riuscito",
-  "config.dsLayout.hover": "Mostra la posizione e la lunghezza di un sottocampo della struttura dati quando si passa il puntatore sulla relativa definizione."
+  "config.dsLayout.hover": "Mostra la posizione e la lunghezza di un sottocampo della struttura dati quando si passa il puntatore sulla relativa definizione.",
+  "command.ai.errors": "IA: Spiega gli errori di compilazione",
+  "command.ai.dependencies": "IA: Spiega le dipendenze del programma",
+  "command.ai.jobLog": "IA: Perché questo lavoro non è riuscito?",
+  "command.ai.openAt": "Apri sorgente alla riga",
+  "chat.vanthrex.errors": "Spiega gli errori di compilazione con il testo della guida IBM e le righe coinvolte",
+  "chat.vanthrex.depends": "Spiega le dipendenze di un programma: LIB/PGM",
+  "chat.vanthrex.joblog": "Scopri perché un lavoro non è riuscito e come correggerlo: numero/utente/nome"
 }

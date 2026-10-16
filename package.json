@@ -1864,6 +1864,29 @@
         "command": "vanthrex.failedJobs.row",
         "title": "%command.failedJobs.row%",
         "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.ai.errors",
+        "title": "%command.ai.errors%",
+        "category": "Vanthrex",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "vanthrex.ai.dependencies",
+        "title": "%command.ai.dependencies%",
+        "category": "Vanthrex",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "vanthrex.ai.jobLog",
+        "title": "%command.ai.jobLog%",
+        "category": "Vanthrex",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "vanthrex.ai.openAt",
+        "title": "%command.ai.openAt%",
+        "category": "Vanthrex"
       }
     ],
     "menus": {
@@ -2699,6 +2722,16 @@
           "command": "vanthrex.signatureCheck",
           "when": "view == vanthrex.libraries && viewItem == object.srvpgm",
           "group": "2_analyse@4"
+        },
+        {
+          "command": "vanthrex.ai.dependencies",
+          "when": "view == vanthrex.libraries && viewItem =~ /^object\\.(pgm|srvpgm)$/",
+          "group": "2_analyse@5"
+        },
+        {
+          "command": "vanthrex.ai.jobLog",
+          "when": "view == vanthrex.jobs && viewItem =~ /^job/",
+          "group": "1_info@9"
         }
       ],
       "editor/title": [
@@ -3485,6 +3518,22 @@
         {
           "command": "vanthrex.failedJobs",
           "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.ai.openAt",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ai.dependencies",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.ai.jobLog",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.ai.errors",
+          "when": "editorLangId =~ /^(rpgle|cl|dds|sql|cobol)$/"
         }
       ],
       "vanthrex.ai": [
@@ -3511,13 +3560,22 @@
           "group": "2@2"
         },
         {
-          "command": "vanthrex.ai.fix",
+          "command": "vanthrex.ai.errors",
           "group": "2@3"
+        },
+        {
+          "command": "vanthrex.ai.fix",
+          "group": "2@4"
         },
         {
           "command": "vanthrex.ai.sql",
           "when": "editorLangId == sql",
           "group": "3@1"
+        },
+        {
+          "command": "vanthrex.ai.dependencies",
+          "when": "vanthrex.connected && resourceScheme == vanthrex-member",
+          "group": "3@2"
         }
       ]
     },
@@ -4369,6 +4427,18 @@
           {
             "name": "object",
             "description": "%chat.vanthrex.object%"
+          },
+          {
+            "name": "errors",
+            "description": "%chat.vanthrex.errors%"
+          },
+          {
+            "name": "depends",
+            "description": "%chat.vanthrex.depends%"
+          },
+          {
+            "name": "joblog",
+            "description": "%chat.vanthrex.joblog%"
           }
         ]
       }

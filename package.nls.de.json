@@ -415,5 +415,12 @@
   "command.signatureCheck.rebindAll": "Alle fehlerhaften Objekte neu binden",
   "command.failedJobs": "Fehlgeschlagene Jobs (abnormal beendet)",
   "command.failedJobs.row": "Optionen für fehlgeschlagenen Job",
-  "config.dsLayout.hover": "Zeigt Position und Länge eines Datenstruktur-Unterfelds an, wenn Sie mit der Maus auf seine Definition zeigen."
+  "config.dsLayout.hover": "Zeigt Position und Länge eines Datenstruktur-Unterfelds an, wenn Sie mit der Maus auf seine Definition zeigen.",
+  "command.ai.errors": "KI: Kompilierungsfehler erklären",
+  "command.ai.dependencies": "KI: Programmabhängigkeiten erklären",
+  "command.ai.jobLog": "KI: Warum ist dieser Job fehlgeschlagen?",
+  "command.ai.openAt": "Quelle in Zeile öffnen",
+  "chat.vanthrex.errors": "Kompilierungsfehler mit dem IBM-Hilfetext und den betroffenen Zeilen erklären",
+  "chat.vanthrex.depends": "Abhängigkeiten eines Programms erklären: BIB/PGM",
+  "chat.vanthrex.joblog": "Herausfinden, warum ein Job fehlgeschlagen ist und wie er behoben wird: Nummer/Benutzer/Name"
 }

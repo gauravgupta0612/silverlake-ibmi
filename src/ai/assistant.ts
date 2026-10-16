@@ -8,6 +8,9 @@ import {
   AiCommand, COMMAND_HELP, PromptContext, buildUserMessage, firstCodeBlock, instructions, parseObjectRef, rowsToText,
 } from './prompts';
 import { registerAiTools } from './tools';
+import { compileErrorContext, dependencyContext, jobLogContext, programsFromMember, testContext, dependencies } from './systemContext';
+import { dependenciesForModel } from './context';
+import { memberUri } from '../features/fileSystems';
 
 const PARTICIPANT = 'vanthrex.assistant';
 const LANGS = new Set(['rpgle', 'cl', 'dds', 'sql', 'cobol', 'clle']);
@@ -108,7 +111,7 @@ async function handle(manager: ConnectionManager, request: vscode.ChatRequest, c
   }
   const command = (request.command as AiCommand | undefined) ?? undefined;
   const conn = manager.connection;
-  const needsSource = command && ['explain', 'document', 'fix', 'modernize', 'test', 'review'].includes(command);
+  const needsSource = command && ['explain', 'document', 'fix', 'modernize', 'test', 'review', 'errors'].includes(command);
   const source = await sourceContext(request);
   if (needsSource && !source) {
     stream.markdown('Open an RPG, CL, DDS or SQL source (or select some code) first, then ask again. You can also attach a file with **#**.');
@@ -121,10 +124,54 @@ async function handle(manager: ConnectionManager, request: vscode.ChatRequest, c
       osRelease: await osRelease(conn),
     } : undefined,
     source: source && (needsSource || command === undefined || command === 'sql') ? source : undefined,
-    diagnostics: command === 'fix' ? compileDiagnostics(source?.uri) : undefined,
+    diagnostics: command === 'fix' || command === 'errors' ? compileDiagnostics(source?.uri) : undefined,
     extra: command === 'object' ? await objectContext(conn, request.prompt) : [],
   };
-  if (command === 'fix' && !ctx.diagnostics?.length) {
+  const fullText = source?.uri ? (await vscode.workspace.openTextDocument(source.uri)).getText() : source?.text ?? '';
+  try {
+    if ((command === 'fix' || command === 'errors') && ctx.diagnostics?.length) {
+      stream.progress(vscode.l10n.t('Reading IBM help for the messages…'));
+      ctx.extra!.push(...await compileErrorContext(conn, fullText, ctx.diagnostics));
+    }
+    if (command === 'test') { ctx.extra!.push(...testContext(fullText)); }
+    if (command === 'document' && conn && source?.uri) {
+      const pgm = (await programsFromMember(conn, source.uri).catch(() => []))[0];
+      if (pgm) { stream.progress(vscode.l10n.t('Reading what {0}/{1} uses…', pgm.lib, pgm.name)); ctx.extra!.push(`The program compiled from this source, as read from the system:\n${dependenciesForModel(await dependencies(conn, pgm.lib, pgm.name, pgm.type))}`); }
+    }
+    if (command === 'depends' || command === 'joblog') {
+      if (!conn) { stream.markdown(vscode.l10n.t('Connect to an IBM i system first: this command reads the real program and job information.')); return {}; }
+      if (command === 'depends') {
+        let ref = parseObjectRef(request.prompt);
+        if (!ref) {
+          const ed = vscode.window.activeTextEditor?.document.uri;
+          const p = ed ? (await programsFromMember(conn, ed).catch(() => []))[0] : undefined;
+          if (p) { ref = { library: p.lib, name: p.name, type: p.type }; }
+        }
+        if (!ref) { stream.markdown(vscode.l10n.t('Name the program: `@vanthrex /depends MYLIB/ORDPGM` (or open its source).')); return {}; }
+        ctx.question = request.prompt.replace(/[A-Z$#@][A-Z0-9$#@_.]{0,9}\/[A-Z$#@][A-Z0-9$#@_.]{0,9}(\s+\*[A-Z]+)?/i, '').trim(); if (ctx.question.split(/\s+/).length < 3) { ctx.question = ''; }
+        stream.progress(vscode.l10n.t('Reading the dependencies of {0}/{1}…', ref.library, ref.name));
+        const d = await dependencyContext(conn, ref);
+        ctx.extra!.push(...d.text);
+        if (d.sourceText) { ctx.extra!.push(`Source ${d.sourceLabel} (first part):\n\`\`\`\n${d.sourceText.slice(0, 20000)}\n\`\`\``); }
+      } else {
+        const job = /\b\d{6}\/[A-Z0-9$#@_.]{1,10}\/[A-Z0-9$#@_.]{1,10}\b/i.exec(request.prompt)?.[0];
+        if (!job) { stream.markdown(vscode.l10n.t('Name the job: `@vanthrex /joblog 123456/QUSER/ORDENTRY`.')); return {}; }
+        ctx.question = request.prompt.replace(job, '').trim(); if (ctx.question.split(/\s+/).length < 3) { ctx.question = ''; }
+        stream.progress(vscode.l10n.t('Reading the job log of {0}…', job));
+        const j = await jobLogContext(conn, job);
+        ctx.extra!.push(...j.text);
+        if (j.failing) {
+          stream.markdown(vscode.l10n.t('Failed in **{0}/{1}**{2}.', j.failing.lib, j.failing.pgm, j.source ? vscode.l10n.t(', source {0}{1}', j.source.label, j.source.line ? vscode.l10n.t(' line {0}', j.source.line) : '') : '') + '\n\n');
+          const m = j.source ? /^([^/]+)\/([^(]+)\(([^)]+)\)$/.exec(j.source.label) : null;
+          if (m) { stream.button({ command: 'vanthrex.ai.openAt', title: vscode.l10n.t('$(go-to-file) Open the failing statement'), arguments: [m[1], m[2], m[3], (j.source!.line ?? 1) - 1] }); }
+        }
+      }
+    }
+  } catch (e) {
+    if (command === 'depends' || command === 'joblog') { stream.markdown(errorMessage(e)); return {}; }
+    log(`AI context: ${errorMessage(e)}`);
+  }
+  if ((command === 'fix' || command === 'errors') && !ctx.diagnostics?.length) {
     stream.markdown('No compile errors are listed for this source. Compile it first (**Ctrl+Alt+C**), then ask again — or describe the problem.\n\n');
   }
 
@@ -198,7 +245,10 @@ class FixWithAi implements vscode.CodeActionProvider {
     const a = new vscode.CodeAction('$(sparkle) Ask AI to explain and fix this compile error', vscode.CodeActionKind.QuickFix);
     a.command = { command: 'vanthrex.ai.fix', title: vscode.l10n.t('Ask AI to fix'), arguments: [doc.uri] };
     a.diagnostics = ibmi;
-    return [a];
+    const e = new vscode.CodeAction('$(sparkle) Ask AI to explain the compile errors', vscode.CodeActionKind.QuickFix);
+    e.command = { command: 'vanthrex.ai.errors', title: vscode.l10n.t('Explain compile errors'), arguments: [doc.uri] };
+    e.diagnostics = ibmi;
+    return [e, a];
   }
 }
 
@@ -224,6 +274,9 @@ export function registerAi(context: vscode.ExtensionContext, manager: Connection
       if (cmd === 'explain') { f.push({ prompt: vscode.l10n.t('Document this code'), command: 'document', label: vscode.l10n.t('Write documentation comments') }, { prompt: '', command: 'review', label: vscode.l10n.t('Review it for problems') }); }
       if (cmd === 'review') { f.push({ prompt: '', command: 'modernize', label: vscode.l10n.t('Modernize to free-form RPG') }); }
       if (cmd === 'modernize' || cmd === 'document') { f.push({ prompt: '', command: 'test', label: vscode.l10n.t('Write unit tests') }); }
+      if (cmd === 'errors') { f.push({ prompt: '', command: 'fix', label: vscode.l10n.t('Fix the errors in the code') }); }
+      if (cmd === 'depends') { f.push({ prompt: vscode.l10n.t('What do I have to recompile or promote if I change this program?'), label: vscode.l10n.t('Impact of a change') }); }
+      if (cmd === 'joblog') { f.push({ prompt: vscode.l10n.t('Write the corrected code with error handling'), label: vscode.l10n.t('Write the fix') }); }
       if (cmd === 'sql') { f.push({ prompt: vscode.l10n.t('Make it faster and explain which index would help'), label: vscode.l10n.t('Tune this query') }); }
       return f;
     },
@@ -243,6 +296,27 @@ export function registerAi(context: vscode.ExtensionContext, manager: Connection
     vscode.commands.registerCommand('vanthrex.ai.fix', async (uri?: vscode.Uri) => {
       if (uri) { pending = { uri, at: Date.now() }; } else { rememberEditor(); }
       return openChat('@vanthrex /fix ');
+    }),
+    vscode.commands.registerCommand('vanthrex.ai.errors', async (uri?: vscode.Uri) => {
+      if (uri instanceof vscode.Uri) { pending = { uri, at: Date.now() }; } else { rememberEditor(); }
+      return openChat('@vanthrex /errors ');
+    }),
+    vscode.commands.registerCommand('vanthrex.ai.dependencies', (n?: { library?: string; name?: string; type?: string }) =>
+      openChat(n?.library ? `@vanthrex /depends ${n.library}/${n.name} ${n.type ?? ''}`.trim() : '@vanthrex /depends ', !n?.library)),
+    vscode.commands.registerCommand('vanthrex.ai.jobLog', async (j?: { job?: string } | string) => {
+      let job = typeof j === 'string' ? j : j?.job;
+      if (!job) {
+        job = (await vscode.window.showInputBox({ title: vscode.l10n.t('Why did this job fail?'), prompt: vscode.l10n.t('Qualified job name (number/user/name)'), placeHolder: '123456/QUSER/ORDENTRY', ignoreFocusOut: true,
+          validateInput: v => (/^\d{6}\/[^/\s]{1,10}\/[^/\s]{1,10}$/.test(v.trim()) ? undefined : '123456/QUSER/ORDENTRY') }))?.trim().toUpperCase();
+        if (!job) { return; }
+      }
+      return openChat(`@vanthrex /joblog ${job}`);
+    }),
+    vscode.commands.registerCommand('vanthrex.ai.openAt', async (lib: string, file: string, member: string, line: number) => {
+      const conn = manager.require();
+      const t = await conn.rows<{ T: string }>(`SELECT COALESCE(SOURCE_TYPE, '') AS T FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND SYSTEM_TABLE_NAME = ${sqlString(file)} AND SYSTEM_TABLE_MEMBER = ${sqlString(member)}`, 1).catch(() => []);
+      const l = Math.max(0, Number(line) || 0);
+      await vscode.window.showTextDocument(memberUri(lib, file, member, String(t[0]?.T ?? '').trim() || 'rpgle'), { selection: new vscode.Range(l, 0, l, 0) });
     }),
     vscode.commands.registerCommand('vanthrex.ai.sql', async () => {
       const what = await vscode.window.showInputBox({ title: vscode.l10n.t('Describe the data you want'), prompt: vscode.l10n.t('For example: customers in Paris with orders over 1000 last month'), ignoreFocusOut: true });
