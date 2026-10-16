@@ -317,6 +317,18 @@ export class IbmiConnection implements vscode.Disposable {
     await this.sql(`CALL QSYS2.QCMDEXC(${sqlString(command)})`, 1);
   }
 
+  /** The diagnostic messages behind the last failed command in the SQL job (e.g. the cause of a CPF2817). */
+  private async recentJobDiagnostics(): Promise<string> {
+    try {
+      const r = await this.rows<{ ID: string; T: string }>(
+        `SELECT MESSAGE_ID AS ID, MESSAGE_TEXT AS T FROM TABLE(QSYS2.JOBLOG_INFO('*')) ` +
+        `WHERE MESSAGE_TYPE IN ('DIAGNOSTIC', 'ESCAPE') AND MESSAGE_ID IS NOT NULL ` +
+        `AND MESSAGE_ID NOT IN ('CPF2817', 'SQL0443') AND MESSAGE_ID NOT LIKE 'SQL%' ` +
+        `ORDER BY ORDINAL_POSITION DESC FETCH FIRST 3 ROWS ONLY`, 3);
+      return r.map(m => `[${m.ID}] ${String(m.T ?? '').trim()}`).join(' ');
+    } catch { return ''; }
+  }
+
   /** Read a member with its SRCSEQ / SRCDAT values (needs a Mapepire SQL engine). */
   async readMemberRecords(lib: string, file: string, member: string): Promise<SourceRecord[]> {
     return this.withAlias(lib, file, member, async alias => {
@@ -370,10 +382,32 @@ export class IbmiConnection implements vscode.Disposable {
           backedUp = true;
         }
         try {
-          if (records.length) {
-            await this.sqlCl(`CPYF FROMFILE(${work}) TOFILE(${lib}/${file}) TOMBR(${member}) MBROPT(*REPLACE) FMTOPT(*MAP)`);
-          } else {
-            await this.sqlCl(`CLRPFM FILE(${lib}/${file}) MBR(${member})`);
+          try {
+            if (records.length) {
+              await this.sqlCl(`CPYF FROMFILE(${work}) TOFILE(${lib}/${file}) TOMBR(${member}) MBROPT(*REPLACE) FMTOPT(*MAP)`);
+            } else {
+              await this.sqlCl(`CLRPFM FILE(${lib}/${file}) MBR(${member})`);
+            }
+          } catch (e) {
+            // CPYF/CLRPFM need the member exclusively (CPF2817 hides the real cause, often CPF3130/CPF3156:
+            // the member is still open, e.g. by a cursor of this SQL job or a reader in another job).
+            // A row-level SQL replace does not need that lock, so retry with it.
+            const cause = await this.recentJobDiagnostics();
+            log(`CPYF replace of ${lib}/${file}(${member}) failed (${cause || (e instanceof Error ? e.message : e)}); retrying with SQL`);
+            // The alias lives in QTEMP, which sql() does not guard, so check protection here.
+            await this.guardChange(`Replace ${lib}/${file}(${member}) with SQL`);
+            try {
+              await this.sql(`DELETE FROM ${alias} WITH NC`, 1);
+              if (records.length) {
+                await this.sql(`INSERT INTO ${alias} (SRCSEQ, SRCDAT, SRCDTA) ` +
+                  `SELECT SRCSEQ, SRCDAT, SRCDTA FROM ${work} W ORDER BY RRN(W) WITH NC`, 1);
+              }
+              const n = Number((await this.rows<{ N: number }>(`SELECT COUNT(*) AS N FROM ${alias}`, 1))[0]?.N ?? -1);
+              if (n !== records.length) { throw new Error(`the member holds ${n} of ${records.length} lines after the replace`); }
+            } catch (s) {
+              const detail = cause ? `${cause} (${e instanceof Error ? e.message : e})` : (e instanceof Error ? e.message : String(e));
+              throw new Error(`${detail}; SQL retry: ${s instanceof Error ? s.message : s}`);
+            }
           }
         } catch (e) {
           if (backedUp) {
