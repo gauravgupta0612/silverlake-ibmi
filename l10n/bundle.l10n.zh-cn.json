@@ -2275,5 +2275,10 @@
   "Impact of a change": "更改的影响",
   "Write the corrected code with error handling": "编写带错误处理的修正代码",
   "Write the fix": "编写修复",
-  "Why did this job fail?": "此作业为何失败？"
+  "Why did this job fail?": "此作业为何失败？",
+  "Loading…": "正在加载…",
+  "refreshing…": "正在刷新…",
+  "loading the rest…": "正在加载其余部分…",
+  "Sort": "排序",
+  "Show {0} more ({1} left)": "再显示 {0} 项（剩余 {1} 项）"
 }

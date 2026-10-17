@@ -6,7 +6,7 @@ import { IbmiConnection } from '../core/connection';
 import { errorMessage, log } from '../core/log';
 import { parseMemberPath, sqlString } from '../core/util';
 import { messageFileFor } from '../core/insights';
-import { dataStructures } from '../core/v29';
+import { dataStructures } from '../core/dataStructures';
 import { exportedProcedures } from '../core/codeTools';
 import { MEMBER_SCHEME } from '../features/fileSystems';
 import {

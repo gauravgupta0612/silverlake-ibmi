@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { IbmiConnection } from './connection';
 import { ConnectionProfile, ProfileStore } from './profiles';
 import { errorMessage, log, logError, showLog } from './log';
-import { reconnectDelay, RECONNECT_DELAYS } from './v27';
+import { RECONNECT_DELAYS, reconnectDelay } from './connectionStability';
 
 /**
  * Owns the IBM i connections. Several systems can be connected at the same time; one of them is
@@ -108,6 +108,8 @@ export class ConnectionManager implements vscode.Disposable {
     const conn = new IbmiConnection(profile);
     try { await conn.connect(password); } catch (e) { conn.ssh.dispose(); throw e; }
     this.open.set(profile.id, conn);
+    // Start the SQL engine now (Java on the IBM i takes a few seconds), so the views do not wait for it one by one.
+    void conn.sql('VALUES 1', 1).catch(() => undefined);
     conn.ssh.connection?.on('close', () => {
       if (this.open.get(profile.id) !== conn) { return; }     // closed on purpose (disconnect)
       log(`SSH connection to ${profile.host} closed by the remote system`);

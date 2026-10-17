@@ -4,7 +4,7 @@ import { ConnectionManager } from '../core/manager';
 import { IbmiConnection } from '../core/connection';
 import { errorMessage, log, logError } from '../core/log';
 import { sqlString } from '../core/util';
-import { CheckResult, SERVICES, evaluateSelfCheck, missingServices } from '../core/robust';
+import { CheckResult, evaluateSelfCheck, missingServices, SERVICES } from '../core/serviceCatalog';
 import { showReport } from './reportPanel';
 
 type Row = Record<string, unknown>;

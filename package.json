@@ -1549,8 +1549,8 @@
         "category": "Vanthrex"
       },
       {
-        "command": "vanthrex.v22.gotoLine",
-        "title": "%command.v22.gotoLine%",
+        "command": "vanthrex.gotoLine",
+        "title": "%command.gotoLine%",
         "category": "Vanthrex"
       },
       {
@@ -3305,7 +3305,7 @@
           "when": "false"
         },
         {
-          "command": "vanthrex.v22.gotoLine",
+          "command": "vanthrex.gotoLine",
           "when": "false"
         },
         {

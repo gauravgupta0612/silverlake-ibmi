@@ -349,7 +349,7 @@
   "command.messageQueue": "Gérer la file d'attente de messages…",
   "command.messageQueue.row": "Options du message",
   "command.messageQueue.send": "Envoyer un message à la file d'attente…",
-  "command.v22.gotoLine": "Aller à la ligne",
+  "command.gotoLine": "Aller à la ligne",
   "config.scan.allowedLibraries": "Bibliothèques qui peuvent être nommées dans les sources sans être signalées par « Rechercher les bibliothèques codées en dur » (les bibliothèques IBM et QTEMP sont toujours autorisées).",
   "command.jobDetails": "Que fait ce travail ?",
   "command.historyLog": "Historique système (QHST)…",

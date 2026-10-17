@@ -349,7 +349,7 @@
   "command.messageQueue": "Mit Nachrichtenwarteschlange arbeiten…",
   "command.messageQueue.row": "Nachrichtenoptionen",
   "command.messageQueue.send": "Nachricht an Warteschlange senden…",
-  "command.v22.gotoLine": "Gehe zu Zeile",
+  "command.gotoLine": "Gehe zu Zeile",
   "config.scan.allowedLibraries": "Bibliotheken, die in Quellen genannt werden dürfen, ohne von „Fest codierte Bibliotheken suchen“ gemeldet zu werden (IBM-Bibliotheken und QTEMP sind immer zulässig).",
   "command.jobDetails": "Was macht dieser Job?",
   "command.historyLog": "Systemprotokoll (QHST)…",

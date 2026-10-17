@@ -4,6 +4,9 @@ import { errorMessage, logError } from '../core/log';
 import { sqlString } from '../core/util';
 import { memberUri } from '../features/fileSystems';
 
+/** Expanding the same library or source file again within this time reuses the list (Refresh reads it again). */
+const TREE_CACHE_MS = 20_000;
+
 export type LibNode =
   | { kind: 'library'; library: string; current: boolean }
   | { kind: 'folder'; library: string; folder: 'source' | 'objects' }
@@ -117,9 +120,9 @@ export class LibraryTreeProvider implements vscode.TreeDataProvider<LibNode> {
   }
 
   private async sourceFiles(library: string): Promise<LibNode[]> {
-    const rows = await this.manager.require().rows<{ NAME: string; TEXT: string }>(
+    const rows = await this.manager.require().cachedRows<{ NAME: string; TEXT: string }>(
       `SELECT SYSTEM_TABLE_NAME AS NAME, COALESCE(TABLE_TEXT, '') AS TEXT FROM QSYS2.SYSTABLES ` +
-      `WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(library)} AND FILE_TYPE = 'S' ORDER BY 1`);
+      `WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(library)} AND FILE_TYPE = 'S' ORDER BY 1`, 5000, TREE_CACHE_MS);
     if (!rows.length) { return [{ kind: 'message', text: 'No source files (right-click the library to create one)' }]; }
     return rows.map(r => ({ kind: 'srcfile', library, file: String(r.NAME).trim(), text: String(r.TEXT ?? '').trim() }));
   }
@@ -130,13 +133,13 @@ export class LibraryTreeProvider implements vscode.TreeDataProvider<LibNode> {
   private async members(library: string, file: string): Promise<LibNode[]> {
     const byDate = vscode.workspace.getConfiguration('vanthrex').get<string>('members.sortBy', 'name') === 'date';
     const days = this.memberFilter.get(`${library}/${file}`);
-    const rows = await this.manager.require().rows<{ NAME: string; TYPE: string; TEXT: string; CHANGED: string; CREATED: string; N: number }>(
+    const rows = await this.manager.require().cachedRows<{ NAME: string; TYPE: string; TEXT: string; CHANGED: string; CREATED: string; N: number }>(
       `SELECT SYSTEM_TABLE_MEMBER AS NAME, COALESCE(SOURCE_TYPE, '') AS TYPE, COALESCE(PARTITION_TEXT, '') AS TEXT, ` +
       `VARCHAR(LAST_SOURCE_UPDATE_TIMESTAMP) AS CHANGED, VARCHAR(CREATE_TIMESTAMP) AS CREATED, NUMBER_ROWS AS N ` +
       `FROM QSYS2.SYSPARTITIONSTAT ` +
       `WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(library)} AND SYSTEM_TABLE_NAME = ${sqlString(file)} ` +
       (days ? `AND LAST_SOURCE_UPDATE_TIMESTAMP >= CURRENT TIMESTAMP - ${Math.floor(days)} DAYS ` : '') +
-      `ORDER BY ${byDate ? 'LAST_SOURCE_UPDATE_TIMESTAMP DESC, ' : ''}1`, 20000);
+      `ORDER BY ${byDate ? 'LAST_SOURCE_UPDATE_TIMESTAMP DESC, ' : ''}1`, 20000, TREE_CACHE_MS);
     if (!rows.length) {
       return [{ kind: 'message', text: days ? `No members changed in the last ${days} days` : 'Empty source file (click + to add a member)' }];
     }
@@ -150,9 +153,9 @@ export class LibraryTreeProvider implements vscode.TreeDataProvider<LibNode> {
   }
 
   private async objects(library: string): Promise<LibNode[]> {
-    const rows = await this.manager.require().rows<{ OBJNAME: string; OBJTYPE: string; ATTR: string; TEXT: string }>(
+    const rows = await this.manager.require().cachedRows<{ OBJNAME: string; OBJTYPE: string; ATTR: string; TEXT: string }>(
       `SELECT OBJNAME, OBJTYPE, COALESCE(OBJATTRIBUTE, '') AS ATTR, COALESCE(OBJTEXT, '') AS TEXT ` +
-      `FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(library)}, '*ALL')) ORDER BY OBJTYPE, OBJNAME`, 20000);
+      `FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(library)}, '*ALL')) ORDER BY OBJTYPE, OBJNAME`, 20000, TREE_CACHE_MS);
     if (!rows.length) { return [{ kind: 'message', text: 'No objects' }]; }
     return rows.map(r => ({
       kind: 'object', library,

@@ -3,7 +3,7 @@ import { readLibraries } from './libraryLookup';
 import { ConnectionManager } from '../core/manager';
 import { ConnectionProfile } from '../core/profiles';
 import { errorMessage, logError, showLog } from '../core/log';
-import { assertSystemName, clString, isValidSystemName, sqlString } from '../core/util';
+import { assertSystemName, clString, isValidSystemName } from '../core/util';
 import { LibNode, LibraryTreeProvider } from '../views/libraryTree';
 import { IfsNode, IfsTreeProvider } from '../views/ifsTree';
 import { ConnectionForm } from './connectionForm';
@@ -194,7 +194,7 @@ export function registerBrowseCommands(
   reg('vanthrex.openDocs', () => vscode.env.openExternal(vscode.Uri.parse('https://gauravgupta0612.github.io/vanthrex-ibmi-docs/')));
 
   // ------------------------------------------------------------ libraries
-  reg('vanthrex.refreshLibraries', () => libraries.refresh());
+  reg('vanthrex.refreshLibraries', () => { manager.connection?.invalidateCache(); libraries.refresh(); });
   reg('vanthrex.addLibrary', async () => {
     const conn = manager.require();
     const lib = await askName('Add library', 'Library to add to the top of your list');
@@ -285,7 +285,7 @@ export function registerBrowseCommands(
     libraries.refresh();
   });
 
-  // vanthrex.findMember lives in v24View.ts (library list or all user libraries, PDM and built-from buttons).
+  // vanthrex.findMember lives in memberToolsView.ts (library list or all user libraries, PDM and built-from buttons).
 
   // ------------------------------------------------------------ objects
   reg('vanthrex.objectCall', async (n: ObjectNode) => {

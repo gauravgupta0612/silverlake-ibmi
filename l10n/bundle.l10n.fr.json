@@ -2275,5 +2275,10 @@
   "Impact of a change": "Impact d'une modification",
   "Write the corrected code with error handling": "Écrire le code corrigé avec gestion des erreurs",
   "Write the fix": "Écrire la correction",
-  "Why did this job fail?": "Pourquoi ce travail a-t-il échoué ?"
+  "Why did this job fail?": "Pourquoi ce travail a-t-il échoué ?",
+  "Loading…": "Chargement…",
+  "refreshing…": "actualisation…",
+  "loading the rest…": "chargement du reste…",
+  "Sort": "Trier",
+  "Show {0} more ({1} left)": "Afficher {0} de plus ({1} restants)"
 }

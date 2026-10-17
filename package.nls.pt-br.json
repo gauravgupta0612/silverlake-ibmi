@@ -349,7 +349,7 @@
   "command.messageQueue": "Trabalhar com fila de mensagens…",
   "command.messageQueue.row": "Opções da mensagem",
   "command.messageQueue.send": "Enviar mensagem para a fila…",
-  "command.v22.gotoLine": "Ir para a linha",
+  "command.gotoLine": "Ir para a linha",
   "config.scan.allowedLibraries": "Bibliotecas que podem ser nomeadas na fonte sem serem relatadas por \"Localizar bibliotecas fixas no código\" (bibliotecas da IBM e QTEMP são sempre permitidas).",
   "command.jobDetails": "O que este job está fazendo?",
   "command.historyLog": "Log de histórico do sistema (QHST)…",

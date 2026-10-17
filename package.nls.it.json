@@ -349,7 +349,7 @@
   "command.messageQueue": "Gestisci coda messaggi…",
   "command.messageQueue.row": "Opzioni messaggio",
   "command.messageQueue.send": "Invia messaggio alla coda…",
-  "command.v22.gotoLine": "Vai alla riga",
+  "command.gotoLine": "Vai alla riga",
   "config.scan.allowedLibraries": "Librerie che possono essere indicate nel sorgente senza essere segnalate da \"Trova librerie specificate nel codice\" (le librerie IBM e QTEMP sono sempre consentite).",
   "command.jobDetails": "Cosa sta facendo questo lavoro?",
   "command.historyLog": "Registrazione cronologica di sistema (QHST)…",

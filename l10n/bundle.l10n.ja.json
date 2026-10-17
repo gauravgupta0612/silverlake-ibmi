@@ -2275,5 +2275,10 @@
   "Impact of a change": "変更の影響",
   "Write the corrected code with error handling": "エラー処理を含む修正済みコードを作成",
   "Write the fix": "修正を作成",
-  "Why did this job fail?": "このジョブが失敗した理由は?"
+  "Why did this job fail?": "このジョブが失敗した理由は?",
+  "Loading…": "読み込み中…",
+  "refreshing…": "更新中…",
+  "loading the rest…": "残りを読み込み中…",
+  "Sort": "並べ替え",
+  "Show {0} more ({1} left)": "さらに {0} 件表示 (残り {1} 件)"
 }

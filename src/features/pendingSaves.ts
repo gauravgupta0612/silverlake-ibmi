@@ -3,7 +3,7 @@
 
 import * as vscode from 'vscode';
 import { errorMessage, log, logError } from '../core/log';
-import { isConnectionError, pendingFileName } from '../core/v27';
+import { isConnectionError, pendingFileName } from '../core/connectionStability';
 
 interface Pending { uri: string; file: string; at: string; system?: string }
 let dir: vscode.Uri | undefined;

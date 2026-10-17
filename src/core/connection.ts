@@ -7,8 +7,15 @@ import { Db2utilEngine, MapepireEngine, SqlEngine, SqlResult } from './sql';
 import { clString, memberPath, shDoubleQuote, shSingleQuote, sqlString } from './util';
 import { SourceRecord } from './sourceDates';
 import { log, logError } from './log';
-import { isChangingSql, isReadOnlyCommand, isTempPath } from './robust';
+import { isChangingSql, isReadOnlyCommand, isTempPath } from './protection';
 import { redactPasswords } from './secadm';
+
+/** Statements that only read (their results can be shared or cached). */
+const READ_ONLY_SQL = /^\s*(SELECT|WITH|VALUES)\b/i;
+/** A SELECT can still change data (FINAL TABLE (INSERT …), NEXT VALUE FOR a sequence, QCMDEXC): never share those. */
+const WRITES_INSIDE_SELECT = /\b(FINAL|NEW|OLD)\s+TABLE\b|\b(NEXT|PREVIOUS)\s+VALUE\b|\bQCMDEXC\b|\bINSERT\b|\bUPDATE\b|\bDELETE\b/i;
+/** Queries slower than this are written to the log, to find what makes a view slow. */
+const SLOW_QUERY_MS = 3000;
 
 export interface MemberLock {
   /** Qualified job name: number/user/name (for interactive jobs, name = the workstation). */
@@ -129,6 +136,7 @@ export class IbmiConnection implements vscode.Disposable {
     lines.push(`system ${shDoubleQuote(command)}`);
     log(`> ${redactPasswords(command)}`);
     const r = await this.exec(QSH, lines.join('\n') + '\n');
+    if (!isReadOnlyCommand(command, this.tempDir)) { this.invalidateCache(); }
     const all = `${r.stdout}\n${r.stderr}`;
     const messages = [...new Set(all.match(/\b[A-Z]{3}[0-9A-F]{4}\b/g) ?? [])];
     // QSH 'system' returns a non-zero exit status when the command ends with an escape message.
@@ -141,15 +149,57 @@ export class IbmiConnection implements vscode.Disposable {
   // ---------------------------------------------------------------- SQL
 
   async sql(statement: string, maxRows = 1000): Promise<SqlResult> {
-    if (isChangingSql(statement, this.tempDir)) { await this.guardChange(statement); }
-    const engine = await this.getSqlEngine();
-    return engine.query(statement, maxRows);
+    const changing = isChangingSql(statement, this.tempDir);
+    if (changing) { await this.guardChange(statement); }
+    const read = !changing && READ_ONLY_SQL.test(statement) && !WRITES_INSIDE_SELECT.test(statement);
+    // The same read asked twice at the same time (two views refreshing together) runs once.
+    const key = `${maxRows}|${statement}`;
+    const running = read ? this.inflight.get(key) : undefined;
+    if (running) { const r = await running; return { ...r, rows: [...r.rows] }; }
+    const run = (async () => {
+      const engine = await this.getSqlEngine();
+      const started = Date.now();
+      try { return await engine.query(statement, maxRows); }
+      finally {
+        const ms = Date.now() - started;
+        if (ms >= SLOW_QUERY_MS) { log(`Slow query (${(ms / 1000).toFixed(1)} s): ${statement.replace(/\s+/g, ' ').slice(0, 200)}`); }
+      }
+    })();
+    if (read) { this.inflight.set(key, run); }
+    try { return await run; }
+    finally {
+      if (read) { if (this.inflight.get(key) === run) { this.inflight.delete(key); } } else { this.invalidateCache(); }
+    }
   }
 
   /** Convenience: run a query and return the rows. */
   async rows<T = Record<string, unknown>>(statement: string, maxRows = 5000): Promise<T[]> {
     return (await this.sql(statement, maxRows)).rows as T[];
   }
+
+  /**
+   * Rows of a read-only query, kept for a short time: for lists that several views ask for (libraries, objects of a
+   * library). Anything that may change the system (a CL command or a changing SQL statement) clears the cache.
+   */
+  async cachedRows<T = Record<string, unknown>>(statement: string, maxRows = 5000, ttlMs = 30_000): Promise<T[]> {
+    const key = `${maxRows}|${statement}`;
+    const hit = this.readCache.get(key);
+    if (hit && Date.now() - hit.at < ttlMs) { return [...hit.rows] as T[]; }
+    const epoch = this.cacheEpoch;
+    const rows = await this.rows<Record<string, unknown>>(statement, maxRows);
+    // Something changed while the query ran: its answer may already be old, so it is not kept.
+    if (epoch === this.cacheEpoch) { this.readCache.set(key, { at: Date.now(), rows }); }
+    if (this.readCache.size > 100) { this.readCache.delete(this.readCache.keys().next().value as string); }
+    return [...rows] as T[];
+  }
+
+  /** Forget the cached query results (after a change, or when the user asks to refresh). */
+  invalidateCache(): void { this.readCache.clear(); this.inflight.clear(); this.cacheEpoch++; }
+
+  private cacheEpoch = 0;
+
+  private readonly readCache = new Map<string, { at: number; rows: Record<string, unknown>[] }>();
+  private readonly inflight = new Map<string, Promise<SqlResult>>();
 
   private getSqlEngine(): Promise<SqlEngine> {
     if (this.sqlEngine) { return Promise.resolve(this.sqlEngine); }

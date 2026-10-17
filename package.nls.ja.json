@@ -349,7 +349,7 @@
   "command.messageQueue": "メッセージ待ち行列の処理…",
   "command.messageQueue.row": "メッセージ・オプション",
   "command.messageQueue.send": "待ち行列へのメッセージ送信…",
-  "command.v22.gotoLine": "行へ移動",
+  "command.gotoLine": "行へ移動",
   "config.scan.allowedLibraries": "「ハードコーディングされたライブラリーの検索」で報告されずにソース内で指定できるライブラリー (IBM ライブラリーと QTEMP は常に許可されます)。",
   "command.jobDetails": "このジョブは何をしていますか？",
   "command.historyLog": "システム・ヒストリー・ログ (QHST)…",

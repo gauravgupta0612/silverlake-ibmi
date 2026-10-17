@@ -36,7 +36,7 @@ import { registerAi } from './ai/assistant';
 import { registerInsights } from './features/insightsView';
 import { registerAdmin } from './features/adminView';
 import { registerWorkWith } from './features/workWithView';
-import { registerExtras } from './features/extrasView';
+
 import { registerDataTransfer } from './features/dataTransferView';
 import { registerPerfMonitor } from './features/perfMonitor';
 import { registerCodeTools } from './features/codeToolsView';
@@ -46,20 +46,25 @@ import { registerDspfPreview } from './features/dspfPreview';
 import { registerErd } from './features/erdView';
 import { registerCrossSystem } from './features/crossSystem';
 import { registerSpoolExtras } from './features/spoolExtras';
-import { registerMore } from './features/moreView';
-import { registerV2 } from './features/v2View';
 import { registerSecadm } from './features/secadmView';
-import { registerV21 } from './features/v21View';
-import { registerV22 } from './features/v22View';
-import { registerV23 } from './features/v23View';
 import { registerPdm } from './features/pdmView';
-import { registerV24 } from './features/v24View';
-import { registerV25 } from './features/v25View';
 import { registerTracker } from './features/trackerView';
-import { registerV26 } from './features/v26View';
-import { registerV27 } from './features/v27View';
-import { registerV28 } from './features/v28View';
-import { registerV29 } from './features/v29View';
+import { registerPrinterFile } from './features/printerFileView';
+import { registerObjectCopy } from './features/objectCopyView';
+import { registerDatabaseTools } from './features/databaseToolsView';
+import { registerJobTools } from './features/jobToolsView';
+import { registerIfsTools } from './features/ifsToolsView';
+import { registerSystemTools } from './features/systemToolsView';
+import { registerMemberTools } from './features/memberToolsView';
+import { registerBindingTools } from './features/bindingToolsView';
+import { registerSecurityTools } from './features/securityToolsView';
+import { registerSourceAnalysis } from './features/sourceAnalysisView';
+import { registerPinned } from './features/pinnedView';
+import { registerConnectionStability } from './features/connectionStabilityView';
+import { registerProgramCall } from './features/programCallView';
+import { registerMemberNotes } from './features/memberNotesView';
+import { registerOperations } from './features/operationsView';
+import { registerSqlFormat } from './features/sqlFormatView';
 
 let manager: ConnectionManager | undefined;
 
@@ -70,9 +75,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Each feature starts on its own: if one fails, the others (and the error report) still work.
   const failures: string[] = [];
+  const startedAt = Date.now();
+  const slowSteps: string[] = [];
   const step = (name: string, fn: () => void) => {
+    const t0 = Date.now();
     try { fn(); }
     catch (e) { failures.push(`${name}: ${errorMessage(e)}`); logError(e); }
+    const ms = Date.now() - t0;
+    if (ms >= 50) { slowSteps.push(`${name} ${ms} ms`); }
   };
 
   const profiles = new ProfileStore(context);
@@ -130,7 +140,6 @@ export function activate(context: vscode.ExtensionContext): void {
   step('insights', () => registerInsights(context, m));
   step('system tools', () => registerAdmin(context, m));
   step('work with', () => registerWorkWith(context, m));
-  step('extras', () => registerExtras(context, m));
   step('data transfer', () => registerDataTransfer(context, m));
   step('performance', () => registerPerfMonitor(context, m));
   step('code tools', () => registerCodeTools(context, m));
@@ -141,26 +150,31 @@ export function activate(context: vscode.ExtensionContext): void {
   step('database diagram', () => registerErd(context, m));
   step('cross-system compare', () => registerCrossSystem(context, m));
   step('spool pdf & e-mail', () => registerSpoolExtras(context, m));
-  step('more tools', () => registerMore(context, m));
-  step('2.0 tools', () => registerV2(context, m));
   step('security admin', () => registerSecadm(context, m));
-  step('2.1 tools', () => registerV21(context, m));
-  step('2.1 more tools', () => registerV22(context, m));
-  step('2.1 batch 4', () => registerV23(context, m));
   step('PDM', () => registerPdm(context, m));
-  step('2.2 editing helpers', () => registerV24(context, m));
-  step('2.2 history, live job log, pins', () => registerV25(context, m));
   step('System Tracker', () => registerTracker(context, m));
-  step('2.3 tools', () => registerV26(context, m));
-  step('2.3 stability', () => registerV27(context, m));
-  step('2.3 call, signed on, notes', () => registerV28(context, m));
-  step('2.3 layout, copies, signatures, failed jobs', () => registerV29(context, m));
+  step('printer file preview', () => registerPrinterFile(context, m));
+  step('copy objects and members', () => registerObjectCopy(context, m));
+  step('database tools', () => registerDatabaseTools(context, m));
+  step('job tools', () => registerJobTools(context, m));
+  step('IFS tools', () => registerIfsTools(context, m));
+  step('system tools (more)', () => registerSystemTools(context, m));
+  step('member tools', () => registerMemberTools(context, m));
+  step('binding tools', () => registerBindingTools(context, m));
+  step('security tools', () => registerSecurityTools(context, m));
+  step('source analysis', () => registerSourceAnalysis(context, m));
+  step('pinned view', () => registerPinned(context, m));
+  step('connection stability', () => registerConnectionStability(context, m));
+  step('call program', () => registerProgramCall(context, m));
+  step('member notes', () => registerMemberNotes(context, m));
+  step('operations', () => registerOperations(context, m));
+  step('SQL formatter', () => registerSqlFormat(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))
       .then(c => { if (c) { showLog(); } });
   } else {
-    log('Vanthrex ready');
+    log(`Vanthrex ready in ${Date.now() - startedAt} ms${slowSteps.length ? ` (slowest: ${slowSteps.join(', ')})` : ''}`);
   }
 
   // First run: open the walkthrough so new users know where to start.

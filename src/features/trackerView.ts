@@ -8,7 +8,8 @@ import { errorMessage, logError } from '../core/log';
 import { sqlString } from '../core/util';
 import { Attention, Row, SECURITY_VALUES, Snapshot, Tone, addSnapshot, adviseSystemValue, attention, journalTone, objectScanSql, scheduleCommand, bytes, csv, healthScore, isIbmLibrary, libraryRows, librarySizeSql, num, pick, portName, queueCommand, since, sparkPoints, summaryMarkdown, tone, unencrypted, unusedSince } from '../core/tracker';
 import { readLibraries } from './libraryLookup';
-import { CompileRecord, latestPerSource, Pin, pinDescription, pinLabel } from '../core/v25';
+import { CompileRecord, latestPerSource } from '../core/compileHistory';
+import { Pin, pinDescription, pinLabel } from '../core/pins';
 import { memberUri } from './fileSystems';
 import { escapeHtml, nonce } from './webviewUtil';
 
@@ -36,8 +37,14 @@ async function safe(conn: IbmiConnection, sql: string, n = 1000): Promise<{ rows
 
 class Tracker {
   static current?: Tracker;
+  /** The last full page per system, shown at once while the next refresh runs. */
+  private static readonly last = new Map<string, { tabs: unknown[]; at: string; sizes: unknown; acts: [number, Act][] }>();
+  private shownData = false;
   private readonly panel: vscode.WebviewPanel;
-  private acts: Act[] = [];
+  /** Actions of the page by number; numbers are never reused, so a click on an older page cannot run another action. */
+  private acts = new Map<number, Act>();
+  private static nextAct = 0;
+  private keepFrom = 0;
   private loading = false;
   private gen = 0;
   lastSummary?: () => string;
@@ -59,13 +66,14 @@ class Tracker {
   }
 
   private post(m: unknown): void { void this.panel.webview.postMessage(m); }
-  private ref(a: Act): number { this.acts.push(a); return this.acts.length - 1; }
+  private ref(a: Act): number { const i = Tracker.nextAct++; this.acts.set(i, a); return i; }
 
   private async onMessage(m: { t: string; [k: string]: unknown }): Promise<void> {
     try {
+      if (m.t === 'refresh') { this.manager.connection?.invalidateCache(); }
       if (m.t === 'ready' || m.t === 'refresh') { await this.load(); }
       if (m.t === 'act') {
-        const a = this.acts[Number(m.i)];
+        const a = this.acts.get(Number(m.i));
         if (a?.command === 'vanthrex.tracker.tab') { this.post({ t: 'tab', id: a.args?.[0] }); return; }
         if (a?.command === 'vanthrex.tracker.scan') { await this.runScan(Number(a.args?.[0]), String(a.args?.[1]), a.args?.[2] === 'size' ? 'size' : 'changed'); return; }
         if (a && ALLOWED.has(a.command)) { await vscode.commands.executeCommand(a.command, ...(a.args ?? [])); }
@@ -85,417 +93,445 @@ class Tracker {
     this.post({ t: 'busy', on: true });
     try {
       const conn = this.manager.require();
-      this.acts = [];
       const gen = ++this.gen;
+      const cached = Tracker.last.get(conn.profile.id);
+      if (cached && !this.shownData) {
+        for (const [i, a] of cached.acts) { this.acts.set(i, a); }
+        this.post({ t: 'data', tabs: cached.tabs, at: cached.at, sizes: cached.sizes, first: this.firstTab, cached: true });
+      }
+      this.shownData = true;
       const me = conn.user;
       const libl = [...new Set([conn.profile.currentLibrary, ...conn.profile.libraries].filter(Boolean).map(l => String(l).toUpperCase()))];
-      const [scheds, sbsInfo, journals, failedSignon, jobqs, outqs, listen, remotes, estab, sysvals, env, st, scpf, subs, waiting, top, asp, waitCount, myAuth, libs, qsysopr, users, powerful, ptf, myJobs, mySpool, myMembers] = await Promise.all([
-        safe(conn, 'SELECT * FROM QSYS2.SCHEDULED_JOB_INFO', 2000),
-        safe(conn, 'SELECT * FROM QSYS2.SUBSYSTEM_INFO', 500),
-        safe(conn, `SELECT * FROM QSYS2.JOURNAL_INFO WHERE JOURNAL_LIBRARY NOT LIKE 'Q%'`, 3000),
-        safe(conn, `SELECT AUTHORIZATION_NAME AS U, STATUS AS S, SIGN_ON_ATTEMPTS_NOT_VALID AS F, VARCHAR(PREVIOUS_SIGNON) AS P FROM QSYS2.USER_INFO WHERE SIGN_ON_ATTEMPTS_NOT_VALID > 0 ORDER BY 3 DESC FETCH FIRST 100 ROWS ONLY`, 100),
-        safe(conn, 'SELECT * FROM QSYS2.JOB_QUEUE_INFO ORDER BY NUMBER_OF_JOBS DESC FETCH FIRST 300 ROWS ONLY', 300),
-        safe(conn, 'SELECT * FROM QSYS2.OUTPUT_QUEUE_INFO ORDER BY NUMBER_OF_FILES DESC FETCH FIRST 200 ROWS ONLY', 200),
-        safe(conn, `SELECT LOCAL_PORT AS P, COUNT(*) AS N FROM QSYS2.NETSTAT_INFO WHERE TCP_STATE = 'LISTEN' GROUP BY LOCAL_PORT ORDER BY 1`, 500),
-        safe(conn, `SELECT REMOTE_ADDRESS AS R, COUNT(*) AS N, MIN(LOCAL_PORT) AS P FROM QSYS2.NETSTAT_INFO WHERE TCP_STATE = 'ESTABLISHED' GROUP BY REMOTE_ADDRESS ORDER BY 2 DESC FETCH FIRST 25 ROWS ONLY`, 25),
-        safe(conn, `SELECT LOCAL_PORT AS P, COUNT(*) AS N FROM QSYS2.NETSTAT_INFO WHERE TCP_STATE = 'ESTABLISHED' GROUP BY LOCAL_PORT`, 2000),
-        safe(conn, `SELECT SYSTEM_VALUE_NAME AS N, COALESCE(VARCHAR(CURRENT_NUMERIC_VALUE), CURRENT_CHARACTER_VALUE, '') AS V FROM QSYS2.SYSTEM_VALUE_INFO ` +
-          `WHERE SYSTEM_VALUE_NAME IN (${SECURITY_VALUES.map(sqlString).join(', ')})`, 50),
-        safe(conn, 'SELECT * FROM SYSIBMADM.ENV_SYS_INFO', 1),
-        safe(conn, 'SELECT * FROM QSYS2.SYSTEM_STATUS_INFO', 1),
-        safe(conn, `SELECT VARCHAR(JOB_ACTIVE_TIME) AS T FROM TABLE(QSYS2.ACTIVE_JOB_INFO(JOB_NAME_FILTER => 'SCPF', DETAILED_INFO => 'ALL')) X`, 1),
-        safe(conn, `SELECT COALESCE(SUBSYSTEM, '(none)') AS S, COUNT(*) AS N, DEC(SUM(COALESCE(ELAPSED_CPU_PERCENTAGE, 0)), 7, 1) AS C, SUM(CASE WHEN JOB_STATUS = 'MSGW' THEN 1 ELSE 0 END) AS W ` +
-          `FROM TABLE(QSYS2.ACTIVE_JOB_INFO(DETAILED_INFO => 'NONE')) X WHERE JOB_TYPE <> 'SYS' GROUP BY SUBSYSTEM ORDER BY 2 DESC`, 200),
-        safe(conn, `SELECT JOB_NAME AS J, AUTHORIZATION_NAME AS U, SUBSYSTEM AS S, JOB_STATUS AS ST, COALESCE(FUNCTION, '') AS F FROM TABLE(QSYS2.ACTIVE_JOB_INFO(DETAILED_INFO => 'NONE')) X ` +
-          `WHERE JOB_STATUS = 'MSGW' OR (JOB_STATUS = 'LCKW' AND JOB_TYPE IN ('BCH', 'BCI', 'INT', 'ASJ')) ORDER BY JOB_STATUS DESC, JOB_NAME FETCH FIRST 300 ROWS ONLY`, 300),
-        safe(conn, `SELECT JOB_NAME AS J, AUTHORIZATION_NAME AS U, SUBSYSTEM AS S, JOB_STATUS AS ST, COALESCE(FUNCTION, '') AS F, ELAPSED_CPU_PERCENTAGE AS C, TEMPORARY_STORAGE AS M ` +
-          `FROM TABLE(QSYS2.ACTIVE_JOB_INFO(DETAILED_INFO => 'NONE')) X WHERE JOB_TYPE <> 'SYS' ORDER BY ELAPSED_CPU_PERCENTAGE DESC FETCH FIRST 25 ROWS ONLY`, 25),
-        safe(conn, 'SELECT * FROM QSYS2.ASP_INFO', 50),
-        safe(conn, `SELECT SUM(CASE WHEN JOB_STATUS = 'MSGW' THEN 1 ELSE 0 END) AS W, SUM(CASE WHEN JOB_STATUS = 'LCKW' AND JOB_TYPE IN ('BCH', 'BCI', 'INT', 'ASJ') THEN 1 ELSE 0 END) AS L ` +
+      const build = async (R: Record<keyof typeof started, { rows: Row[]; error?: string }>, partial: boolean): Promise<void> => {
+        const buildFrom = Tracker.nextAct;
+        const { scheds, sbsInfo, journals, failedSignon, jobqs, outqs, listen, remotes, estab, sysvals, env, st, scpf, subs, waiting, top, asp, waitCount, myAuth, libs, qsysopr, users, powerful, ptf, myJobs, mySpool, myMembers } = R;
+
+        const s0 = st.rows[0]; const e0 = env.rows[0];
+        const cpu = num(pick(s0, 'AVERAGE_CPU_UTILIZATION', 'AVERAGE_CPU_RATE'));
+        const aspUsed = num(pick(s0, 'SYSTEM_ASP_USED'));
+        const aspMb = num(pick(s0, 'SYSTEM_ASP_STORAGE'));
+        const activeJobs = num(pick(s0, 'ACTIVE_JOBS_IN_SYSTEM'));
+        const totalJobs = num(pick(s0, 'TOTAL_JOBS_IN_SYSTEM'));
+        const msgw = num(pick(waitCount.rows[0], 'W')) ?? waiting.rows.filter(r => pick(r, 'ST') === 'MSGW').length;
+        const lckw = num(pick(waitCount.rows[0], 'L')) ?? waiting.rows.filter(r => pick(r, 'ST') === 'LCKW').length;
+        const auth = pick(myAuth.rows[0], 'A');
+        const allObj = /\*ALLOBJ/.test(auth);
+        const sizeCache = this.state.get<Record<string, { objects?: number; size?: number; text: string; at: string }>>(`vanthrex.tracker.sizes.${conn.profile.name}`, {});
+        const inquiries = qsysopr.rows.filter(r => /INQUIRY/i.test(pick(r, 'Y'))).length;
+        const history = this.state.get<CompileRecord[]>('vanthrex.compileHistory', []).filter(r => r.system === conn.profile.name);
+        const broken = latestPerSource(history).filter(r => !r.ok);
+        const libRows = libraryRows(libs.rows, libl);
+        const existing = new Set(libRows.map(l => l.name));
+        const missing = libs.rows.length ? libl.filter(l => !existing.has(l)) : [];
+        const u0 = users.rows[0];
+        const pins = this.state.get<Pin[]>(`vanthrex.pins.${conn.profile.name}`, []);
+        const release = [pick(e0, 'OS_NAME'), pick(e0, 'OS_VERSION') && `V${pick(e0, 'OS_VERSION')}R${pick(e0, 'OS_RELEASE')}`].filter(Boolean).join(' ');
+        const cum = ptf.rows.find(r => /CUMULATIVE/i.test(pick(r, 'D')));
+        const tr = ptf.rows.find(r => /TECHNOLOGY REFRESH/i.test(pick(r, 'D')));
+        const jobActs = (j: string): Act[] => [{ label: vscode.l10n.t('Details'), command: 'vanthrex.jobDetails', args: [j] }, { label: vscode.l10n.t('Job log'), command: 'vanthrex.jobLog', args: [{ job: j }] }, { label: vscode.l10n.t('Live'), command: 'vanthrex.jobLogLive', args: [j] }];
+
+        const tabs: Tab[] = [];
+        // ---- overview
+        const say: Record<string, (v: (string | number)[]) => string> = {
+          asp: v => vscode.l10n.t('System ASP is {0}% full.', v[0]), inq: v => vscode.l10n.t('{0} message(s) in QSYSOPR wait for a reply.', v[0]),
+          msgw: v => vscode.l10n.t('{0} job(s) wait for a message reply (MSGW).', v[0]), lckw: v => vscode.l10n.t('{0} job(s) wait for a lock (LCKW).', v[0]),
+          cpu: v => vscode.l10n.t('CPU is at {0}%.', v[0]), broken: v => vscode.l10n.t('{0} of your source(s) did not compile the last time.', v[0]),
+          libl: v => vscode.l10n.t('Library list entries that do not exist: {0}.', v[0]), pwd: v => vscode.l10n.t('{0} enabled profile(s) have an expired password.', v[0]),
+        };
+        const actionName: Record<string, string> = { Storage: vscode.l10n.t('Storage'), Reply: vscode.l10n.t('Reply'), Jobs: vscode.l10n.t('Jobs'), Monitor: vscode.l10n.t('Monitor'),
+          History: vscode.l10n.t('History'), Fix: vscode.l10n.t('Fix'), Users: vscode.l10n.t('Users') };
+        const att = attention({ aspUsed, cpu, msgwJobs: msgw, lckwJobs: lckw, inquiries, brokenCompiles: broken.length,
+          expiredPasswords: num(pick(u0, 'X')), libraryListMissing: missing });
+        for (const a of att) { a.text = say[a.key]?.(a.vals) ?? a.text; a.action = a.action ? actionName[a.action] ?? a.action : a.action; }
+        const advice = sysvals.rows.map(r => adviseSystemValue(pick(r, 'N'), pick(r, 'V'))).sort((a, b) => SECURITY_VALUES.indexOf(a.name) - SECURITY_VALUES.indexOf(b.name));
+        const adviceText: Record<string, string> = {
+          'Any object can be restored, including security-sensitive ones.': vscode.l10n.t('Any object can be restored, including security-sensitive ones.'),
+          'Auditing is on.': vscode.l10n.t('Auditing is on.'),
+          'Below 30: passwords or resource security not enforced.': vscode.l10n.t('Below 30: passwords or resource security not enforced.'),
+          'Inactive interactive jobs are never ended.': vscode.l10n.t('Inactive interactive jobs are never ended.'),
+          'Level 0/1: passwords up to 10 characters, not case-sensitive.': vscode.l10n.t('Level 0/1: passwords up to 10 characters, not case-sensitive.'),
+          'Level 30: move to 40 so programs cannot bypass security.': vscode.l10n.t('Level 30: move to 40 so programs cannot bypass security.'),
+          'Level 40 or 50: object and system integrity protected.': vscode.l10n.t('Level 40 or 50: object and system integrity protected.'),
+          'Long, case-sensitive passwords.': vscode.l10n.t('Long, case-sensitive passwords.'),
+          'Minimum password length below 8.': vscode.l10n.t('Minimum password length below 8.'),
+          'Minimum password length is reasonable.': vscode.l10n.t('Minimum password length is reasonable.'),
+          'More than 5 attempts allowed: 3–5 is usual.': vscode.l10n.t('More than 5 attempts allowed: 3–5 is usual.'),
+          'New objects give *ALL to *PUBLIC.': vscode.l10n.t('New objects give *ALL to *PUBLIC.'),
+          'New objects give *CHANGE to *PUBLIC (default): *USE or *EXCLUDE is stricter.': vscode.l10n.t('New objects give *CHANGE to *PUBLIC (default): *USE or *EXCLUDE is stricter.'),
+          'Passwords never expire.': vscode.l10n.t('Passwords never expire.'),
+          'Public authority on new objects is restricted.': vscode.l10n.t('Public authority on new objects is restricted.'),
+          'Restoring sensitive objects is limited.': vscode.l10n.t('Restoring sensitive objects is limited.'),
+          'Security auditing is off.': vscode.l10n.t('Security auditing is off.'),
+          'Sign-on attempts limited.': vscode.l10n.t('Sign-on attempts limited.'),
+          'Unlimited sign-on attempts: set 3–5.': vscode.l10n.t('Unlimited sign-on attempts: set 3–5.'),
+        };
+        for (const a of advice) {
+          const d = /^Passwords expire after (\S+) days\.$/.exec(a.advice); const m = /^Inactive jobs are handled after (\S+) minutes\.$/.exec(a.advice);
+          a.advice = d ? vscode.l10n.t('Passwords expire after {0} days.', d[1]) : m ? vscode.l10n.t('Inactive jobs are handled after {0} minutes.', m[1]) : adviceText[a.advice] ?? a.advice;
+        }
+        const qsec = num(advice.find(a => a.name === 'QSECURITY')?.value);
+        const health = healthScore({ aspUsed, cpu, msgwJobs: msgw, lckwJobs: lckw, inquiries, brokenCompiles: broken.length, missingLibraries: missing.length,
+          qsecurity: qsec, expiredPasswords: num(pick(u0, 'X')), badSettings: advice.filter(a => a.tone === 'bad').length });
+        const snapKey = `vanthrex.tracker.trend.${conn.profile.name}`;
+        const snaps = addSnapshot(this.state.get<Snapshot[]>(snapKey, []), { at: new Date().toISOString(), cpu, asp: aspUsed, jobs: activeJobs, msgw, score: health.score });
+        if (!partial) { await this.state.update(snapKey, snaps); }
+        const recent = snaps.slice(-24);
+        const span = recent.length > 1 ? vscode.l10n.t('trend over the last {0} refreshes (since {1})', recent.length, new Date(recent[0].at).toLocaleString()) : '';
+        const sp = (k: keyof Snapshot) => sparkPoints(recent.map(x => x[k] as number | undefined));
+        const reasonText: Record<string, string> = { disk: vscode.l10n.t('disk'), 'messages waiting': vscode.l10n.t('messages waiting'), 'MSGW jobs': vscode.l10n.t('MSGW jobs'), 'LCKW jobs': vscode.l10n.t('LCKW jobs'),
+          CPU: 'CPU', QSECURITY: 'QSECURITY', 'security settings': vscode.l10n.t('security settings'), compiles: vscode.l10n.t('compiles'), 'library list': vscode.l10n.t('library list'), passwords: vscode.l10n.t('passwords') };
+        health.reasons = health.reasons.map(r => r.replace(/^(−\d+) (.+)$/, (_, n: string, w: string) => `${n} ${reasonText[w] ?? w}`));
+        const healthLabel = { healthy: vscode.l10n.t('Healthy'), watch: vscode.l10n.t('Keep an eye on it'), action: vscode.l10n.t('Action needed') }[health.label];
+        this.lastSummary = () => summaryMarkdown(conn.profile.name, new Date().toLocaleString(), { ...health, label: healthLabel },
+          [{ label: 'CPU', value: cpu !== undefined ? `${cpu.toFixed(1)}%` : '—' }, { label: vscode.l10n.t('System ASP'), value: aspUsed !== undefined ? `${aspUsed.toFixed(1)}%` : '—' },
+            { label: vscode.l10n.t('Active jobs'), value: String(activeJobs ?? '—') }, { label: 'MSGW / LCKW', value: `${msgw} / ${lckw}` }, { label: vscode.l10n.t('QSYSOPR replies'), value: String(inquiries) },
+            { label: vscode.l10n.t('PTF level'), value: cum ? `CUM ${pick(cum, 'L')}` : '—' }], att);
+        tabs.push({
+          hero: { score: health.score, label: healthLabel, tone: health.label === 'healthy' ? 'ok' : health.label === 'watch' ? 'warn' : 'bad', reasons: health.reasons, spark: sp('score'), sparkTitle: span },
+          id: 'overview', title: vscode.l10n.t('Overview'), badge: att.filter(a => a.tone === 'bad' || a.tone === 'warn').length || undefined, badgeTone: att.some(a => a.tone === 'bad') ? 'bad' : 'warn',
+          tiles: [
+            { label: vscode.l10n.t('System'), value: pick(e0, 'HOST_NAME') || conn.profile.name, sub: release },
+            { label: vscode.l10n.t('CPU'), value: cpu !== undefined ? `${cpu.toFixed(1)}%` : '—', sub: pick(s0, 'CONFIGURED_CPUS') ? vscode.l10n.t('{0} CPU(s)', pick(s0, 'CONFIGURED_CPUS')) : '', tone: tone(cpu, 70, 90), act: { label: '', command: 'vanthrex.performanceMonitor' }, meter: cpu, spark: sp('cpu'), sparkTitle: span },
+            { label: vscode.l10n.t('System ASP used'), value: aspUsed !== undefined ? `${aspUsed.toFixed(1)}%` : '—', sub: aspMb ? bytes(aspMb * 1024 * 1024) : '', tone: tone(aspUsed, 80, 90), act: { label: '', command: 'vanthrex.tracker.tab', args: ['storage'] }, meter: aspUsed, spark: sp('asp'), sparkTitle: span },
+            { label: vscode.l10n.t('Jobs'), value: activeJobs !== undefined ? String(activeJobs) : '—', sub: totalJobs ? vscode.l10n.t('{0} in the system', totalJobs) : '', act: { label: '', command: 'vanthrex.tracker.tab', args: ['jobs'] }, spark: sp('jobs'), sparkTitle: span },
+            { label: vscode.l10n.t('Waiting jobs'), value: String(msgw + lckw), sub: `MSGW ${msgw} · LCKW ${lckw}`, tone: msgw ? 'bad' : lckw ? 'warn' : 'ok', act: { label: '', command: 'vanthrex.tracker.tab', args: ['jobs'] } },
+            { label: vscode.l10n.t('QSYSOPR replies'), value: String(inquiries), tone: inquiries ? 'bad' : 'ok', act: { label: '', command: 'vanthrex.tracker.tab', args: ['messages'] } },
+            { label: vscode.l10n.t('Up since IPL'), value: scpf.rows[0] ? since(pick(scpf.rows[0], 'T')) || '—' : '—', sub: pick(scpf.rows[0], 'T').slice(0, 16) },
+            { label: vscode.l10n.t('PTF level'), value: cum ? `CUM ${pick(cum, 'L')}` : '—', sub: tr ? `TR ${pick(tr, 'L')}` : '', act: { label: '', command: 'vanthrex.tracker.tab', args: ['ptf'] } },
+            { label: vscode.l10n.t('Libraries'), value: String(libRows.length || '—'), sub: vscode.l10n.t('{0} user libraries', libRows.filter(l => !isIbmLibrary(l.name)).length), act: { label: '', command: 'vanthrex.tracker.tab', args: ['libraries'] } },
+            { label: vscode.l10n.t('My compiles'), value: history.length ? `${history.length - history.filter(h => !h.ok).length} / ${history.length}` : '—', sub: broken.length ? vscode.l10n.t('{0} broken now', broken.length) : history.length ? vscode.l10n.t('successful') : '', tone: broken.length ? 'warn' : 'ok', act: { label: '', command: 'vanthrex.compileHistory' } },
+          ],
+          attention: att,
+          buttons: [
+            { label: vscode.l10n.t('PDM'), command: 'vanthrex.pdm' }, { label: vscode.l10n.t('Find member'), command: 'vanthrex.findMember' }, { label: vscode.l10n.t('Performance monitor'), command: 'vanthrex.performanceMonitor' },
+            { label: vscode.l10n.t('Running SQL'), command: 'vanthrex.activeSql' }, { label: vscode.l10n.t('History log (QHST)'), command: 'vanthrex.historyLog' }, { label: vscode.l10n.t('Exit points'), command: 'vanthrex.exitPoints' },
+            { label: vscode.l10n.t('Create library'), command: 'vanthrex.createLibrary' }, { label: vscode.l10n.t('Create IFS folder or file'), command: 'vanthrex.createIfs' },
+            { label: vscode.l10n.t('Who is signed on'), command: 'vanthrex.signedOn' },
+            { label: vscode.l10n.t('Failed jobs'), command: 'vanthrex.failedJobs' },
+            { label: vscode.l10n.t('Copy summary'), command: 'vanthrex.tracker.copySummary' },
+          ],
+          tables: [],
+          error: st.error,
+        });
+        // ---- libraries
+        const userLibs = libRows.filter(l => !isIbmLibrary(l.name));
+        const unused = unusedSince(libRows, 365).filter(l => !l.inList);
+        const knownSizes = Object.values(sizeCache).filter(z => z.size !== undefined);
+        tabs.push({
+          id: 'libraries', title: vscode.l10n.t('Libraries'), badge: libRows.length, badgeTone: 'info',
+          tiles: [
+            { label: vscode.l10n.t('Libraries you can see'), value: String(libRows.length), sub: allObj ? vscode.l10n.t('all of them (*ALLOBJ)') : vscode.l10n.t('those you are authorized to') },
+            { label: vscode.l10n.t('User libraries'), value: String(userLibs.length), sub: vscode.l10n.t('{0} TEST', userLibs.filter(l => /TEST/i.test(l.type)).length) },
+            { label: vscode.l10n.t('In your library list'), value: String(libRows.filter(l => l.inList).length), sub: missing.length ? vscode.l10n.t('{0} missing', missing.length) : '', tone: missing.length ? 'warn' : 'ok' },
+            { label: vscode.l10n.t('Not used for a year'), value: String(unused.length), sub: vscode.l10n.t('cleanup candidates'), tone: unused.length ? 'warn' : 'ok' },
+            { label: vscode.l10n.t('Size known'), value: knownSizes.length ? bytes(knownSizes.reduce((a, z) => a + (z.size ?? 0), 0)) : '—', sub: vscode.l10n.t('{0} libraries measured', knownSizes.length) },
+            { label: vscode.l10n.t('Your special authorities'), value: auth.split(/\s+/).filter(x => /^\*(ALLOBJ|SECADM|AUDIT|SERVICE|IOSYSCFG|JOBCTL|SPLCTL|SAVSYS)$/.test(x)).filter((x, k, a) => a.indexOf(x) === k).join(' ') || '*NONE', tone: allObj ? 'info' : undefined },
+          ],
+          buttons: [{ label: vscode.l10n.t('Create library'), command: 'vanthrex.createLibrary' }, { label: vscode.l10n.t('Library list from a job description'), command: 'vanthrex.libraryListFromJobd' }],
+          tables: [{
+            id: 'libs', title: vscode.l10n.t('Every library on the system'), filter: true, numeric: [6, 7],
+            columns: [vscode.l10n.t('Library'), vscode.l10n.t('Type'), vscode.l10n.t('Text'), vscode.l10n.t('Owner'), vscode.l10n.t('Created'), vscode.l10n.t('Last used'), vscode.l10n.t('Objects'), vscode.l10n.t('Size'), vscode.l10n.t('Library list')],
+            rows: libRows.map(l => [l.name, l.type, l.text, l.owner, l.created, l.lastUsed, '', '', l.inList ? `★ ${l.inList}` : '']),
+            acts: libRows.map(l => [
+              { label: vscode.l10n.t('PDM'), command: 'vanthrex.pdm', args: [{ level: 'objects', library: l.name }] },
+              ...(l.inList ? [] : [{ label: vscode.l10n.t('+ list'), command: 'vanthrex.tracker.addLibrary', args: [l.name] }]),
+              { label: vscode.l10n.t('Pin'), command: 'vanthrex.pin', args: [{ kind: 'library', library: l.name }] },
+              { label: vscode.l10n.t('Storage'), command: 'vanthrex.storageAdvisor', args: [l.name] },
+              { label: '*PUBLIC', command: 'vanthrex.publicAuthorityScan', args: [l.name] },
+            ]),
+            tones: libRows.map(l => (l.inList ? 'info' : unused.includes(l) ? 'warn' : undefined)),
+            empty: libs.error ?? vscode.l10n.t('No libraries.'),
+          }],
+          note: allObj ? vscode.l10n.t('You have *ALLOBJ, so every library is listed. Objects and size are calculated on request and remembered.')
+            : vscode.l10n.t('You see the libraries you are authorized to; a profile with *ALLOBJ sees them all (*SECADM manages profiles, not objects). Objects and size are calculated on request and remembered.'),
+        });
+        // ---- jobs
+        const subStats = new Map(subs.rows.map(r => [pick(r, 'S'), { jobs: num(pick(r, 'N')) ?? 0, cpu: num(pick(r, 'C')) ?? 0, msgw: num(pick(r, 'W')) ?? 0 }]));
+        const sbsRows = (sbsInfo.rows.length ? sbsInfo.rows.map(r => {
+          const name = pick(r, 'SUBSYSTEM_DESCRIPTION', 'SUBSYSTEM_NAME'); const st = subStats.get(name);
+          const jobs = num(pick(r, 'CURRENT_ACTIVE_JOBS')) ?? st?.jobs ?? 0; const max = pick(r, 'MAXIMUM_ACTIVE_JOBS');
+          return { name, lib: pick(r, 'SUBSYSTEM_DESCRIPTION_LIBRARY'), status: pick(r, 'STATUS'), jobs, max: max === '0' ? '*NOMAX' : max, cpu: st?.cpu ?? 0, msgw: st?.msgw ?? 0,
+            full: !!num(max) && jobs >= (num(max) ?? 0) };
+        }) : subs.rows.map(r => ({ name: pick(r, 'S'), lib: '', status: 'ACTIVE', jobs: num(pick(r, 'N')) ?? 0, max: '', cpu: num(pick(r, 'C')) ?? 0, msgw: num(pick(r, 'W')) ?? 0, full: false })))
+          .sort((a, b) => (a.status === b.status ? b.jobs - a.jobs : a.status === 'ACTIVE' ? -1 : 1));
+        tabs.push({
+          id: 'jobs', title: vscode.l10n.t('Jobs'), badge: msgw || undefined, badgeTone: 'bad',
+          tiles: [
+            { label: vscode.l10n.t('Active jobs'), value: activeJobs !== undefined ? String(activeJobs) : '—' }, { label: vscode.l10n.t('Waiting for a reply'), value: String(msgw), tone: msgw ? 'bad' : 'ok' },
+            { label: vscode.l10n.t('Waiting for a lock'), value: String(lckw), tone: lckw ? 'warn' : 'ok' }, { label: vscode.l10n.t('Subsystems'), value: String(subs.rows.length) },
+          ],
+          buttons: [{ label: vscode.l10n.t('Running SQL'), command: 'vanthrex.activeSql' }, { label: vscode.l10n.t('Performance monitor'), command: 'vanthrex.performanceMonitor' }],
+          tables: [
+            { title: vscode.l10n.t('Waiting jobs (MSGW, and LCKW for batch and interactive jobs)'), columns: [vscode.l10n.t('Job'), vscode.l10n.t('User'), vscode.l10n.t('Subsystem'), vscode.l10n.t('Status'), vscode.l10n.t('Function')],
+              rows: waiting.rows.map(r => [pick(r, 'J'), pick(r, 'U'), pick(r, 'S'), pick(r, 'ST'), pick(r, 'F')]), tones: waiting.rows.map(r => (pick(r, 'ST') === 'MSGW' ? 'bad' : 'warn')),
+              acts: waiting.rows.map(r => jobActs(pick(r, 'J'))), empty: waiting.error ?? vscode.l10n.t('No job is waiting. 👍') },
+            { title: vscode.l10n.t('Top jobs by CPU'), filter: true, numeric: [5, 6], columns: [vscode.l10n.t('Job'), vscode.l10n.t('User'), vscode.l10n.t('Subsystem'), vscode.l10n.t('Status'), vscode.l10n.t('Function'), vscode.l10n.t('CPU %'), vscode.l10n.t('Temp storage (MB)')],
+              rows: top.rows.map(r => [pick(r, 'J'), pick(r, 'U'), pick(r, 'S'), pick(r, 'ST'), pick(r, 'F'), num(pick(r, 'C')) ?? '', num(pick(r, 'M')) ?? '']),
+              acts: top.rows.map(r => jobActs(pick(r, 'J'))), empty: top.error },
+            { title: vscode.l10n.t('Subsystems'), filter: true, numeric: [3, 4, 5, 6], columns: [vscode.l10n.t('Subsystem'), vscode.l10n.t('Library'), vscode.l10n.t('Status'), vscode.l10n.t('Jobs'), vscode.l10n.t('Maximum'), vscode.l10n.t('CPU %'), 'MSGW'],
+              rows: sbsRows.map(x => [x.name, x.lib, x.status, x.jobs, x.max, x.cpu, x.msgw]), tones: sbsRows.map(x => (x.msgw ? 'bad' : x.full ? 'warn' : x.status === 'INACTIVE' ? 'info' : undefined)),
+              empty: sbsInfo.error ?? subs.error },
+          ],
+        });
+        // ---- storage
+        tabs.push({
+          id: 'storage', title: vscode.l10n.t('Storage'), badge: aspUsed !== undefined && aspUsed >= 80 ? 1 : undefined, badgeTone: tone(aspUsed, 80, 90),
+          tiles: [
+            { label: vscode.l10n.t('System ASP used'), value: aspUsed !== undefined ? `${aspUsed.toFixed(1)}%` : '—', tone: tone(aspUsed, 80, 90) },
+            { label: vscode.l10n.t('System ASP size'), value: aspMb ? bytes(aspMb * 1024 * 1024) : '—' },
+            { label: vscode.l10n.t('Free'), value: aspMb && aspUsed !== undefined ? bytes(aspMb * (100 - aspUsed) / 100 * 1024 * 1024) : '—' },
+          ],
+          buttons: [{ label: vscode.l10n.t('Library sizes'), command: 'vanthrex.tracker.tab', args: ['libraries'] }],
+          tables: [{ id: 'largest', title: vscode.l10n.t('Largest libraries (measured)'), numeric: [1, 2], columns: [vscode.l10n.t('Library'), vscode.l10n.t('Objects'), vscode.l10n.t('Size')], rows: [],
+            empty: vscode.l10n.t('Calculate library sizes in the Libraries tab first.') }, { title: vscode.l10n.t('Auxiliary storage pools'), columns: asp.rows[0] ? Object.keys(asp.rows[0]).slice(0, 10) : ['ASP'],
+            rows: asp.rows.map(r => Object.keys(asp.rows[0]).slice(0, 10).map(k => pick(r, k))), empty: asp.error ?? vscode.l10n.t('No ASP information.') }],
+        });
+        // ---- messages
+        tabs.push({
+          id: 'messages', title: 'QSYSOPR', badge: inquiries || undefined, badgeTone: 'bad',
+          buttons: [{ label: vscode.l10n.t('Work with QSYSOPR (reply, remove)'), command: 'vanthrex.messageQueue', args: ['QSYS/QSYSOPR'] }, { label: vscode.l10n.t('History log (QHST)'), command: 'vanthrex.historyLog' }],
+          tables: [{ title: vscode.l10n.t('Latest QSYSOPR messages'), filter: true, columns: [vscode.l10n.t('Time'), vscode.l10n.t('Message'), vscode.l10n.t('Type'), vscode.l10n.t('Sev'), vscode.l10n.t('Text'), vscode.l10n.t('From job')],
+            rows: qsysopr.rows.map(r => [pick(r, 'T'), pick(r, 'I'), pick(r, 'Y'), num(pick(r, 'S')) ?? 0, pick(r, 'X'), pick(r, 'J')]),
+            tones: qsysopr.rows.map(r => (/INQUIRY/i.test(pick(r, 'Y')) ? 'bad' : (num(pick(r, 'S')) ?? 0) >= 30 ? 'warn' : undefined)),
+            acts: qsysopr.rows.map(r => [...(pick(r, 'I') ? [{ label: vscode.l10n.t('Explain'), command: 'vanthrex.explainMessage', args: [pick(r, 'I')] }] : []),
+              ...(pick(r, 'J') ? [{ label: vscode.l10n.t('Job log'), command: 'vanthrex.jobLog', args: [{ job: pick(r, 'J') }] }] : [])]),
+            empty: qsysopr.error ?? vscode.l10n.t('No messages.') }],
+        });
+        // ---- users
+        tabs.push({
+          id: 'users', title: vscode.l10n.t('Users'), badge: advice.filter(a => a.tone === 'bad').length || undefined, badgeTone: 'bad',
+          tiles: [
+            { label: vscode.l10n.t('User profiles'), value: pick(u0, 'N') || '—' }, { label: vscode.l10n.t('Enabled'), value: pick(u0, 'E') || '—', tone: 'ok' }, { label: vscode.l10n.t('Disabled'), value: pick(u0, 'D') || '—' },
+            { label: vscode.l10n.t('Not signed on for 90 days'), value: pick(u0, 'O') || '—', tone: (num(pick(u0, 'O')) ?? 0) > 0 ? 'warn' : 'ok', act: { label: '', command: 'vanthrex.secadm.inactive' } },
+            { label: vscode.l10n.t('Expired passwords'), value: pick(u0, 'X') || '—', tone: (num(pick(u0, 'X')) ?? 0) > 0 ? 'warn' : 'ok' },
+            { label: vscode.l10n.t('*ALLOBJ / *SECADM'), value: String(powerful.rows.length), act: { label: '', command: 'vanthrex.secadm.powerful' } },
+          ],
+          buttons: [{ label: vscode.l10n.t('Security Admin (*SECADM)'), command: 'vanthrex.securityCenter' }],
+          tables: [{ title: vscode.l10n.t('Security settings (system values)'), columns: [vscode.l10n.t('System value'), vscode.l10n.t('Value'), vscode.l10n.t('Assessment')],
+            rows: advice.map(a => [a.name, a.value, `${a.tone === 'ok' ? '✓' : a.tone === 'bad' ? '✗' : a.tone === 'warn' ? '⚠' : ''} ${a.advice}`.trim()]),
+            tones: advice.map(a => (a.tone === 'ok' || a.tone === 'info' ? undefined : a.tone)), empty: sysvals.error ?? vscode.l10n.t('Not available.') },
+            { title: vscode.l10n.t('Failed sign-on attempts'), numeric: [2], columns: [vscode.l10n.t('User'), vscode.l10n.t('Status'), vscode.l10n.t('Invalid attempts'), vscode.l10n.t('Last sign-on')],
+              rows: failedSignon.rows.map(r => [pick(r, 'U'), pick(r, 'S'), num(pick(r, 'F')) ?? 0, pick(r, 'P').slice(0, 16)]),
+              tones: failedSignon.rows.map(r => (pick(r, 'S') === '*DISABLED' ? 'bad' : (num(pick(r, 'F')) ?? 0) >= 2 ? 'warn' : undefined)), empty: failedSignon.error ?? vscode.l10n.t('No failed sign-on attempts. 👍') },
+            { title: vscode.l10n.t('Powerful profiles'), filter: true, columns: [vscode.l10n.t('User'), vscode.l10n.t('Status'), vscode.l10n.t('Class'), vscode.l10n.t('Special authorities'), vscode.l10n.t('Last sign-on')],
+            rows: powerful.rows.map(r => [pick(r, 'U'), pick(r, 'S'), pick(r, 'C'), pick(r, 'A'), pick(r, 'P').slice(0, 16)]),
+            tones: powerful.rows.map(r => (pick(r, 'S') === '*ENABLED' ? 'warn' : undefined)),
+            empty: powerful.error ?? vscode.l10n.t('None you are allowed to see.') }],
+          note: vscode.l10n.t('You only see the profiles you are authorized to; with *SECADM you see them all.'),
+          error: users.error,
+        });
+        // ---- queues
+        const jq = jobqs.rows.map(r => ({ lib: pick(r, 'JOB_QUEUE_LIBRARY'), name: pick(r, 'JOB_QUEUE_NAME'), status: pick(r, 'JOB_QUEUE_STATUS'), jobs: num(pick(r, 'NUMBER_OF_JOBS')) ?? 0,
+          sbs: pick(r, 'SUBSYSTEM_NAME'), held: num(pick(r, 'HELD_JOB_COUNT')), sched: num(pick(r, 'SCHEDULED_JOB_COUNT')), text: pick(r, 'TEXT_DESCRIPTION') }));
+        const stuckJq = jq.filter(q => q.jobs > 0 && (q.status === 'HELD' || !q.sbs));
+        const oq = outqs.rows.map(r => ({ lib: pick(r, 'OUTPUT_QUEUE_LIBRARY_NAME', 'OUTPUT_QUEUE_LIBRARY'), name: pick(r, 'OUTPUT_QUEUE_NAME'), files: num(pick(r, 'NUMBER_OF_FILES')) ?? 0,
+          status: pick(r, 'OUTPUT_QUEUE_STATUS'), writer: pick(r, 'WRITER_JOB_NAME'), wstatus: pick(r, 'WRITER_JOB_STATUS', 'WRITER_STATUS'), text: pick(r, 'TEXT_DESCRIPTION') }));
+        const qAct = (kind: 'jobq' | 'outq', lib: string, name: string, held: boolean): Act[] => {
+          try {
+            const cmd = queueCommand(kind, held ? 'release' : 'hold', lib, name);
+            return [{ label: held ? vscode.l10n.t('Release') : vscode.l10n.t('Hold'), command: 'vanthrex.tracker.cl', args: [cmd] }];
+          } catch { return []; }
+        };
+        tabs.push({
+          id: 'queues', title: vscode.l10n.t('Queues'), badge: stuckJq.length || undefined, badgeTone: 'warn',
+          tiles: [
+            { label: vscode.l10n.t('Jobs waiting in job queues'), value: String(jq.reduce((a, q) => a + q.jobs, 0)), sub: vscode.l10n.t('{0} job queue(s)', jq.length) },
+            { label: vscode.l10n.t('Stuck job queues'), value: String(stuckJq.length), sub: vscode.l10n.t('held, or not attached to a subsystem, with jobs'), tone: stuckJq.length ? 'warn' : 'ok' },
+            { label: vscode.l10n.t('Spooled files in output queues'), value: oq.reduce((a, q) => a + q.files, 0).toLocaleString(), sub: vscode.l10n.t('{0} output queue(s)', oq.length) },
+            { label: vscode.l10n.t('Held output queues'), value: String(oq.filter(q => /HELD/i.test(q.status)).length) },
+          ],
+          buttons: [{ label: vscode.l10n.t('Spooled files'), command: 'vanthrex.spool.focus' }],
+          tables: [
+            { title: vscode.l10n.t('Job queues'), filter: true, numeric: [4, 5, 6], columns: [vscode.l10n.t('Library'), vscode.l10n.t('Job queue'), vscode.l10n.t('Status'), vscode.l10n.t('Subsystem'), vscode.l10n.t('Jobs'), vscode.l10n.t('Held'), vscode.l10n.t('Scheduled'), vscode.l10n.t('Text')],
+              rows: jq.map(q => [q.lib, q.name, q.status, q.sbs || '—', q.jobs, q.held ?? '', q.sched ?? '', q.text]),
+              tones: jq.map(q => (stuckJq.includes(q) ? 'warn' : undefined)), acts: jq.map(q => qAct('jobq', q.lib, q.name, q.status === 'HELD')), empty: jobqs.error },
+            { title: vscode.l10n.t('Output queues (most spooled files first)'), filter: true, numeric: [2], columns: [vscode.l10n.t('Library'), vscode.l10n.t('Output queue'), vscode.l10n.t('Files'), vscode.l10n.t('Status'), vscode.l10n.t('Writer'), vscode.l10n.t('Text')],
+              rows: oq.map(q => [q.lib, q.name, q.files, q.status, [q.writer, q.wstatus].filter(Boolean).join(' '), q.text]),
+              tones: oq.map(q => (q.files > 5000 ? 'warn' : undefined)), acts: oq.map(q => qAct('outq', q.lib, q.name, /HELD/i.test(q.status))), empty: outqs.error },
+          ],
+          note: vscode.l10n.t('Hold and release ask before they run, and respect the protection of this connection.'),
+        });
+        // ---- network
+        const estBy = new Map(estab.rows.map(r => [num(pick(r, 'P')) ?? 0, num(pick(r, 'N')) ?? 0]));
+        const ports = listen.rows.map(r => num(pick(r, 'P')) ?? 0).filter((p, i, a) => p && a.indexOf(p) === i);
+        const plain = ports.filter(p => unencrypted(p));
+        tabs.push({
+          id: 'network', title: vscode.l10n.t('Network'),
+          tiles: [
+            { label: vscode.l10n.t('Listening ports'), value: String(ports.length) },
+            { label: vscode.l10n.t('Open connections'), value: [...estBy.values()].reduce((a, b) => a + b, 0).toLocaleString() },
+            { label: vscode.l10n.t('Unencrypted services'), value: String(plain.length), sub: plain.slice(0, 6).map(p => portName(p) || p).join(', '), tone: plain.length ? 'warn' : 'ok' },
+          ],
+          tables: [
+            { title: vscode.l10n.t('Servers listening'), filter: true, numeric: [2], columns: [vscode.l10n.t('Port'), vscode.l10n.t('Service'), vscode.l10n.t('Connections'), vscode.l10n.t('Encrypted')],
+              rows: ports.map(p => [String(p), portName(p), estBy.get(p) ?? 0, unencrypted(p) ? vscode.l10n.t('no') : '']), tones: ports.map(p => (unencrypted(p) && (estBy.get(p) ?? 0) > 0 ? 'warn' : undefined)), empty: listen.error },
+            { title: vscode.l10n.t('Who is connected (top 25 addresses)'), numeric: [1, 2], columns: [vscode.l10n.t('Remote address'), vscode.l10n.t('Connections'), vscode.l10n.t('Port')],
+              rows: remotes.rows.map(r => [pick(r, 'R'), num(pick(r, 'N')) ?? 0, `${pick(r, 'P')} ${portName(num(pick(r, 'P')) ?? 0)}`.trim()]), empty: remotes.error },
+          ],
+        });
+        // ---- scheduled jobs
+        const sch = scheds.rows.map(r => ({ entry: num(pick(r, 'SCHEDULED_JOB_ENTRY_NUMBER')) ?? 0, name: pick(r, 'SCHEDULED_JOB_NAME'), status: pick(r, 'STATUS'), freq: pick(r, 'FREQUENCY'),
+          when: [pick(r, 'SCHEDULED_DATE_VALUE', 'SCHEDULED_DATE'), pick(r, 'SCHEDULED_TIME'), pick(r, 'SCHEDULED_DAYS')].filter(Boolean).join(' '),
+          next: pick(r, 'NEXT_SUBMISSION_DATE').slice(0, 10), cmd: pick(r, 'COMMAND_STRING'), by: pick(r, 'SCHEDULED_BY'), jobq: pick(r, 'JOB_QUEUE_NAME'), text: pick(r, 'DESCRIPTION', 'TEXT_DESCRIPTION') }))
+          .sort((a, b) => (a.next || '9').localeCompare(b.next || '9'));
+        const heldSch = sch.filter(x => /HELD|HLD/i.test(x.status));
+        const schAct = (x: typeof sch[number]): Act[] => { try { return [{ label: /HELD|HLD/i.test(x.status) ? vscode.l10n.t('Release') : vscode.l10n.t('Hold'), command: 'vanthrex.tracker.cl', args: [scheduleCommand(/HELD|HLD/i.test(x.status) ? 'release' : 'hold', x.name, x.entry)] }]; } catch { return []; } };
+        const today = new Date().toISOString().slice(0, 10);
+        tabs.push({
+          id: 'schedule', title: vscode.l10n.t('Scheduled jobs'), badge: heldSch.length || undefined, badgeTone: 'warn',
+          tiles: [
+            { label: vscode.l10n.t('Schedule entries'), value: String(sch.length) }, { label: vscode.l10n.t('Running today'), value: String(sch.filter(x => x.next === today).length) },
+            { label: vscode.l10n.t('Held'), value: String(heldSch.length), tone: heldSch.length ? 'warn' : 'ok' },
+          ],
+          tables: [{ title: vscode.l10n.t('Job schedule (next run first)'), filter: true, numeric: [0],
+            columns: [vscode.l10n.t('Entry'), vscode.l10n.t('Job'), vscode.l10n.t('Status'), vscode.l10n.t('Frequency'), vscode.l10n.t('When'), vscode.l10n.t('Next run'), vscode.l10n.t('Command'), vscode.l10n.t('Job queue'), vscode.l10n.t('Added by')],
+            rows: sch.map(x => [String(x.entry).padStart(6, '0'), x.name, x.status, x.freq, x.when, x.next, x.cmd.slice(0, 120), x.jobq, x.by]),
+            tones: sch.map(x => (/HELD|HLD/i.test(x.status) ? 'warn' : x.next === today ? 'info' : undefined)), acts: sch.map(schAct), empty: scheds.error ?? vscode.l10n.t('No scheduled jobs.') }],
+          note: vscode.l10n.t('Hold and release ask before they run, and respect the protection of this connection.'),
+        });
+        // ---- journals
+        const jr = journals.rows.map(r => {
+          const kb = num(pick(r, 'TOTAL_SIZE_JOURNAL_RECEIVERS')); const bytesTotal = kb !== undefined ? kb * 1024 : undefined;
+          const n = num(pick(r, 'NUMBER_JOURNAL_RECEIVERS'));
+          return { lib: pick(r, 'JOURNAL_LIBRARY'), name: pick(r, 'JOURNAL_NAME'), rcv: [pick(r, 'ATTACHED_JOURNAL_RECEIVER_LIBRARY'), pick(r, 'ATTACHED_JOURNAL_RECEIVER_NAME')].filter(Boolean).join('/'),
+            n, bytes: bytesTotal, objects: num(pick(r, 'NUMBER_JOURNALED_OBJECTS', 'JOURNALED_OBJECTS')), state: pick(r, 'JOURNAL_STATE'), tone: journalTone(n, bytesTotal) };
+        }).sort((a, b) => (b.bytes ?? 0) - (a.bytes ?? 0));
+        tabs.push({
+          id: 'journals', title: vscode.l10n.t('Journals'), badge: jr.filter(j => j.tone).length || undefined, badgeTone: jr.some(j => j.tone === 'bad') ? 'bad' : 'warn',
+          tiles: [
+            { label: vscode.l10n.t('Journals (user libraries)'), value: String(jr.length) },
+            { label: vscode.l10n.t('Receivers kept'), value: jr.reduce((a, j) => a + (j.n ?? 0), 0).toLocaleString(), sub: bytes(jr.reduce((a, j) => a + (j.bytes ?? 0), 0)) },
+            { label: vscode.l10n.t('Need cleanup'), value: String(jr.filter(j => j.tone).length), sub: vscode.l10n.t('50+ receivers or 10 GB+'), tone: jr.some(j => j.tone === 'bad') ? 'bad' : jr.some(j => j.tone) ? 'warn' : 'ok' },
+          ],
+          tables: [{ title: vscode.l10n.t('Journals (largest first)'), filter: true, numeric: [3, 4, 5], columns: [vscode.l10n.t('Library'), vscode.l10n.t('Journal'), vscode.l10n.t('Attached receiver'), vscode.l10n.t('Receivers'), vscode.l10n.t('Size'), vscode.l10n.t('Objects'), vscode.l10n.t('State')],
+            rows: jr.map(j => [j.lib, j.name, j.rcv, j.n ?? '', bytes(j.bytes), j.objects ?? '', j.state]), tones: jr.map(j => j.tone),
+            acts: jr.map(j => [{ label: vscode.l10n.t('Work with'), command: 'vanthrex.journals', args: [{ kind: 'library', library: j.lib }] }]), empty: journals.error ?? vscode.l10n.t('No journals in user libraries.') }],
+        });
+        // ---- what changed (scan on request)
+        tabs.push({
+          id: 'objects', title: vscode.l10n.t('What changed'),
+          buttons: [
+            { label: vscode.l10n.t('Changed today (library list)'), command: 'vanthrex.tracker.scan', args: [1, 'libl', 'changed'] },
+            { label: vscode.l10n.t('Changed in 7 days (library list)'), command: 'vanthrex.tracker.scan', args: [7, 'libl', 'changed'] },
+            { label: vscode.l10n.t('Changed today (all user libraries — slow)'), command: 'vanthrex.tracker.scan', args: [1, 'all', 'changed'] },
+            { label: vscode.l10n.t('Largest objects (library list)'), command: 'vanthrex.tracker.scan', args: [1, 'libl', 'size'] },
+            { label: vscode.l10n.t('Largest objects (all user libraries — slow)'), command: 'vanthrex.tracker.scan', args: [1, 'all', 'size'] },
+          ],
+          tables: this.scan ? [this.scan] : [],
+          note: vscode.l10n.t('Pick a scan above. Scanning every user library reads every object description and can take minutes on a big system.'),
+        });
+        // ---- all connected systems
+        const others = this.manager.openConnections;
+        tabs.push({
+          id: 'systems', title: vscode.l10n.t('All systems'), buttons: others.length > 1 ? [{ label: vscode.l10n.t('Compare system values'), command: 'vanthrex.compareSystemValues' }] : [], badge: others.length > 1 ? others.length : undefined, badgeTone: 'info',
+          tables: [{ title: vscode.l10n.t('Connected systems'), numeric: [1, 2, 3, 4, 5], columns: [vscode.l10n.t('System'), vscode.l10n.t('Health'), 'CPU %', 'ASP %', 'MSGW', vscode.l10n.t('QSYSOPR replies')],
+            rows: [], id: 'systems', empty: vscode.l10n.t('Loading the other systems…') }],
+          note: others.length > 1 ? vscode.l10n.t('Every system you are connected to, read in parallel.') : vscode.l10n.t('Connect to more systems (Connections view) to compare them here.'),
+        });
+        // ---- PTFs
+        tabs.push({
+          id: 'ptf', title: vscode.l10n.t('PTFs & software'),
+          tiles: [{ label: vscode.l10n.t('Release'), value: release || '—' }, { label: vscode.l10n.t('Cumulative PTF'), value: cum ? pick(cum, 'L') : '—', sub: cum ? pick(cum, 'G') : '' },
+            { label: vscode.l10n.t('Technology Refresh'), value: tr ? pick(tr, 'L') : '—' }],
+          buttons: [{ label: vscode.l10n.t('Installed software & license keys'), command: 'vanthrex.installedSoftware' }, { label: vscode.l10n.t('Is this PTF installed?'), command: 'vanthrex.ptfLookup' }],
+          tables: [{ title: vscode.l10n.t('Installed PTF groups'), filter: true, columns: [vscode.l10n.t('Group'), vscode.l10n.t('Description'), vscode.l10n.t('Level')], rows: ptf.rows.map(r => [pick(r, 'G'), pick(r, 'D'), pick(r, 'L')]), empty: ptf.error }],
+        });
+        // ---- my work
+        tabs.push({
+          id: 'mine', title: vscode.l10n.t('My work'), badge: broken.length || undefined, badgeTone: 'warn',
+          tiles: [
+            { label: vscode.l10n.t('My active jobs'), value: String(myJobs.rows.length) }, { label: vscode.l10n.t('My spooled files'), value: pick(mySpool.rows[0], 'N') || '—' },
+            { label: vscode.l10n.t('Members I changed (7 days)'), value: String(myMembers.rows.length) }, { label: vscode.l10n.t('Broken compiles'), value: String(broken.length), tone: broken.length ? 'warn' : 'ok', act: { label: '', command: 'vanthrex.compileHistory' } },
+            { label: vscode.l10n.t('Pinned'), value: String(pins.length) },
+          ],
+          buttons: [{ label: vscode.l10n.t('Compile history'), command: 'vanthrex.compileHistory' }, { label: vscode.l10n.t('Find member'), command: 'vanthrex.findMember' }],
+          tables: [
+            { title: vscode.l10n.t('Broken right now'), columns: [vscode.l10n.t('Source'), vscode.l10n.t('Object'), vscode.l10n.t('Errors'), vscode.l10n.t('When')], rows: broken.map(b => [b.name, b.object, b.errors, new Date(b.at).toLocaleString()]),
+              tones: broken.map(() => 'bad'), acts: broken.map(b => [{ label: vscode.l10n.t('Open'), command: 'vanthrex.compileHistory.open', args: [b.uri] }]), empty: vscode.l10n.t('Nothing broken. 👍') },
+            { title: vscode.l10n.t('Source changed in your library list (last 7 days)'), filter: true, columns: [vscode.l10n.t('Member'), vscode.l10n.t('Type'), vscode.l10n.t('Text'), vscode.l10n.t('Changed')],
+              rows: myMembers.rows.map(r => [`${pick(r, 'L')}/${pick(r, 'F')}(${pick(r, 'M')})`, pick(r, 'Y'), pick(r, 'X'), pick(r, 'C').slice(0, 16)]),
+              acts: myMembers.rows.map(r => [{ label: vscode.l10n.t('Open'), command: 'vanthrex.compileHistory.open', args: [memberUri(pick(r, 'L'), pick(r, 'F'), pick(r, 'M'), pick(r, 'Y')).toString()] },
+                { label: vscode.l10n.t('PDM'), command: 'vanthrex.pdm', args: [{ level: 'members', library: pick(r, 'L'), file: pick(r, 'F'), name: pick(r, 'M') }] }]), empty: myMembers.error ?? vscode.l10n.t('No changes in the last 7 days.') },
+            { title: vscode.l10n.t('My jobs'), columns: [vscode.l10n.t('Job'), vscode.l10n.t('Subsystem'), vscode.l10n.t('Status'), vscode.l10n.t('Function'), vscode.l10n.t('CPU %')], rows: myJobs.rows.map(r => [pick(r, 'J'), pick(r, 'S'), pick(r, 'ST'), pick(r, 'F'), num(pick(r, 'C')) ?? '']),
+              acts: myJobs.rows.map(r => jobActs(pick(r, 'J'))), empty: myJobs.error },
+            { title: vscode.l10n.t('Pinned'), columns: [vscode.l10n.t('Item'), vscode.l10n.t('Where')], rows: pins.map(p => [pinLabel(p), pinDescription(p)]), acts: pins.map(p => [{ label: vscode.l10n.t('Open'), command: 'vanthrex.pin.open', args: [p] }]),
+              empty: vscode.l10n.t('Right-click a member, library, object or IFS file → Pin.') },
+          ],
+        });
+
+        // Turn actions into indexes for the page.
+        const enc = (a?: Act) => (a ? this.ref(a) : -1);
+        if (!partial) { void this.loadSystems(conn.profile.id, gen); }
+        const out = tabs.map(tb => ({
+          ...tb, buttons: (tb.buttons ?? []).map(b => ({ label: b.label, i: enc(b) })),
+          tiles: (tb.tiles ?? []).map(x => ({ ...x, act: enc(x.act) })),
+          attention: tb.attention?.map(a => ({ ...a, i: a.command ? enc({ label: a.action ?? '', command: a.command, args: a.args }) : -1 })),
+          tables: tb.tables.map(x => ({ ...x, acts: (x.acts ?? []).map(r => r.map(a => ({ label: a.label, i: enc(a) }))) })),
+        }));
+        this.post({ t: 'data', tabs: out, at: new Date().toLocaleTimeString(), first: this.firstTab, sizes: sizeCache, partial });
+        if (!partial) {
+        Tracker.last.set(conn.profile.id, { tabs: out, at: new Date().toLocaleTimeString(), sizes: sizeCache, acts: [...this.acts].filter(([i]) => i >= buildFrom) });
+        // Forget the actions of pages older than the previous one.
+        for (const i of [...this.acts.keys()]) { if (i < this.keepFrom) { this.acts.delete(i); } }
+        this.keepFrom = buildFrom;
+      }
+      };
+      // Queries run one after the other in the SQL job: start the ones the Overview needs first, show the page as soon as
+      // they are back, then fill in the rest (libraries, network, journals…) when it arrives.
+      const started = {
+        st: safe(conn, 'SELECT * FROM QSYS2.SYSTEM_STATUS_INFO', 1),
+        env: safe(conn, 'SELECT * FROM SYSIBMADM.ENV_SYS_INFO', 1),
+        waitCount: safe(conn, `SELECT SUM(CASE WHEN JOB_STATUS = 'MSGW' THEN 1 ELSE 0 END) AS W, SUM(CASE WHEN JOB_STATUS = 'LCKW' AND JOB_TYPE IN ('BCH', 'BCI', 'INT', 'ASJ') THEN 1 ELSE 0 END) AS L ` +
           `FROM TABLE(QSYS2.ACTIVE_JOB_INFO(DETAILED_INFO => 'NONE')) X`, 1),
-        safe(conn, `SELECT COALESCE(U.SPECIAL_AUTHORITIES, '') || ' ' || COALESCE((SELECT G.SPECIAL_AUTHORITIES FROM QSYS2.USER_INFO G WHERE G.AUTHORIZATION_NAME = U.GROUP_PROFILE_NAME), '') AS A ` +
+        asp: safe(conn, 'SELECT * FROM QSYS2.ASP_INFO', 50),
+        myAuth: safe(conn, `SELECT COALESCE(U.SPECIAL_AUTHORITIES, '') || ' ' || COALESCE((SELECT G.SPECIAL_AUTHORITIES FROM QSYS2.USER_INFO G WHERE G.AUTHORIZATION_NAME = U.GROUP_PROFILE_NAME), '') AS A ` +
           `FROM QSYS2.USER_INFO U WHERE U.AUTHORIZATION_NAME = ${sqlString(me)}`, 1),
-        readLibraries(conn),
-        safe(conn, `SELECT VARCHAR_FORMAT(MESSAGE_TIMESTAMP, 'YYYY-MM-DD HH24:MI') AS T, COALESCE(MESSAGE_ID, '') AS I, MESSAGE_TYPE AS Y, COALESCE(SEVERITY, 0) AS S, ` +
+        qsysopr: safe(conn, `SELECT VARCHAR_FORMAT(MESSAGE_TIMESTAMP, 'YYYY-MM-DD HH24:MI') AS T, COALESCE(MESSAGE_ID, '') AS I, MESSAGE_TYPE AS Y, COALESCE(SEVERITY, 0) AS S, ` +
           `COALESCE(MESSAGE_TEXT, '') AS X, COALESCE(FROM_JOB, '') AS J FROM QSYS2.MESSAGE_QUEUE_INFO WHERE MESSAGE_QUEUE_LIBRARY = 'QSYS' AND MESSAGE_QUEUE_NAME = 'QSYSOPR' ` +
           `ORDER BY MESSAGE_TIMESTAMP DESC FETCH FIRST 60 ROWS ONLY`, 60),
-        safe(conn, `SELECT COUNT(*) AS N, SUM(CASE WHEN STATUS = '*ENABLED' THEN 1 ELSE 0 END) AS E, SUM(CASE WHEN STATUS = '*DISABLED' THEN 1 ELSE 0 END) AS D, ` +
+        users: safe(conn, `SELECT COUNT(*) AS N, SUM(CASE WHEN STATUS = '*ENABLED' THEN 1 ELSE 0 END) AS E, SUM(CASE WHEN STATUS = '*DISABLED' THEN 1 ELSE 0 END) AS D, ` +
           `SUM(CASE WHEN STATUS = '*ENABLED' AND DATE_PASSWORD_EXPIRES < CURRENT TIMESTAMP THEN 1 ELSE 0 END) AS X, ` +
           `SUM(CASE WHEN STATUS = '*ENABLED' AND (PREVIOUS_SIGNON IS NULL OR PREVIOUS_SIGNON < CURRENT TIMESTAMP - 90 DAYS) THEN 1 ELSE 0 END) AS O ` +
           `FROM QSYS2.USER_INFO WHERE AUTHORIZATION_NAME NOT LIKE 'Q%'`, 1),
-        safe(conn, `SELECT AUTHORIZATION_NAME AS U, STATUS AS S, USER_CLASS_NAME AS C, COALESCE(SPECIAL_AUTHORITIES, '') AS A, VARCHAR(PREVIOUS_SIGNON) AS P FROM QSYS2.USER_INFO ` +
+        sysvals: safe(conn, `SELECT SYSTEM_VALUE_NAME AS N, COALESCE(VARCHAR(CURRENT_NUMERIC_VALUE), CURRENT_CHARACTER_VALUE, '') AS V FROM QSYS2.SYSTEM_VALUE_INFO ` +
+          `WHERE SYSTEM_VALUE_NAME IN (${SECURITY_VALUES.map(sqlString).join(', ')})`, 50),
+        scpf: safe(conn, `SELECT VARCHAR(JOB_ACTIVE_TIME) AS T FROM TABLE(QSYS2.ACTIVE_JOB_INFO(JOB_NAME_FILTER => 'SCPF', DETAILED_INFO => 'ALL')) X`, 1),
+        ptf: safe(conn, `SELECT PTF_GROUP_NAME AS G, MAX(PTF_GROUP_DESCRIPTION) AS D, MAX(PTF_GROUP_LEVEL) AS L FROM QSYS2.GROUP_PTF_INFO WHERE PTF_GROUP_STATUS = 'INSTALLED' GROUP BY PTF_GROUP_NAME ORDER BY 1`, 300),
+        waiting: safe(conn, `SELECT JOB_NAME AS J, AUTHORIZATION_NAME AS U, SUBSYSTEM AS S, JOB_STATUS AS ST, COALESCE(FUNCTION, '') AS F FROM TABLE(QSYS2.ACTIVE_JOB_INFO(DETAILED_INFO => 'NONE')) X ` +
+          `WHERE JOB_STATUS = 'MSGW' OR (JOB_STATUS = 'LCKW' AND JOB_TYPE IN ('BCH', 'BCI', 'INT', 'ASJ')) ORDER BY JOB_STATUS DESC, JOB_NAME FETCH FIRST 300 ROWS ONLY`, 300),
+        myJobs: safe(conn, `SELECT JOB_NAME AS J, SUBSYSTEM AS S, JOB_STATUS AS ST, COALESCE(FUNCTION, '') AS F, ELAPSED_CPU_PERCENTAGE AS C FROM TABLE(QSYS2.ACTIVE_JOB_INFO(CURRENT_USER_LIST_FILTER => ${sqlString(me)}, DETAILED_INFO => 'NONE')) X ORDER BY JOB_NAME`, 100),
+        mySpool: safe(conn, `SELECT COUNT(*) AS N FROM QSYS2.OUTPUT_QUEUE_ENTRIES_BASIC WHERE USER_NAME = ${sqlString(me)}`, 1),
+        top: safe(conn, `SELECT JOB_NAME AS J, AUTHORIZATION_NAME AS U, SUBSYSTEM AS S, JOB_STATUS AS ST, COALESCE(FUNCTION, '') AS F, ELAPSED_CPU_PERCENTAGE AS C, TEMPORARY_STORAGE AS M ` +
+          `FROM TABLE(QSYS2.ACTIVE_JOB_INFO(DETAILED_INFO => 'NONE')) X WHERE JOB_TYPE <> 'SYS' ORDER BY ELAPSED_CPU_PERCENTAGE DESC FETCH FIRST 25 ROWS ONLY`, 25),
+        scheds: safe(conn, 'SELECT * FROM QSYS2.SCHEDULED_JOB_INFO', 2000),
+        sbsInfo: safe(conn, 'SELECT * FROM QSYS2.SUBSYSTEM_INFO', 500),
+        journals: safe(conn, `SELECT * FROM QSYS2.JOURNAL_INFO WHERE JOURNAL_LIBRARY NOT LIKE 'Q%'`, 3000),
+        failedSignon: safe(conn, `SELECT AUTHORIZATION_NAME AS U, STATUS AS S, SIGN_ON_ATTEMPTS_NOT_VALID AS F, VARCHAR(PREVIOUS_SIGNON) AS P FROM QSYS2.USER_INFO WHERE SIGN_ON_ATTEMPTS_NOT_VALID > 0 ORDER BY 3 DESC FETCH FIRST 100 ROWS ONLY`, 100),
+        jobqs: safe(conn, 'SELECT * FROM QSYS2.JOB_QUEUE_INFO ORDER BY NUMBER_OF_JOBS DESC FETCH FIRST 300 ROWS ONLY', 300),
+        outqs: safe(conn, 'SELECT * FROM QSYS2.OUTPUT_QUEUE_INFO ORDER BY NUMBER_OF_FILES DESC FETCH FIRST 200 ROWS ONLY', 200),
+        listen: safe(conn, `SELECT LOCAL_PORT AS P, COUNT(*) AS N FROM QSYS2.NETSTAT_INFO WHERE TCP_STATE = 'LISTEN' GROUP BY LOCAL_PORT ORDER BY 1`, 500),
+        remotes: safe(conn, `SELECT REMOTE_ADDRESS AS R, COUNT(*) AS N, MIN(LOCAL_PORT) AS P FROM QSYS2.NETSTAT_INFO WHERE TCP_STATE = 'ESTABLISHED' GROUP BY REMOTE_ADDRESS ORDER BY 2 DESC FETCH FIRST 25 ROWS ONLY`, 25),
+        estab: safe(conn, `SELECT LOCAL_PORT AS P, COUNT(*) AS N FROM QSYS2.NETSTAT_INFO WHERE TCP_STATE = 'ESTABLISHED' GROUP BY LOCAL_PORT`, 2000),
+        subs: safe(conn, `SELECT COALESCE(SUBSYSTEM, '(none)') AS S, COUNT(*) AS N, DEC(SUM(COALESCE(ELAPSED_CPU_PERCENTAGE, 0)), 7, 1) AS C, SUM(CASE WHEN JOB_STATUS = 'MSGW' THEN 1 ELSE 0 END) AS W ` +
+          `FROM TABLE(QSYS2.ACTIVE_JOB_INFO(DETAILED_INFO => 'NONE')) X WHERE JOB_TYPE <> 'SYS' GROUP BY SUBSYSTEM ORDER BY 2 DESC`, 200),
+        libs: readLibraries(conn),
+        powerful: safe(conn, `SELECT AUTHORIZATION_NAME AS U, STATUS AS S, USER_CLASS_NAME AS C, COALESCE(SPECIAL_AUTHORITIES, '') AS A, VARCHAR(PREVIOUS_SIGNON) AS P FROM QSYS2.USER_INFO ` +
           `WHERE AUTHORIZATION_NAME NOT LIKE 'Q%' AND (SPECIAL_AUTHORITIES LIKE '%*ALLOBJ%' OR SPECIAL_AUTHORITIES LIKE '%*SECADM%') ORDER BY 1`, 500),
-        safe(conn, `SELECT PTF_GROUP_NAME AS G, MAX(PTF_GROUP_DESCRIPTION) AS D, MAX(PTF_GROUP_LEVEL) AS L FROM QSYS2.GROUP_PTF_INFO WHERE PTF_GROUP_STATUS = 'INSTALLED' GROUP BY PTF_GROUP_NAME ORDER BY 1`, 300),
-        safe(conn, `SELECT JOB_NAME AS J, SUBSYSTEM AS S, JOB_STATUS AS ST, COALESCE(FUNCTION, '') AS F, ELAPSED_CPU_PERCENTAGE AS C FROM TABLE(QSYS2.ACTIVE_JOB_INFO(CURRENT_USER_LIST_FILTER => ${sqlString(me)}, DETAILED_INFO => 'NONE')) X ORDER BY JOB_NAME`, 100),
-        safe(conn, `SELECT COUNT(*) AS N FROM QSYS2.OUTPUT_QUEUE_ENTRIES_BASIC WHERE USER_NAME = ${sqlString(me)}`, 1),
-        libl.length ? safe(conn, `SELECT SYSTEM_TABLE_SCHEMA AS L, SYSTEM_TABLE_NAME AS F, SYSTEM_TABLE_MEMBER AS M, COALESCE(SOURCE_TYPE, '') AS Y, COALESCE(PARTITION_TEXT, '') AS X, ` +
+        myMembers: libl.length ? safe(conn, `SELECT SYSTEM_TABLE_SCHEMA AS L, SYSTEM_TABLE_NAME AS F, SYSTEM_TABLE_MEMBER AS M, COALESCE(SOURCE_TYPE, '') AS Y, COALESCE(PARTITION_TEXT, '') AS X, ` +
           `VARCHAR(LAST_SOURCE_UPDATE_TIMESTAMP) AS C FROM QSYS2.SYSPARTITIONSTAT WHERE SYSTEM_TABLE_SCHEMA IN (${libl.map(sqlString).join(', ')}) AND SOURCE_TYPE IS NOT NULL ` +
           `AND LAST_SOURCE_UPDATE_TIMESTAMP > CURRENT TIMESTAMP - 7 DAYS ORDER BY LAST_SOURCE_UPDATE_TIMESTAMP DESC FETCH FIRST 60 ROWS ONLY`, 60) : Promise.resolve({ rows: [] as Row[], error: undefined as string | undefined }),
-      ]);
-
-      const s0 = st.rows[0]; const e0 = env.rows[0];
-      const cpu = num(pick(s0, 'AVERAGE_CPU_UTILIZATION', 'AVERAGE_CPU_RATE'));
-      const aspUsed = num(pick(s0, 'SYSTEM_ASP_USED'));
-      const aspMb = num(pick(s0, 'SYSTEM_ASP_STORAGE'));
-      const activeJobs = num(pick(s0, 'ACTIVE_JOBS_IN_SYSTEM'));
-      const totalJobs = num(pick(s0, 'TOTAL_JOBS_IN_SYSTEM'));
-      const msgw = num(pick(waitCount.rows[0], 'W')) ?? waiting.rows.filter(r => pick(r, 'ST') === 'MSGW').length;
-      const lckw = num(pick(waitCount.rows[0], 'L')) ?? waiting.rows.filter(r => pick(r, 'ST') === 'LCKW').length;
-      const auth = pick(myAuth.rows[0], 'A');
-      const allObj = /\*ALLOBJ/.test(auth);
-      const sizeCache = this.state.get<Record<string, { objects?: number; size?: number; text: string; at: string }>>(`vanthrex.tracker.sizes.${conn.profile.name}`, {});
-      const inquiries = qsysopr.rows.filter(r => /INQUIRY/i.test(pick(r, 'Y'))).length;
-      const history = this.state.get<CompileRecord[]>('vanthrex.compileHistory', []).filter(r => r.system === conn.profile.name);
-      const broken = latestPerSource(history).filter(r => !r.ok);
-      const libRows = libraryRows(libs.rows, libl);
-      const existing = new Set(libRows.map(l => l.name));
-      const missing = libs.rows.length ? libl.filter(l => !existing.has(l)) : [];
-      const u0 = users.rows[0];
-      const pins = this.state.get<Pin[]>(`vanthrex.pins.${conn.profile.name}`, []);
-      const release = [pick(e0, 'OS_NAME'), pick(e0, 'OS_VERSION') && `V${pick(e0, 'OS_VERSION')}R${pick(e0, 'OS_RELEASE')}`].filter(Boolean).join(' ');
-      const cum = ptf.rows.find(r => /CUMULATIVE/i.test(pick(r, 'D')));
-      const tr = ptf.rows.find(r => /TECHNOLOGY REFRESH/i.test(pick(r, 'D')));
-      const jobActs = (j: string): Act[] => [{ label: vscode.l10n.t('Details'), command: 'vanthrex.jobDetails', args: [j] }, { label: vscode.l10n.t('Job log'), command: 'vanthrex.jobLog', args: [{ job: j }] }, { label: vscode.l10n.t('Live'), command: 'vanthrex.jobLogLive', args: [j] }];
-
-      const tabs: Tab[] = [];
-      // ---- overview
-      const say: Record<string, (v: (string | number)[]) => string> = {
-        asp: v => vscode.l10n.t('System ASP is {0}% full.', v[0]), inq: v => vscode.l10n.t('{0} message(s) in QSYSOPR wait for a reply.', v[0]),
-        msgw: v => vscode.l10n.t('{0} job(s) wait for a message reply (MSGW).', v[0]), lckw: v => vscode.l10n.t('{0} job(s) wait for a lock (LCKW).', v[0]),
-        cpu: v => vscode.l10n.t('CPU is at {0}%.', v[0]), broken: v => vscode.l10n.t('{0} of your source(s) did not compile the last time.', v[0]),
-        libl: v => vscode.l10n.t('Library list entries that do not exist: {0}.', v[0]), pwd: v => vscode.l10n.t('{0} enabled profile(s) have an expired password.', v[0]),
       };
-      const actionName: Record<string, string> = { Storage: vscode.l10n.t('Storage'), Reply: vscode.l10n.t('Reply'), Jobs: vscode.l10n.t('Jobs'), Monitor: vscode.l10n.t('Monitor'),
-        History: vscode.l10n.t('History'), Fix: vscode.l10n.t('Fix'), Users: vscode.l10n.t('Users') };
-      const att = attention({ aspUsed, cpu, msgwJobs: msgw, lckwJobs: lckw, inquiries, brokenCompiles: broken.length,
-        expiredPasswords: num(pick(u0, 'X')), libraryListMissing: missing });
-      for (const a of att) { a.text = say[a.key]?.(a.vals) ?? a.text; a.action = a.action ? actionName[a.action] ?? a.action : a.action; }
-      const advice = sysvals.rows.map(r => adviseSystemValue(pick(r, 'N'), pick(r, 'V'))).sort((a, b) => SECURITY_VALUES.indexOf(a.name) - SECURITY_VALUES.indexOf(b.name));
-      const adviceText: Record<string, string> = {
-        'Any object can be restored, including security-sensitive ones.': vscode.l10n.t('Any object can be restored, including security-sensitive ones.'),
-        'Auditing is on.': vscode.l10n.t('Auditing is on.'),
-        'Below 30: passwords or resource security not enforced.': vscode.l10n.t('Below 30: passwords or resource security not enforced.'),
-        'Inactive interactive jobs are never ended.': vscode.l10n.t('Inactive interactive jobs are never ended.'),
-        'Level 0/1: passwords up to 10 characters, not case-sensitive.': vscode.l10n.t('Level 0/1: passwords up to 10 characters, not case-sensitive.'),
-        'Level 30: move to 40 so programs cannot bypass security.': vscode.l10n.t('Level 30: move to 40 so programs cannot bypass security.'),
-        'Level 40 or 50: object and system integrity protected.': vscode.l10n.t('Level 40 or 50: object and system integrity protected.'),
-        'Long, case-sensitive passwords.': vscode.l10n.t('Long, case-sensitive passwords.'),
-        'Minimum password length below 8.': vscode.l10n.t('Minimum password length below 8.'),
-        'Minimum password length is reasonable.': vscode.l10n.t('Minimum password length is reasonable.'),
-        'More than 5 attempts allowed: 3–5 is usual.': vscode.l10n.t('More than 5 attempts allowed: 3–5 is usual.'),
-        'New objects give *ALL to *PUBLIC.': vscode.l10n.t('New objects give *ALL to *PUBLIC.'),
-        'New objects give *CHANGE to *PUBLIC (default): *USE or *EXCLUDE is stricter.': vscode.l10n.t('New objects give *CHANGE to *PUBLIC (default): *USE or *EXCLUDE is stricter.'),
-        'Passwords never expire.': vscode.l10n.t('Passwords never expire.'),
-        'Public authority on new objects is restricted.': vscode.l10n.t('Public authority on new objects is restricted.'),
-        'Restoring sensitive objects is limited.': vscode.l10n.t('Restoring sensitive objects is limited.'),
-        'Security auditing is off.': vscode.l10n.t('Security auditing is off.'),
-        'Sign-on attempts limited.': vscode.l10n.t('Sign-on attempts limited.'),
-        'Unlimited sign-on attempts: set 3–5.': vscode.l10n.t('Unlimited sign-on attempts: set 3–5.'),
-      };
-      for (const a of advice) {
-        const d = /^Passwords expire after (\S+) days\.$/.exec(a.advice); const m = /^Inactive jobs are handled after (\S+) minutes\.$/.exec(a.advice);
-        a.advice = d ? vscode.l10n.t('Passwords expire after {0} days.', d[1]) : m ? vscode.l10n.t('Inactive jobs are handled after {0} minutes.', m[1]) : adviceText[a.advice] ?? a.advice;
-      }
-      const qsec = num(advice.find(a => a.name === 'QSECURITY')?.value);
-      const health = healthScore({ aspUsed, cpu, msgwJobs: msgw, lckwJobs: lckw, inquiries, brokenCompiles: broken.length, missingLibraries: missing.length,
-        qsecurity: qsec, expiredPasswords: num(pick(u0, 'X')), badSettings: advice.filter(a => a.tone === 'bad').length });
-      const snapKey = `vanthrex.tracker.trend.${conn.profile.name}`;
-      const snaps = addSnapshot(this.state.get<Snapshot[]>(snapKey, []), { at: new Date().toISOString(), cpu, asp: aspUsed, jobs: activeJobs, msgw, score: health.score });
-      await this.state.update(snapKey, snaps);
-      const recent = snaps.slice(-24);
-      const span = recent.length > 1 ? vscode.l10n.t('trend over the last {0} refreshes (since {1})', recent.length, new Date(recent[0].at).toLocaleString()) : '';
-      const sp = (k: keyof Snapshot) => sparkPoints(recent.map(x => x[k] as number | undefined));
-      const reasonText: Record<string, string> = { disk: vscode.l10n.t('disk'), 'messages waiting': vscode.l10n.t('messages waiting'), 'MSGW jobs': vscode.l10n.t('MSGW jobs'), 'LCKW jobs': vscode.l10n.t('LCKW jobs'),
-        CPU: 'CPU', QSECURITY: 'QSECURITY', 'security settings': vscode.l10n.t('security settings'), compiles: vscode.l10n.t('compiles'), 'library list': vscode.l10n.t('library list'), passwords: vscode.l10n.t('passwords') };
-      health.reasons = health.reasons.map(r => r.replace(/^(−\d+) (.+)$/, (_, n: string, w: string) => `${n} ${reasonText[w] ?? w}`));
-      const healthLabel = { healthy: vscode.l10n.t('Healthy'), watch: vscode.l10n.t('Keep an eye on it'), action: vscode.l10n.t('Action needed') }[health.label];
-      this.lastSummary = () => summaryMarkdown(conn.profile.name, new Date().toLocaleString(), { ...health, label: healthLabel },
-        [{ label: 'CPU', value: cpu !== undefined ? `${cpu.toFixed(1)}%` : '—' }, { label: vscode.l10n.t('System ASP'), value: aspUsed !== undefined ? `${aspUsed.toFixed(1)}%` : '—' },
-          { label: vscode.l10n.t('Active jobs'), value: String(activeJobs ?? '—') }, { label: 'MSGW / LCKW', value: `${msgw} / ${lckw}` }, { label: vscode.l10n.t('QSYSOPR replies'), value: String(inquiries) },
-          { label: vscode.l10n.t('PTF level'), value: cum ? `CUM ${pick(cum, 'L')}` : '—' }], att);
-      tabs.push({
-        hero: { score: health.score, label: healthLabel, tone: health.label === 'healthy' ? 'ok' : health.label === 'watch' ? 'warn' : 'bad', reasons: health.reasons, spark: sp('score'), sparkTitle: span },
-        id: 'overview', title: vscode.l10n.t('Overview'), badge: att.filter(a => a.tone === 'bad' || a.tone === 'warn').length || undefined, badgeTone: att.some(a => a.tone === 'bad') ? 'bad' : 'warn',
-        tiles: [
-          { label: vscode.l10n.t('System'), value: pick(e0, 'HOST_NAME') || conn.profile.name, sub: release },
-          { label: vscode.l10n.t('CPU'), value: cpu !== undefined ? `${cpu.toFixed(1)}%` : '—', sub: pick(s0, 'CONFIGURED_CPUS') ? vscode.l10n.t('{0} CPU(s)', pick(s0, 'CONFIGURED_CPUS')) : '', tone: tone(cpu, 70, 90), act: { label: '', command: 'vanthrex.performanceMonitor' }, meter: cpu, spark: sp('cpu'), sparkTitle: span },
-          { label: vscode.l10n.t('System ASP used'), value: aspUsed !== undefined ? `${aspUsed.toFixed(1)}%` : '—', sub: aspMb ? bytes(aspMb * 1024 * 1024) : '', tone: tone(aspUsed, 80, 90), act: { label: '', command: 'vanthrex.tracker.tab', args: ['storage'] }, meter: aspUsed, spark: sp('asp'), sparkTitle: span },
-          { label: vscode.l10n.t('Jobs'), value: activeJobs !== undefined ? String(activeJobs) : '—', sub: totalJobs ? vscode.l10n.t('{0} in the system', totalJobs) : '', act: { label: '', command: 'vanthrex.tracker.tab', args: ['jobs'] }, spark: sp('jobs'), sparkTitle: span },
-          { label: vscode.l10n.t('Waiting jobs'), value: String(msgw + lckw), sub: `MSGW ${msgw} · LCKW ${lckw}`, tone: msgw ? 'bad' : lckw ? 'warn' : 'ok', act: { label: '', command: 'vanthrex.tracker.tab', args: ['jobs'] } },
-          { label: vscode.l10n.t('QSYSOPR replies'), value: String(inquiries), tone: inquiries ? 'bad' : 'ok', act: { label: '', command: 'vanthrex.tracker.tab', args: ['messages'] } },
-          { label: vscode.l10n.t('Up since IPL'), value: scpf.rows[0] ? since(pick(scpf.rows[0], 'T')) || '—' : '—', sub: pick(scpf.rows[0], 'T').slice(0, 16) },
-          { label: vscode.l10n.t('PTF level'), value: cum ? `CUM ${pick(cum, 'L')}` : '—', sub: tr ? `TR ${pick(tr, 'L')}` : '', act: { label: '', command: 'vanthrex.tracker.tab', args: ['ptf'] } },
-          { label: vscode.l10n.t('Libraries'), value: String(libRows.length || '—'), sub: vscode.l10n.t('{0} user libraries', libRows.filter(l => !isIbmLibrary(l.name)).length), act: { label: '', command: 'vanthrex.tracker.tab', args: ['libraries'] } },
-          { label: vscode.l10n.t('My compiles'), value: history.length ? `${history.length - history.filter(h => !h.ok).length} / ${history.length}` : '—', sub: broken.length ? vscode.l10n.t('{0} broken now', broken.length) : history.length ? vscode.l10n.t('successful') : '', tone: broken.length ? 'warn' : 'ok', act: { label: '', command: 'vanthrex.compileHistory' } },
-        ],
-        attention: att,
-        buttons: [
-          { label: vscode.l10n.t('PDM'), command: 'vanthrex.pdm' }, { label: vscode.l10n.t('Find member'), command: 'vanthrex.findMember' }, { label: vscode.l10n.t('Performance monitor'), command: 'vanthrex.performanceMonitor' },
-          { label: vscode.l10n.t('Running SQL'), command: 'vanthrex.activeSql' }, { label: vscode.l10n.t('History log (QHST)'), command: 'vanthrex.historyLog' }, { label: vscode.l10n.t('Exit points'), command: 'vanthrex.exitPoints' },
-          { label: vscode.l10n.t('Create library'), command: 'vanthrex.createLibrary' }, { label: vscode.l10n.t('Create IFS folder or file'), command: 'vanthrex.createIfs' },
-          { label: vscode.l10n.t('Who is signed on'), command: 'vanthrex.signedOn' },
-          { label: vscode.l10n.t('Failed jobs'), command: 'vanthrex.failedJobs' },
-          { label: vscode.l10n.t('Copy summary'), command: 'vanthrex.tracker.copySummary' },
-        ],
-        tables: [],
-        error: st.error,
-      });
-      // ---- libraries
-      const userLibs = libRows.filter(l => !isIbmLibrary(l.name));
-      const unused = unusedSince(libRows, 365).filter(l => !l.inList);
-      const knownSizes = Object.values(sizeCache).filter(z => z.size !== undefined);
-      tabs.push({
-        id: 'libraries', title: vscode.l10n.t('Libraries'), badge: libRows.length, badgeTone: 'info',
-        tiles: [
-          { label: vscode.l10n.t('Libraries you can see'), value: String(libRows.length), sub: allObj ? vscode.l10n.t('all of them (*ALLOBJ)') : vscode.l10n.t('those you are authorized to') },
-          { label: vscode.l10n.t('User libraries'), value: String(userLibs.length), sub: vscode.l10n.t('{0} TEST', userLibs.filter(l => /TEST/i.test(l.type)).length) },
-          { label: vscode.l10n.t('In your library list'), value: String(libRows.filter(l => l.inList).length), sub: missing.length ? vscode.l10n.t('{0} missing', missing.length) : '', tone: missing.length ? 'warn' : 'ok' },
-          { label: vscode.l10n.t('Not used for a year'), value: String(unused.length), sub: vscode.l10n.t('cleanup candidates'), tone: unused.length ? 'warn' : 'ok' },
-          { label: vscode.l10n.t('Size known'), value: knownSizes.length ? bytes(knownSizes.reduce((a, z) => a + (z.size ?? 0), 0)) : '—', sub: vscode.l10n.t('{0} libraries measured', knownSizes.length) },
-          { label: vscode.l10n.t('Your special authorities'), value: auth.split(/\s+/).filter(x => /^\*(ALLOBJ|SECADM|AUDIT|SERVICE|IOSYSCFG|JOBCTL|SPLCTL|SAVSYS)$/.test(x)).filter((x, k, a) => a.indexOf(x) === k).join(' ') || '*NONE', tone: allObj ? 'info' : undefined },
-        ],
-        buttons: [{ label: vscode.l10n.t('Create library'), command: 'vanthrex.createLibrary' }, { label: vscode.l10n.t('Library list from a job description'), command: 'vanthrex.libraryListFromJobd' }],
-        tables: [{
-          id: 'libs', title: vscode.l10n.t('Every library on the system'), filter: true, numeric: [6, 7],
-          columns: [vscode.l10n.t('Library'), vscode.l10n.t('Type'), vscode.l10n.t('Text'), vscode.l10n.t('Owner'), vscode.l10n.t('Created'), vscode.l10n.t('Last used'), vscode.l10n.t('Objects'), vscode.l10n.t('Size'), vscode.l10n.t('Library list')],
-          rows: libRows.map(l => [l.name, l.type, l.text, l.owner, l.created, l.lastUsed, '', '', l.inList ? `★ ${l.inList}` : '']),
-          acts: libRows.map(l => [
-            { label: vscode.l10n.t('PDM'), command: 'vanthrex.pdm', args: [{ level: 'objects', library: l.name }] },
-            ...(l.inList ? [] : [{ label: vscode.l10n.t('+ list'), command: 'vanthrex.tracker.addLibrary', args: [l.name] }]),
-            { label: vscode.l10n.t('Pin'), command: 'vanthrex.pin', args: [{ kind: 'library', library: l.name }] },
-            { label: vscode.l10n.t('Storage'), command: 'vanthrex.storageAdvisor', args: [l.name] },
-            { label: '*PUBLIC', command: 'vanthrex.publicAuthorityScan', args: [l.name] },
-          ]),
-          tones: libRows.map(l => (l.inList ? 'info' : unused.includes(l) ? 'warn' : undefined)),
-          empty: libs.error ?? vscode.l10n.t('No libraries.'),
-        }],
-        note: allObj ? vscode.l10n.t('You have *ALLOBJ, so every library is listed. Objects and size are calculated on request and remembered.')
-          : vscode.l10n.t('You see the libraries you are authorized to; a profile with *ALLOBJ sees them all (*SECADM manages profiles, not objects). Objects and size are calculated on request and remembered.'),
-      });
-      // ---- jobs
-      const subStats = new Map(subs.rows.map(r => [pick(r, 'S'), { jobs: num(pick(r, 'N')) ?? 0, cpu: num(pick(r, 'C')) ?? 0, msgw: num(pick(r, 'W')) ?? 0 }]));
-      const sbsRows = (sbsInfo.rows.length ? sbsInfo.rows.map(r => {
-        const name = pick(r, 'SUBSYSTEM_DESCRIPTION', 'SUBSYSTEM_NAME'); const st = subStats.get(name);
-        const jobs = num(pick(r, 'CURRENT_ACTIVE_JOBS')) ?? st?.jobs ?? 0; const max = pick(r, 'MAXIMUM_ACTIVE_JOBS');
-        return { name, lib: pick(r, 'SUBSYSTEM_DESCRIPTION_LIBRARY'), status: pick(r, 'STATUS'), jobs, max: max === '0' ? '*NOMAX' : max, cpu: st?.cpu ?? 0, msgw: st?.msgw ?? 0,
-          full: !!num(max) && jobs >= (num(max) ?? 0) };
-      }) : subs.rows.map(r => ({ name: pick(r, 'S'), lib: '', status: 'ACTIVE', jobs: num(pick(r, 'N')) ?? 0, max: '', cpu: num(pick(r, 'C')) ?? 0, msgw: num(pick(r, 'W')) ?? 0, full: false })))
-        .sort((a, b) => (a.status === b.status ? b.jobs - a.jobs : a.status === 'ACTIVE' ? -1 : 1));
-      tabs.push({
-        id: 'jobs', title: vscode.l10n.t('Jobs'), badge: msgw || undefined, badgeTone: 'bad',
-        tiles: [
-          { label: vscode.l10n.t('Active jobs'), value: activeJobs !== undefined ? String(activeJobs) : '—' }, { label: vscode.l10n.t('Waiting for a reply'), value: String(msgw), tone: msgw ? 'bad' : 'ok' },
-          { label: vscode.l10n.t('Waiting for a lock'), value: String(lckw), tone: lckw ? 'warn' : 'ok' }, { label: vscode.l10n.t('Subsystems'), value: String(subs.rows.length) },
-        ],
-        buttons: [{ label: vscode.l10n.t('Running SQL'), command: 'vanthrex.activeSql' }, { label: vscode.l10n.t('Performance monitor'), command: 'vanthrex.performanceMonitor' }],
-        tables: [
-          { title: vscode.l10n.t('Waiting jobs (MSGW, and LCKW for batch and interactive jobs)'), columns: [vscode.l10n.t('Job'), vscode.l10n.t('User'), vscode.l10n.t('Subsystem'), vscode.l10n.t('Status'), vscode.l10n.t('Function')],
-            rows: waiting.rows.map(r => [pick(r, 'J'), pick(r, 'U'), pick(r, 'S'), pick(r, 'ST'), pick(r, 'F')]), tones: waiting.rows.map(r => (pick(r, 'ST') === 'MSGW' ? 'bad' : 'warn')),
-            acts: waiting.rows.map(r => jobActs(pick(r, 'J'))), empty: waiting.error ?? vscode.l10n.t('No job is waiting. 👍') },
-          { title: vscode.l10n.t('Top jobs by CPU'), filter: true, numeric: [5, 6], columns: [vscode.l10n.t('Job'), vscode.l10n.t('User'), vscode.l10n.t('Subsystem'), vscode.l10n.t('Status'), vscode.l10n.t('Function'), vscode.l10n.t('CPU %'), vscode.l10n.t('Temp storage (MB)')],
-            rows: top.rows.map(r => [pick(r, 'J'), pick(r, 'U'), pick(r, 'S'), pick(r, 'ST'), pick(r, 'F'), num(pick(r, 'C')) ?? '', num(pick(r, 'M')) ?? '']),
-            acts: top.rows.map(r => jobActs(pick(r, 'J'))), empty: top.error },
-          { title: vscode.l10n.t('Subsystems'), filter: true, numeric: [3, 4, 5, 6], columns: [vscode.l10n.t('Subsystem'), vscode.l10n.t('Library'), vscode.l10n.t('Status'), vscode.l10n.t('Jobs'), vscode.l10n.t('Maximum'), vscode.l10n.t('CPU %'), 'MSGW'],
-            rows: sbsRows.map(x => [x.name, x.lib, x.status, x.jobs, x.max, x.cpu, x.msgw]), tones: sbsRows.map(x => (x.msgw ? 'bad' : x.full ? 'warn' : x.status === 'INACTIVE' ? 'info' : undefined)),
-            empty: sbsInfo.error ?? subs.error },
-        ],
-      });
-      // ---- storage
-      tabs.push({
-        id: 'storage', title: vscode.l10n.t('Storage'), badge: aspUsed !== undefined && aspUsed >= 80 ? 1 : undefined, badgeTone: tone(aspUsed, 80, 90),
-        tiles: [
-          { label: vscode.l10n.t('System ASP used'), value: aspUsed !== undefined ? `${aspUsed.toFixed(1)}%` : '—', tone: tone(aspUsed, 80, 90) },
-          { label: vscode.l10n.t('System ASP size'), value: aspMb ? bytes(aspMb * 1024 * 1024) : '—' },
-          { label: vscode.l10n.t('Free'), value: aspMb && aspUsed !== undefined ? bytes(aspMb * (100 - aspUsed) / 100 * 1024 * 1024) : '—' },
-        ],
-        buttons: [{ label: vscode.l10n.t('Library sizes'), command: 'vanthrex.tracker.tab', args: ['libraries'] }],
-        tables: [{ id: 'largest', title: vscode.l10n.t('Largest libraries (measured)'), numeric: [1, 2], columns: [vscode.l10n.t('Library'), vscode.l10n.t('Objects'), vscode.l10n.t('Size')], rows: [],
-          empty: vscode.l10n.t('Calculate library sizes in the Libraries tab first.') }, { title: vscode.l10n.t('Auxiliary storage pools'), columns: asp.rows[0] ? Object.keys(asp.rows[0]).slice(0, 10) : ['ASP'],
-          rows: asp.rows.map(r => Object.keys(asp.rows[0]).slice(0, 10).map(k => pick(r, k))), empty: asp.error ?? vscode.l10n.t('No ASP information.') }],
-      });
-      // ---- messages
-      tabs.push({
-        id: 'messages', title: 'QSYSOPR', badge: inquiries || undefined, badgeTone: 'bad',
-        buttons: [{ label: vscode.l10n.t('Work with QSYSOPR (reply, remove)'), command: 'vanthrex.messageQueue', args: ['QSYS/QSYSOPR'] }, { label: vscode.l10n.t('History log (QHST)'), command: 'vanthrex.historyLog' }],
-        tables: [{ title: vscode.l10n.t('Latest QSYSOPR messages'), filter: true, columns: [vscode.l10n.t('Time'), vscode.l10n.t('Message'), vscode.l10n.t('Type'), vscode.l10n.t('Sev'), vscode.l10n.t('Text'), vscode.l10n.t('From job')],
-          rows: qsysopr.rows.map(r => [pick(r, 'T'), pick(r, 'I'), pick(r, 'Y'), num(pick(r, 'S')) ?? 0, pick(r, 'X'), pick(r, 'J')]),
-          tones: qsysopr.rows.map(r => (/INQUIRY/i.test(pick(r, 'Y')) ? 'bad' : (num(pick(r, 'S')) ?? 0) >= 30 ? 'warn' : undefined)),
-          acts: qsysopr.rows.map(r => [...(pick(r, 'I') ? [{ label: vscode.l10n.t('Explain'), command: 'vanthrex.explainMessage', args: [pick(r, 'I')] }] : []),
-            ...(pick(r, 'J') ? [{ label: vscode.l10n.t('Job log'), command: 'vanthrex.jobLog', args: [{ job: pick(r, 'J') }] }] : [])]),
-          empty: qsysopr.error ?? vscode.l10n.t('No messages.') }],
-      });
-      // ---- users
-      tabs.push({
-        id: 'users', title: vscode.l10n.t('Users'), badge: advice.filter(a => a.tone === 'bad').length || undefined, badgeTone: 'bad',
-        tiles: [
-          { label: vscode.l10n.t('User profiles'), value: pick(u0, 'N') || '—' }, { label: vscode.l10n.t('Enabled'), value: pick(u0, 'E') || '—', tone: 'ok' }, { label: vscode.l10n.t('Disabled'), value: pick(u0, 'D') || '—' },
-          { label: vscode.l10n.t('Not signed on for 90 days'), value: pick(u0, 'O') || '—', tone: (num(pick(u0, 'O')) ?? 0) > 0 ? 'warn' : 'ok', act: { label: '', command: 'vanthrex.secadm.inactive' } },
-          { label: vscode.l10n.t('Expired passwords'), value: pick(u0, 'X') || '—', tone: (num(pick(u0, 'X')) ?? 0) > 0 ? 'warn' : 'ok' },
-          { label: vscode.l10n.t('*ALLOBJ / *SECADM'), value: String(powerful.rows.length), act: { label: '', command: 'vanthrex.secadm.powerful' } },
-        ],
-        buttons: [{ label: vscode.l10n.t('Security Admin (*SECADM)'), command: 'vanthrex.securityCenter' }],
-        tables: [{ title: vscode.l10n.t('Security settings (system values)'), columns: [vscode.l10n.t('System value'), vscode.l10n.t('Value'), vscode.l10n.t('Assessment')],
-          rows: advice.map(a => [a.name, a.value, `${a.tone === 'ok' ? '✓' : a.tone === 'bad' ? '✗' : a.tone === 'warn' ? '⚠' : ''} ${a.advice}`.trim()]),
-          tones: advice.map(a => (a.tone === 'ok' || a.tone === 'info' ? undefined : a.tone)), empty: sysvals.error ?? vscode.l10n.t('Not available.') },
-          { title: vscode.l10n.t('Failed sign-on attempts'), numeric: [2], columns: [vscode.l10n.t('User'), vscode.l10n.t('Status'), vscode.l10n.t('Invalid attempts'), vscode.l10n.t('Last sign-on')],
-            rows: failedSignon.rows.map(r => [pick(r, 'U'), pick(r, 'S'), num(pick(r, 'F')) ?? 0, pick(r, 'P').slice(0, 16)]),
-            tones: failedSignon.rows.map(r => (pick(r, 'S') === '*DISABLED' ? 'bad' : (num(pick(r, 'F')) ?? 0) >= 2 ? 'warn' : undefined)), empty: failedSignon.error ?? vscode.l10n.t('No failed sign-on attempts. 👍') },
-          { title: vscode.l10n.t('Powerful profiles'), filter: true, columns: [vscode.l10n.t('User'), vscode.l10n.t('Status'), vscode.l10n.t('Class'), vscode.l10n.t('Special authorities'), vscode.l10n.t('Last sign-on')],
-          rows: powerful.rows.map(r => [pick(r, 'U'), pick(r, 'S'), pick(r, 'C'), pick(r, 'A'), pick(r, 'P').slice(0, 16)]),
-          tones: powerful.rows.map(r => (pick(r, 'S') === '*ENABLED' ? 'warn' : undefined)),
-          empty: powerful.error ?? vscode.l10n.t('None you are allowed to see.') }],
-        note: vscode.l10n.t('You only see the profiles you are authorized to; with *SECADM you see them all.'),
-        error: users.error,
-      });
-      // ---- queues
-      const jq = jobqs.rows.map(r => ({ lib: pick(r, 'JOB_QUEUE_LIBRARY'), name: pick(r, 'JOB_QUEUE_NAME'), status: pick(r, 'JOB_QUEUE_STATUS'), jobs: num(pick(r, 'NUMBER_OF_JOBS')) ?? 0,
-        sbs: pick(r, 'SUBSYSTEM_NAME'), held: num(pick(r, 'HELD_JOB_COUNT')), sched: num(pick(r, 'SCHEDULED_JOB_COUNT')), text: pick(r, 'TEXT_DESCRIPTION') }));
-      const stuckJq = jq.filter(q => q.jobs > 0 && (q.status === 'HELD' || !q.sbs));
-      const oq = outqs.rows.map(r => ({ lib: pick(r, 'OUTPUT_QUEUE_LIBRARY_NAME', 'OUTPUT_QUEUE_LIBRARY'), name: pick(r, 'OUTPUT_QUEUE_NAME'), files: num(pick(r, 'NUMBER_OF_FILES')) ?? 0,
-        status: pick(r, 'OUTPUT_QUEUE_STATUS'), writer: pick(r, 'WRITER_JOB_NAME'), wstatus: pick(r, 'WRITER_JOB_STATUS', 'WRITER_STATUS'), text: pick(r, 'TEXT_DESCRIPTION') }));
-      const qAct = (kind: 'jobq' | 'outq', lib: string, name: string, held: boolean): Act[] => {
-        try {
-          const cmd = queueCommand(kind, held ? 'release' : 'hold', lib, name);
-          return [{ label: held ? vscode.l10n.t('Release') : vscode.l10n.t('Hold'), command: 'vanthrex.tracker.cl', args: [cmd] }];
-        } catch { return []; }
-      };
-      tabs.push({
-        id: 'queues', title: vscode.l10n.t('Queues'), badge: stuckJq.length || undefined, badgeTone: 'warn',
-        tiles: [
-          { label: vscode.l10n.t('Jobs waiting in job queues'), value: String(jq.reduce((a, q) => a + q.jobs, 0)), sub: vscode.l10n.t('{0} job queue(s)', jq.length) },
-          { label: vscode.l10n.t('Stuck job queues'), value: String(stuckJq.length), sub: vscode.l10n.t('held, or not attached to a subsystem, with jobs'), tone: stuckJq.length ? 'warn' : 'ok' },
-          { label: vscode.l10n.t('Spooled files in output queues'), value: oq.reduce((a, q) => a + q.files, 0).toLocaleString(), sub: vscode.l10n.t('{0} output queue(s)', oq.length) },
-          { label: vscode.l10n.t('Held output queues'), value: String(oq.filter(q => /HELD/i.test(q.status)).length) },
-        ],
-        buttons: [{ label: vscode.l10n.t('Spooled files'), command: 'vanthrex.spool.focus' }],
-        tables: [
-          { title: vscode.l10n.t('Job queues'), filter: true, numeric: [4, 5, 6], columns: [vscode.l10n.t('Library'), vscode.l10n.t('Job queue'), vscode.l10n.t('Status'), vscode.l10n.t('Subsystem'), vscode.l10n.t('Jobs'), vscode.l10n.t('Held'), vscode.l10n.t('Scheduled'), vscode.l10n.t('Text')],
-            rows: jq.map(q => [q.lib, q.name, q.status, q.sbs || '—', q.jobs, q.held ?? '', q.sched ?? '', q.text]),
-            tones: jq.map(q => (stuckJq.includes(q) ? 'warn' : undefined)), acts: jq.map(q => qAct('jobq', q.lib, q.name, q.status === 'HELD')), empty: jobqs.error },
-          { title: vscode.l10n.t('Output queues (most spooled files first)'), filter: true, numeric: [2], columns: [vscode.l10n.t('Library'), vscode.l10n.t('Output queue'), vscode.l10n.t('Files'), vscode.l10n.t('Status'), vscode.l10n.t('Writer'), vscode.l10n.t('Text')],
-            rows: oq.map(q => [q.lib, q.name, q.files, q.status, [q.writer, q.wstatus].filter(Boolean).join(' '), q.text]),
-            tones: oq.map(q => (q.files > 5000 ? 'warn' : undefined)), acts: oq.map(q => qAct('outq', q.lib, q.name, /HELD/i.test(q.status))), empty: outqs.error },
-        ],
-        note: vscode.l10n.t('Hold and release ask before they run, and respect the protection of this connection.'),
-      });
-      // ---- network
-      const estBy = new Map(estab.rows.map(r => [num(pick(r, 'P')) ?? 0, num(pick(r, 'N')) ?? 0]));
-      const ports = listen.rows.map(r => num(pick(r, 'P')) ?? 0).filter((p, i, a) => p && a.indexOf(p) === i);
-      const plain = ports.filter(p => unencrypted(p));
-      tabs.push({
-        id: 'network', title: vscode.l10n.t('Network'),
-        tiles: [
-          { label: vscode.l10n.t('Listening ports'), value: String(ports.length) },
-          { label: vscode.l10n.t('Open connections'), value: [...estBy.values()].reduce((a, b) => a + b, 0).toLocaleString() },
-          { label: vscode.l10n.t('Unencrypted services'), value: String(plain.length), sub: plain.slice(0, 6).map(p => portName(p) || p).join(', '), tone: plain.length ? 'warn' : 'ok' },
-        ],
-        tables: [
-          { title: vscode.l10n.t('Servers listening'), filter: true, numeric: [2], columns: [vscode.l10n.t('Port'), vscode.l10n.t('Service'), vscode.l10n.t('Connections'), vscode.l10n.t('Encrypted')],
-            rows: ports.map(p => [String(p), portName(p), estBy.get(p) ?? 0, unencrypted(p) ? vscode.l10n.t('no') : '']), tones: ports.map(p => (unencrypted(p) && (estBy.get(p) ?? 0) > 0 ? 'warn' : undefined)), empty: listen.error },
-          { title: vscode.l10n.t('Who is connected (top 25 addresses)'), numeric: [1, 2], columns: [vscode.l10n.t('Remote address'), vscode.l10n.t('Connections'), vscode.l10n.t('Port')],
-            rows: remotes.rows.map(r => [pick(r, 'R'), num(pick(r, 'N')) ?? 0, `${pick(r, 'P')} ${portName(num(pick(r, 'P')) ?? 0)}`.trim()]), empty: remotes.error },
-        ],
-      });
-      // ---- scheduled jobs
-      const sch = scheds.rows.map(r => ({ entry: num(pick(r, 'SCHEDULED_JOB_ENTRY_NUMBER')) ?? 0, name: pick(r, 'SCHEDULED_JOB_NAME'), status: pick(r, 'STATUS'), freq: pick(r, 'FREQUENCY'),
-        when: [pick(r, 'SCHEDULED_DATE_VALUE', 'SCHEDULED_DATE'), pick(r, 'SCHEDULED_TIME'), pick(r, 'SCHEDULED_DAYS')].filter(Boolean).join(' '),
-        next: pick(r, 'NEXT_SUBMISSION_DATE').slice(0, 10), cmd: pick(r, 'COMMAND_STRING'), by: pick(r, 'SCHEDULED_BY'), jobq: pick(r, 'JOB_QUEUE_NAME'), text: pick(r, 'DESCRIPTION', 'TEXT_DESCRIPTION') }))
-        .sort((a, b) => (a.next || '9').localeCompare(b.next || '9'));
-      const heldSch = sch.filter(x => /HELD|HLD/i.test(x.status));
-      const schAct = (x: typeof sch[number]): Act[] => { try { return [{ label: /HELD|HLD/i.test(x.status) ? vscode.l10n.t('Release') : vscode.l10n.t('Hold'), command: 'vanthrex.tracker.cl', args: [scheduleCommand(/HELD|HLD/i.test(x.status) ? 'release' : 'hold', x.name, x.entry)] }]; } catch { return []; } };
-      const today = new Date().toISOString().slice(0, 10);
-      tabs.push({
-        id: 'schedule', title: vscode.l10n.t('Scheduled jobs'), badge: heldSch.length || undefined, badgeTone: 'warn',
-        tiles: [
-          { label: vscode.l10n.t('Schedule entries'), value: String(sch.length) }, { label: vscode.l10n.t('Running today'), value: String(sch.filter(x => x.next === today).length) },
-          { label: vscode.l10n.t('Held'), value: String(heldSch.length), tone: heldSch.length ? 'warn' : 'ok' },
-        ],
-        tables: [{ title: vscode.l10n.t('Job schedule (next run first)'), filter: true, numeric: [0],
-          columns: [vscode.l10n.t('Entry'), vscode.l10n.t('Job'), vscode.l10n.t('Status'), vscode.l10n.t('Frequency'), vscode.l10n.t('When'), vscode.l10n.t('Next run'), vscode.l10n.t('Command'), vscode.l10n.t('Job queue'), vscode.l10n.t('Added by')],
-          rows: sch.map(x => [String(x.entry).padStart(6, '0'), x.name, x.status, x.freq, x.when, x.next, x.cmd.slice(0, 120), x.jobq, x.by]),
-          tones: sch.map(x => (/HELD|HLD/i.test(x.status) ? 'warn' : x.next === today ? 'info' : undefined)), acts: sch.map(schAct), empty: scheds.error ?? vscode.l10n.t('No scheduled jobs.') }],
-        note: vscode.l10n.t('Hold and release ask before they run, and respect the protection of this connection.'),
-      });
-      // ---- journals
-      const jr = journals.rows.map(r => {
-        const kb = num(pick(r, 'TOTAL_SIZE_JOURNAL_RECEIVERS')); const bytesTotal = kb !== undefined ? kb * 1024 : undefined;
-        const n = num(pick(r, 'NUMBER_JOURNAL_RECEIVERS'));
-        return { lib: pick(r, 'JOURNAL_LIBRARY'), name: pick(r, 'JOURNAL_NAME'), rcv: [pick(r, 'ATTACHED_JOURNAL_RECEIVER_LIBRARY'), pick(r, 'ATTACHED_JOURNAL_RECEIVER_NAME')].filter(Boolean).join('/'),
-          n, bytes: bytesTotal, objects: num(pick(r, 'NUMBER_JOURNALED_OBJECTS', 'JOURNALED_OBJECTS')), state: pick(r, 'JOURNAL_STATE'), tone: journalTone(n, bytesTotal) };
-      }).sort((a, b) => (b.bytes ?? 0) - (a.bytes ?? 0));
-      tabs.push({
-        id: 'journals', title: vscode.l10n.t('Journals'), badge: jr.filter(j => j.tone).length || undefined, badgeTone: jr.some(j => j.tone === 'bad') ? 'bad' : 'warn',
-        tiles: [
-          { label: vscode.l10n.t('Journals (user libraries)'), value: String(jr.length) },
-          { label: vscode.l10n.t('Receivers kept'), value: jr.reduce((a, j) => a + (j.n ?? 0), 0).toLocaleString(), sub: bytes(jr.reduce((a, j) => a + (j.bytes ?? 0), 0)) },
-          { label: vscode.l10n.t('Need cleanup'), value: String(jr.filter(j => j.tone).length), sub: vscode.l10n.t('50+ receivers or 10 GB+'), tone: jr.some(j => j.tone === 'bad') ? 'bad' : jr.some(j => j.tone) ? 'warn' : 'ok' },
-        ],
-        tables: [{ title: vscode.l10n.t('Journals (largest first)'), filter: true, numeric: [3, 4, 5], columns: [vscode.l10n.t('Library'), vscode.l10n.t('Journal'), vscode.l10n.t('Attached receiver'), vscode.l10n.t('Receivers'), vscode.l10n.t('Size'), vscode.l10n.t('Objects'), vscode.l10n.t('State')],
-          rows: jr.map(j => [j.lib, j.name, j.rcv, j.n ?? '', bytes(j.bytes), j.objects ?? '', j.state]), tones: jr.map(j => j.tone),
-          acts: jr.map(j => [{ label: vscode.l10n.t('Work with'), command: 'vanthrex.journals', args: [{ kind: 'library', library: j.lib }] }]), empty: journals.error ?? vscode.l10n.t('No journals in user libraries.') }],
-      });
-      // ---- what changed (scan on request)
-      tabs.push({
-        id: 'objects', title: vscode.l10n.t('What changed'),
-        buttons: [
-          { label: vscode.l10n.t('Changed today (library list)'), command: 'vanthrex.tracker.scan', args: [1, 'libl', 'changed'] },
-          { label: vscode.l10n.t('Changed in 7 days (library list)'), command: 'vanthrex.tracker.scan', args: [7, 'libl', 'changed'] },
-          { label: vscode.l10n.t('Changed today (all user libraries — slow)'), command: 'vanthrex.tracker.scan', args: [1, 'all', 'changed'] },
-          { label: vscode.l10n.t('Largest objects (library list)'), command: 'vanthrex.tracker.scan', args: [1, 'libl', 'size'] },
-          { label: vscode.l10n.t('Largest objects (all user libraries — slow)'), command: 'vanthrex.tracker.scan', args: [1, 'all', 'size'] },
-        ],
-        tables: this.scan ? [this.scan] : [],
-        note: vscode.l10n.t('Pick a scan above. Scanning every user library reads every object description and can take minutes on a big system.'),
-      });
-      // ---- all connected systems
-      const others = this.manager.openConnections;
-      tabs.push({
-        id: 'systems', title: vscode.l10n.t('All systems'), buttons: others.length > 1 ? [{ label: vscode.l10n.t('Compare system values'), command: 'vanthrex.compareSystemValues' }] : [], badge: others.length > 1 ? others.length : undefined, badgeTone: 'info',
-        tables: [{ title: vscode.l10n.t('Connected systems'), numeric: [1, 2, 3, 4, 5], columns: [vscode.l10n.t('System'), vscode.l10n.t('Health'), 'CPU %', 'ASP %', 'MSGW', vscode.l10n.t('QSYSOPR replies')],
-          rows: [], id: 'systems', empty: vscode.l10n.t('Loading the other systems…') }],
-        note: others.length > 1 ? vscode.l10n.t('Every system you are connected to, read in parallel.') : vscode.l10n.t('Connect to more systems (Connections view) to compare them here.'),
-      });
-      // ---- PTFs
-      tabs.push({
-        id: 'ptf', title: vscode.l10n.t('PTFs & software'),
-        tiles: [{ label: vscode.l10n.t('Release'), value: release || '—' }, { label: vscode.l10n.t('Cumulative PTF'), value: cum ? pick(cum, 'L') : '—', sub: cum ? pick(cum, 'G') : '' },
-          { label: vscode.l10n.t('Technology Refresh'), value: tr ? pick(tr, 'L') : '—' }],
-        buttons: [{ label: vscode.l10n.t('Installed software & license keys'), command: 'vanthrex.installedSoftware' }, { label: vscode.l10n.t('Is this PTF installed?'), command: 'vanthrex.ptfLookup' }],
-        tables: [{ title: vscode.l10n.t('Installed PTF groups'), filter: true, columns: [vscode.l10n.t('Group'), vscode.l10n.t('Description'), vscode.l10n.t('Level')], rows: ptf.rows.map(r => [pick(r, 'G'), pick(r, 'D'), pick(r, 'L')]), empty: ptf.error }],
-      });
-      // ---- my work
-      tabs.push({
-        id: 'mine', title: vscode.l10n.t('My work'), badge: broken.length || undefined, badgeTone: 'warn',
-        tiles: [
-          { label: vscode.l10n.t('My active jobs'), value: String(myJobs.rows.length) }, { label: vscode.l10n.t('My spooled files'), value: pick(mySpool.rows[0], 'N') || '—' },
-          { label: vscode.l10n.t('Members I changed (7 days)'), value: String(myMembers.rows.length) }, { label: vscode.l10n.t('Broken compiles'), value: String(broken.length), tone: broken.length ? 'warn' : 'ok', act: { label: '', command: 'vanthrex.compileHistory' } },
-          { label: vscode.l10n.t('Pinned'), value: String(pins.length) },
-        ],
-        buttons: [{ label: vscode.l10n.t('Compile history'), command: 'vanthrex.compileHistory' }, { label: vscode.l10n.t('Find member'), command: 'vanthrex.findMember' }],
-        tables: [
-          { title: vscode.l10n.t('Broken right now'), columns: [vscode.l10n.t('Source'), vscode.l10n.t('Object'), vscode.l10n.t('Errors'), vscode.l10n.t('When')], rows: broken.map(b => [b.name, b.object, b.errors, new Date(b.at).toLocaleString()]),
-            tones: broken.map(() => 'bad'), acts: broken.map(b => [{ label: vscode.l10n.t('Open'), command: 'vanthrex.compileHistory.open', args: [b.uri] }]), empty: vscode.l10n.t('Nothing broken. 👍') },
-          { title: vscode.l10n.t('Source changed in your library list (last 7 days)'), filter: true, columns: [vscode.l10n.t('Member'), vscode.l10n.t('Type'), vscode.l10n.t('Text'), vscode.l10n.t('Changed')],
-            rows: myMembers.rows.map(r => [`${pick(r, 'L')}/${pick(r, 'F')}(${pick(r, 'M')})`, pick(r, 'Y'), pick(r, 'X'), pick(r, 'C').slice(0, 16)]),
-            acts: myMembers.rows.map(r => [{ label: vscode.l10n.t('Open'), command: 'vanthrex.compileHistory.open', args: [memberUri(pick(r, 'L'), pick(r, 'F'), pick(r, 'M'), pick(r, 'Y')).toString()] },
-              { label: vscode.l10n.t('PDM'), command: 'vanthrex.pdm', args: [{ level: 'members', library: pick(r, 'L'), file: pick(r, 'F'), name: pick(r, 'M') }] }]), empty: myMembers.error ?? vscode.l10n.t('No changes in the last 7 days.') },
-          { title: vscode.l10n.t('My jobs'), columns: [vscode.l10n.t('Job'), vscode.l10n.t('Subsystem'), vscode.l10n.t('Status'), vscode.l10n.t('Function'), vscode.l10n.t('CPU %')], rows: myJobs.rows.map(r => [pick(r, 'J'), pick(r, 'S'), pick(r, 'ST'), pick(r, 'F'), num(pick(r, 'C')) ?? '']),
-            acts: myJobs.rows.map(r => jobActs(pick(r, 'J'))), empty: myJobs.error },
-          { title: vscode.l10n.t('Pinned'), columns: [vscode.l10n.t('Item'), vscode.l10n.t('Where')], rows: pins.map(p => [pinLabel(p), pinDescription(p)]), acts: pins.map(p => [{ label: vscode.l10n.t('Open'), command: 'vanthrex.pin.open', args: [p] }]),
-            empty: vscode.l10n.t('Right-click a member, library, object or IFS file → Pin.') },
-        ],
-      });
-
-      // Turn actions into indexes for the page.
-      const enc = (a?: Act) => (a ? this.ref(a) : -1);
-      void this.loadSystems(conn.profile.id, gen);
-      const out = tabs.map(tb => ({
-        ...tb, buttons: (tb.buttons ?? []).map(b => ({ label: b.label, i: enc(b) })),
-        tiles: (tb.tiles ?? []).map(x => ({ ...x, act: enc(x.act) })),
-        attention: tb.attention?.map(a => ({ ...a, i: a.command ? enc({ label: a.action ?? '', command: a.command, args: a.args }) : -1 })),
-        tables: tb.tables.map(x => ({ ...x, acts: (x.acts ?? []).map(r => r.map(a => ({ label: a.label, i: enc(a) }))) })),
-      }));
-      this.post({ t: 'data', tabs: out, at: new Date().toLocaleTimeString(), first: this.firstTab, sizes: sizeCache });
+      type Res = { rows: Row[]; error?: string };
+      const pending: Res = { rows: [], error: vscode.l10n.t('Loading…') };
+      const settled: Partial<Record<keyof typeof started, Res>> = {};
+      for (const [k, pr] of Object.entries(started) as [keyof typeof started, Promise<Res>][]) { void pr.then(r => { settled[k] = r; }); }
+      const snapshot = () => Object.fromEntries(Object.keys(started).map(k => [k, settled[k as keyof typeof started] ?? pending])) as Record<keyof typeof started, Res>;
+      await Promise.all([started.st, started.env, started.waitCount, started.asp, started.myAuth, started.qsysopr, started.users, started.sysvals, started.scpf, started.ptf, started.waiting, started.myJobs, started.mySpool, started.top]);
+      if (gen !== this.gen) { return; }
+      await build(snapshot(), true);
+      await Promise.all(Object.values(started));
+      if (gen !== this.gen) { return; }
+      await build(snapshot(), false);
     } catch (e) {
       logError(e);
       this.post({ t: 'error', text: errorMessage(e).split('\n')[0] });
@@ -587,7 +623,7 @@ class Tracker {
   private html(): string {
     const n = nonce();
     const L = {
-      refresh: vscode.l10n.t('Refresh'), updated: vscode.l10n.t('Updated'), loading: vscode.l10n.t('Loading the whole system…'), attention: vscode.l10n.t('Needs attention'), allGood: vscode.l10n.t('Nothing needs attention. 👍'),
+      refresh: vscode.l10n.t('Refresh'), updated: vscode.l10n.t('Updated'), refreshing: vscode.l10n.t('refreshing…'), loadingRest: vscode.l10n.t('loading the rest…'), loading: vscode.l10n.t('Loading the whole system…'), attention: vscode.l10n.t('Needs attention'), allGood: vscode.l10n.t('Nothing needs attention. 👍'),
       filter: vscode.l10n.t('Filter…'), hideIbm: vscode.l10n.t('Hide IBM libraries (Q*, SYS*)'), onlyList: vscode.l10n.t('Only my library list'), sizes: vscode.l10n.t('Calculate objects and size of the libraries shown'),
       stop: vscode.l10n.t('Stop'), rows: vscode.l10n.t('rows'), more: vscode.l10n.t('Show more'), empty: vscode.l10n.t('Nothing to show.'),
       report: vscode.l10n.t('Save report'), reportTitle: vscode.l10n.t('System report'), generated: vscode.l10n.t('Generated'),
@@ -776,7 +812,7 @@ document.addEventListener('input', e => {
 });
 window.addEventListener('message', ev => {
   const m = ev.data;
-  if (m.t === 'data') { D = m; Object.assign(sizes, m.sizes || {}); if (m.first && !st0.cur) cur = m.first; document.getElementById('at').textContent = L.updated + ' ' + m.at; render(); }
+  if (m.t === 'data') { D = m; Object.assign(sizes, m.sizes || {}); if (m.first && !st0.cur) cur = m.first; document.getElementById('at').textContent = L.updated + ' ' + m.at + (m.cached ? ' · ' + L.refreshing : m.partial ? ' · ' + L.loadingRest : ''); render(); }
   else if (m.t === 'busy') document.body.classList.toggle('busy', !!m.on);
   else if (m.t === 'tabTables') { const tb = D && D.tabs.find(t => t.id === m.id); if (tb) { tb.tables = m.tables; if (cur === m.id) { render(); } else if (m.id === 'objects') { cur = 'objects'; save(); render(); } } }
   else if (m.t === 'tab') { cur = m.id; save(); window.scrollTo(0, 0); render(); }

@@ -53,7 +53,7 @@ export function matchGeneric(name: string, pattern: string): boolean {
   return re.test(name.trim());
 }
 
-export interface PdmRow { name: string; type: string; /** Source file of a member (lists over several source files). */ file?: string; attribute?: string; text: string; changed?: string; size?: number; lockedBy?: string; objStatus?: ObjStatus }
+export interface PdmRow { name: string; type: string; /** Source file of a member (lists over several source files). */ file?: string; attribute?: string; text: string; changed?: string; size?: number; lockedBy?: string; objStatus?: ObjStatus; /** Full source change timestamp (for the object status). */ srcChanged?: string }
 /** '' = not something you compile, none = no object yet, current = object newer than the source, stale = source changed after the object. */
 export type ObjStatus = '' | 'none' | 'current' | 'stale';
 export interface Subset { name?: string; type?: string; text?: string; since?: string; needsCompile?: boolean; locked?: boolean }

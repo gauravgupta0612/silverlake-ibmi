@@ -1,4 +1,4 @@
-import { explainError } from './robust';
+import { explainError } from './friendlyErrors';
 import * as vscode from 'vscode';
 
 let channel: vscode.LogOutputChannel | undefined;

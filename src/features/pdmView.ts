@@ -19,7 +19,7 @@ import { escapeHtml, nonce } from './webviewUtil';
 
 type Row = Record<string, unknown>;
 const s = (r: Row | undefined, k: string) => String(r?.[k] ?? '').trim();
-const ALLOWED = new Set(['vanthrex.v22.gotoLine', 'vanthrex.pdm']);
+const ALLOWED = new Set(['vanthrex.gotoLine', 'vanthrex.pdm']);
 const RECENT_KEY = 'vanthrex.pdm.recent';
 
 /** Translated option labels (the core keeps English ones). */
@@ -58,6 +58,9 @@ class PdmPanel {
   private statuses: Record<string, string> = {};
   private message = '';
   private busy = false;
+  private loadGen = 0;
+  /** Locks and object status of the members on screen, while they are still being read. */
+  private statusPending?: Promise<void>;
   private retry: Record<string, string> = {};
   /** Members removed by the last option 4, with their source, so F9 can put them back. */
   private lastDeleted: { library: string; file: string; name: string; type: string; text: string; source: string }[] = [];
@@ -124,8 +127,24 @@ class PdmPanel {
     this.panel.title = l.level === 'members' ? `PDM · ${l.library}/${l.file}` : l.level === 'objects' ? `PDM · ${l.library}` : vscode.l10n.t('PDM · Libraries');
     this.post({ t: 'busy', on: true });
     try {
-      this.rows = l.level === 'members' ? await this.members(l.library!, l.file!) : l.level === 'objects' ? await this.objects(l.library!) : await this.libraries(l.subset.name);
-      this.loaded = true;
+      const gen = ++this.loadGen;
+      if (l.level === 'members') {
+        // Show the members at once; locks and object status (two more queries) follow when they arrive.
+        const rows = await this.members(l.library!, l.file!);
+        const needStatus = !!(l.subset.needsCompile || l.subset.locked);
+        if (needStatus) { await this.memberStatus(l.library!, l.file!, rows); }
+        this.rows = rows; this.loaded = true;
+        if (!needStatus) {
+          this.statusPending = this.memberStatus(l.library!, l.file!, rows).catch(e => logError(e));
+          void this.statusPending.then(() => {
+            if (gen !== this.loadGen || this.rows !== rows) { return; }
+            this.post({ t: 'patch', rows: rows.filter(r => r.lockedBy || r.objStatus).map(r => this.view(r)) });
+          });
+        }
+      } else {
+        this.rows = l.level === 'objects' ? await this.objects(l.library!) : await this.libraries(l.subset.name);
+        this.loaded = true;
+      }
     } catch (e) {
       logError(e);
       this.rows = [];
@@ -150,19 +169,31 @@ class PdmPanel {
       if (!f.length) { this.message = multi ? vscode.l10n.t('No source files match {0} in {1}.', file, lib) : vscode.l10n.t('File {0} was not found in {1}. Tip: type *ALL in File to see the members of every source file.', file, lib); }
       else if (multi && !f.some(x => s(x, 'T') === 'S')) { this.message = vscode.l10n.t('No source files match {0} in {1}.', file, lib); }
     }
+    return rows.map(r => ({
+      name: s(r, 'N'), type: s(r, 'T'), file: s(r, 'F') || file, text: s(r, 'X'), changed: s(r, 'C').slice(0, 16), size: Number(r.R ?? 0), lockedBy: '', objStatus: '',
+      srcChanged: s(r, 'C'),
+    }));
+  }
+
+  /** Who has each member locked, and whether its object is older than the source. */
+  private async memberStatus(lib: string, file: string, list: PdmRow[]): Promise<void> {
+    const multi = isMultiFile(file);
+    const files = multi
+      ? `IN (SELECT SYSTEM_TABLE_NAME FROM QSYS2.SYSTABLES WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND FILE_TYPE = 'S' AND SYSTEM_TABLE_NAME LIKE ${sqlString(likePattern(file))})`
+      : `= ${sqlString(file)}`;
     const objLib = (this.conn.profile.objectLibrary || lib).toUpperCase();
     const [locks, objs] = await Promise.all([
       this.conn.rows<Row>(`SELECT SYSTEM_OBJECT_NAME AS F, SYSTEM_TABLE_MEMBER AS M, MAX(JOB_NAME) AS J FROM QSYS2.OBJECT_LOCK_INFO WHERE SYSTEM_OBJECT_SCHEMA = ${sqlString(lib)} ` +
         `AND SYSTEM_OBJECT_NAME ${files} AND OBJECT_TYPE = '*FILE' AND SYSTEM_TABLE_MEMBER IS NOT NULL GROUP BY SYSTEM_OBJECT_NAME, SYSTEM_TABLE_MEMBER`, 5000).catch(() => [] as Row[]),
-      this.conn.rows<Row>(`SELECT OBJNAME AS N, OBJTYPE AS T, VARCHAR(OBJCREATED) AS C FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(objLib)}, '*PGM *MODULE *FILE *CMD *MENU')) X`, 50000).catch(() => [] as Row[]),
+      this.conn.cachedRows<Row>(`SELECT OBJNAME AS N, OBJTYPE AS T, VARCHAR(OBJCREATED) AS C FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(objLib)}, '*PGM *MODULE *FILE *CMD *MENU')) X`, 50000, 30_000).catch(() => [] as Row[]),
     ]);
     const lockBy = new Map(locks.map(r => [`${s(r, 'F') || file}/${s(r, 'M')}`, s(r, 'J')]));
     const byName = new Map<string, { type: string; created: string }[]>();
     for (const o of objs) { const k = s(o, 'N'); if (!byName.has(k)) { byName.set(k, []); } byName.get(k)!.push({ type: s(o, 'T'), created: s(o, 'C') }); }
-    return rows.map(r => ({
-      name: s(r, 'N'), type: s(r, 'T'), file: s(r, 'F') || file, text: s(r, 'X'), changed: s(r, 'C').slice(0, 16), size: Number(r.R ?? 0),
-      lockedBy: lockBy.get(`${s(r, 'F') || file}/${s(r, 'N')}`) ?? '', objStatus: objectStatus(s(r, 'T'), s(r, 'C'), byName.get(s(r, 'N')) ?? []),
-    }));
+    for (const r of list) {
+      r.lockedBy = lockBy.get(`${r.file ?? file}/${r.name}`) ?? '';
+      r.objStatus = objectStatus(r.type, r.srcChanged ?? '', byName.get(r.name) ?? []);
+    }
   }
 
   private async objects(lib: string): Promise<PdmRow[]> {
@@ -193,6 +224,10 @@ class PdmPanel {
 
   private post(m: unknown): void { void this.panel.webview.postMessage(m); }
 
+  private view(r: PdmRow) {
+    return { k: this.key(r), name: r.name, file: r.file ?? '', type: r.type, attribute: r.attribute ?? '', text: r.text, changed: r.changed ?? '', size: r.size ?? '', lock: r.lockedBy ?? '', obj: r.objStatus ?? '' };
+  }
+
   private send(): void {
     const l = this.loc;
     let view: PdmRow[];
@@ -201,7 +236,7 @@ class PdmPanel {
     const user = Object.keys(userOptions()).filter(k => validUserOptionCode(k, l.level)).sort();
     this.post({
       t: 'data', level: l.level, library: l.library ?? '', file: l.file ?? '', subset: l.subset, canBack: this.back.length > 0,
-      multi: this.multi, rows: view.map(r => ({ k: this.key(r), name: r.name, file: r.file ?? '', type: r.type, attribute: r.attribute ?? '', text: r.text, changed: r.changed ?? '', size: r.size ?? '', lock: r.lockedBy ?? '', obj: r.objStatus ?? '' })),
+      multi: this.multi, rows: view.map(r => this.view(r)),
       total: this.rows.length, options: opts, user, statuses: this.statuses, message: this.message, retry: this.retry,
       types: typeCounts(this.rows), canUndo: this.lastDeleted.length > 0,
       objLib: l.level === 'members' ? (this.conn.profile.objectLibrary || l.library || '').toUpperCase() : '',
@@ -214,6 +249,8 @@ class PdmPanel {
     if (this.busy && m.t !== 'ready') { this.post({ t: 'note', text: vscode.l10n.t('Still working on the previous request…') }); return; }
     this.busy = true;
     try {
+      // Options and subsets use the locks and object status: wait for them when they are still on their way.
+      if (this.statusPending && m.t !== 'ready' && m.t !== 'goto') { await this.statusPending; }
       switch (m.t) {
         case 'ready': if (this.loaded) { this.send(); } break;
         case 'enter': await this.enter(m.entries as { k: string; option: string }[], String(m.params ?? '')); break;
@@ -237,7 +274,7 @@ class PdmPanel {
     switch (key) {
       case 'F3': this.panel.dispose(); return;
       case 'F12': { const prev = this.back.pop(); if (prev) { this.loc = prev; this.statuses = {}; this.message = ''; await this.load(); } else { this.panel.dispose(); } return; }
-      case 'F5': this.statuses = {}; this.message = ''; await this.load(); return;
+      case 'F5': this.statuses = {}; this.message = ''; this.conn.invalidateCache(); await this.load(); return;
       case 'F6': await this.create(); return;
       case 'F16': await editUserOptions(this.loc.level); this.send(); return;
       case 'F21': await this.exportList(); return;
@@ -567,7 +604,7 @@ class PdmPanel {
       subtitle: vscode.l10n.t('{0} line(s) in {1} member(s). Click a line to open it.', hits.length, new Set(hits.map(h => h.m.name)).size),
       tables: [{ title: vscode.l10n.t('Lines'), filter: true, columns: [vscode.l10n.t('Member'), vscode.l10n.t('Line'), vscode.l10n.t('Source')],
         rows: hits.map(h => [this.multi ? `${this.f(h.m)}/${h.m.name}` : h.m.name, h.line + 1, h.src]),
-        rowActions: hits.map(h => ({ label: vscode.l10n.t('Open'), command: 'vanthrex.v22.gotoLine', args: [memberUri(l.library!, this.f(h.m), h.m.name, h.m.type).toString(), h.line] })),
+        rowActions: hits.map(h => ({ label: vscode.l10n.t('Open'), command: 'vanthrex.gotoLine', args: [memberUri(l.library!, this.f(h.m), h.m.name, h.m.type).toString(), h.line] })),
         empty: vscode.l10n.t('Not found.') }],
     }, ALLOWED);
   }
@@ -823,6 +860,12 @@ document.addEventListener('dblclick', e => {
 window.addEventListener('message', ev => {
   const m = ev.data;
   if (m.t === 'data') { D = m; render(); const first = $('body').querySelector('input'); if (first) first.focus(); }
+  else if (m.t === 'patch' && D) {
+    const byK = new Map(m.rows.map(r => [r.k, r]));
+    D.rows = D.rows.map(r => byK.get(r.k) || r);
+    document.querySelectorAll('#body tr[data-k]').forEach(tr => { const r = byK.get(tr.dataset.k); if (r) { const focused = tr.contains(document.activeElement); const sel = tr.classList.contains('sel'); tr.outerHTML = rowHtml(r);
+        if (sel) { const n = [...document.querySelectorAll('#body tr[data-k]')].find(x => x.dataset.k === r.k); if (n) n.classList.add('sel'); } if (focused) { const n = [...document.querySelectorAll('#body tr[data-k]')].find(x => x.dataset.k === r.k); if (n && n.querySelector('input')) n.querySelector('input').focus(); } } });
+  }
   else if (m.t === 'busy') document.body.classList.toggle('busy', !!m.on);
   else if (m.t === 'note') { $('msg').textContent = m.text; }
   else if (m.t === 'preview' && m.k === pvKey) { $('pvTitle').textContent = m.title; $('pvText').textContent = m.text; }

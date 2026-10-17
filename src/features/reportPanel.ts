@@ -51,22 +51,30 @@ function cell(v: string | number | null | undefined): string {
   return escapeHtml(String(v));
 }
 
+/** Rows are sent as data and drawn a page at a time, so reports with thousands of rows open at once. */
+const PAGE = 300;
+
 function render(r: Report, ref: (a?: ReportAction) => number): string {
   const n = nonce();
   const facts = r.facts?.length
     ? `<dl>${r.facts.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${cell(v)}</dd>`).join('')}</dl>` : '';
   const buttons = r.actions?.length
     ? `<div class="actions">${r.actions.map(a => `<button data-a="${ref(a)}">${escapeHtml(a.label)}</button>`).join('')}</div>` : '';
+  const data = (r.tables ?? []).map(t => ({
+    rows: t.rows.map(row => row.map(v => (v === null || v === undefined ? '' : v))),
+    cls: t.rows.map((_, i) => t.rowClass?.[i] ?? ''),
+    act: t.rows.map((_, i) => ref(t.rowActions?.[i])),
+    tip: t.rows.map((_, i) => t.rowActions?.[i]?.label ?? ''),
+  }));
   const tables = (r.tables ?? []).map((t, ti) => {
-    const body = t.rows.length ? t.rows.map((row, i) => {
-      const a = ref(t.rowActions?.[i]);
-      return `<tr class="${t.rowClass?.[i] ?? ''}${a >= 0 ? ' link' : ''}"${a >= 0 ? ` data-a="${a}" title="${escapeHtml(t.rowActions![i]!.label)}"` : ''}>` +
-        row.map(v => `<td>${cell(v)}</td>`).join('') + '</tr>';
-    }).join('') : `<tr><td colspan="${t.columns.length}" class="dim">${escapeHtml(t.empty ?? 'Nothing to show.')}</td></tr>`;
+    const empty = t.rows.length ? '' : `<tr><td colspan="${t.columns.length}" class="dim">${escapeHtml(t.empty ?? 'Nothing to show.')}</td></tr>`;
     return `<section><h2>${escapeHtml(t.title)} <span class="dim">(${t.rows.length})</span></h2>` +
-      (t.filter && t.rows.length > 8 ? `<input class="filter" data-t="${ti}" placeholder="Filter…">` : '') +
-      `<table data-t="${ti}"><thead><tr>${t.columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></section>`;
+      ((t.filter || t.rows.length > 50) && t.rows.length > 8 ? `<input class="filter" data-t="${ti}" placeholder="${escapeHtml(vscode.l10n.t('Filter…'))}">` : '') +
+      `<table data-t="${ti}"><thead><tr>${t.columns.map((c, ci) => `<th data-c="${ci}" title="${escapeHtml(vscode.l10n.t('Sort'))}">${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>${empty}</tbody></table>` +
+      `<div class="more" data-t="${ti}"></div></section>`;
   }).join('');
+  const json = JSON.stringify(data).replace(/</g, '\\u003c');
+  const moreText = JSON.stringify(vscode.l10n.t('Show {0} more ({1} left)', '%N', '%L')).replace(/</g, '\\u003c');
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${n}';">
 <style>
@@ -91,20 +99,64 @@ function render(r: Report, ref: (a?: ReportAction) => number): string {
   .filter { padding: 4px 8px; margin-bottom: 6px; min-width: 240px; color: var(--vscode-input-foreground);
     background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, #8884); border-radius: 3px; }
   .note { margin-top: 18px; color: var(--vscode-descriptionForeground); }
+  th { cursor: pointer; user-select: none; } th.up::after { content: ' ▲'; } th.down::after { content: ' ▼'; }
+  .more { margin-top: 6px; }
 </style></head><body>
 <h1>${escapeHtml(r.title)}</h1>${r.subtitle ? `<div class="sub">${escapeHtml(r.subtitle)}</div>` : ''}
 ${buttons}${facts}${tables}${r.note ? `<p class="note">${escapeHtml(r.note)}</p>` : ''}
 <script nonce="${n}">
   const vscode = acquireVsCodeApi();
+  const T = ${json};
+  const PAGE = ${PAGE};
+  const MORE = ${moreText};
+  const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const state = T.map(t => ({ view: t.rows.map((_, i) => i), shown: 0, text: null, sort: -1, dir: 1 }));
+  function rowHtml(t, i) {
+    const a = t.act[i];
+    return '<tr class="' + t.cls[i] + (a >= 0 ? ' link' : '') + '"' + (a >= 0 ? ' data-a="' + a + '" title="' + esc(t.tip[i]) + '"' : '') + '>' +
+      t.rows[i].map(v => v === '' ? '<td><span class="dim">—</span></td>' : '<td>' + esc(v) + '</td>').join('') + '</tr>';
+  }
+  function more(ti) {
+    const t = T[ti], s = state[ti], body = document.querySelector('table[data-t="' + ti + '"] tbody');
+    const next = s.view.slice(s.shown, s.shown + PAGE);
+    body.insertAdjacentHTML('beforeend', next.map(i => rowHtml(t, i)).join(''));
+    s.shown += next.length;
+    const left = s.view.length - s.shown;
+    document.querySelector('.more[data-t="' + ti + '"]').innerHTML = left > 0 ? '<button data-more="' + ti + '">' + esc(MORE.replace('%N', Math.min(left, PAGE)).replace('%L', left)) + '</button>' : '';
+  }
+  function draw(ti) {
+    if (!T[ti].rows.length) return;
+    document.querySelector('table[data-t="' + ti + '"] tbody').innerHTML = '';
+    state[ti].shown = 0; more(ti);
+  }
+  T.forEach((_, ti) => draw(ti));
   document.addEventListener('click', e => {
+    const m = e.target.closest('[data-more]');
+    if (m) { more(Number(m.dataset.more)); return; }
+    const th = e.target.closest('th[data-c]');
+    if (th) {
+      const ti = Number(th.closest('table').dataset.t), c = Number(th.dataset.c), s = state[ti], rows = T[ti].rows;
+      s.dir = s.sort === c ? -s.dir : 1; s.sort = c;
+      const num = v => typeof v === 'number' ? v : (/^-?[\\d.,]+$/.test(String(v).trim()) ? Number(String(v).replace(/,/g, '')) : NaN);
+      s.view.sort((x, y) => { const a = rows[x][c], b = rows[y][c]; const na = num(a), nb = num(b);
+        return s.dir * (!isNaN(na) && !isNaN(nb) ? na - nb : String(a).localeCompare(String(b))); });
+      th.closest('thead').querySelectorAll('th').forEach(h => h.classList.remove('up', 'down'));
+      th.classList.add(s.dir > 0 ? 'up' : 'down');
+      draw(ti); return;
+    }
     const el = e.target.closest('[data-a]');
     if (el && Number(el.dataset.a) >= 0) { vscode.postMessage({ action: el.dataset.a }); }
   });
   document.querySelectorAll('.filter').forEach(inp => inp.addEventListener('input', () => {
-    const f = inp.value.toLowerCase();
-    document.querySelectorAll('table[data-t="' + inp.dataset.t + '"] tbody tr').forEach(tr => {
-      tr.style.display = !f || tr.textContent.toLowerCase().includes(f) ? '' : 'none';
-    });
+    clearTimeout(inp._timer);
+    inp._timer = setTimeout(() => {
+      const ti = Number(inp.dataset.t), t = T[ti], s = state[ti], f = inp.value.toLowerCase().trim();
+      if (!s.text) s.text = t.rows.map(r => r.join(' ').toLowerCase());
+      s.view = t.rows.map((_, i) => i).filter(i => !f || s.text[i].includes(f));
+      s.sort = -1;
+      document.querySelectorAll('table[data-t="' + ti + '"] th').forEach(h => h.classList.remove('up', 'down'));
+      draw(ti);
+    }, 120);
   }));
 </script></body></html>`;
 }

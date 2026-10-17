@@ -349,7 +349,7 @@
   "command.messageQueue": "Work with Message Queue…",
   "command.messageQueue.row": "Message Options",
   "command.messageQueue.send": "Send Message to Queue…",
-  "command.v22.gotoLine": "Go to Line",
+  "command.gotoLine": "Go to Line",
   "config.scan.allowedLibraries": "Libraries that may be named in source without being reported by \"Find Hard-Coded Libraries\" (IBM libraries and QTEMP are always allowed).",
   "command.jobDetails": "What Is This Job Doing?",
   "command.historyLog": "System History Log (QHST)…",

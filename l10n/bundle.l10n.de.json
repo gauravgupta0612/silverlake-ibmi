@@ -2275,5 +2275,10 @@
   "Impact of a change": "Auswirkung einer Änderung",
   "Write the corrected code with error handling": "Korrigierten Code mit Fehlerbehandlung schreiben",
   "Write the fix": "Korrektur schreiben",
-  "Why did this job fail?": "Warum ist dieser Job fehlgeschlagen?"
+  "Why did this job fail?": "Warum ist dieser Job fehlgeschlagen?",
+  "Loading…": "Wird geladen…",
+  "refreshing…": "wird aktualisiert…",
+  "loading the rest…": "der Rest wird geladen…",
+  "Sort": "Sortieren",
+  "Show {0} more ({1} left)": "{0} weitere anzeigen ({1} übrig)"
 }

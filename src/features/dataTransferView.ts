@@ -5,7 +5,7 @@ import { ConnectionManager } from '../core/manager';
 import { IbmiConnection } from '../core/connection';
 import { errorMessage, logError } from '../core/log';
 import { assertSystemName, isDestructiveSql, sqlString, statementAtOffset, toCsv } from '../core/util';
-import { insertScript } from '../core/v2';
+import { insertScript } from '../core/testData';
 import { Column, buildXlsx, insertStatements, mapColumns, parseCsv, readSheet, toJson, unzip } from '../core/dataTransfer';
 import { showReport } from './reportPanel';
 

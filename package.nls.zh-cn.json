@@ -349,7 +349,7 @@
   "command.messageQueue": "处理消息队列…",
   "command.messageQueue.row": "消息选项",
   "command.messageQueue.send": "向队列发送消息…",
-  "command.v22.gotoLine": "转至行",
+  "command.gotoLine": "转至行",
   "config.scan.allowedLibraries": "可在源代码中指定而不会被“查找硬编码的库”报告的库（IBM 库和 QTEMP 始终允许）。",
   "command.jobDetails": "此作业在做什么？",
   "command.historyLog": "系统历史日志 (QHST)…",
