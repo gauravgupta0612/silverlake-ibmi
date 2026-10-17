@@ -422,5 +422,20 @@
   "command.ai.openAt": "Open Source at Line",
   "chat.vanthrex.errors": "Explain the compile errors with IBM's help text and the lines involved",
   "chat.vanthrex.depends": "Explain a program's dependencies: LIB/PGM",
-  "chat.vanthrex.joblog": "Find why a job failed and how to fix it: number/user/name"
+  "chat.vanthrex.joblog": "Find why a job failed and how to fix it: number/user/name",
+  "command.open5250": "Open 5250 Session",
+  "command.commandLine": "Command Line (5250 Style)",
+  "command.commandLine.key": "Command Line Function Key",
+  "command.wrkactjob": "Work with Active Jobs",
+  "command.wrkactjob.key": "Work with Active Jobs Function Key",
+  "config.5250.client": "Which program opens a 5250 session for the active system.",
+  "config.5250.client.auto": "IBM i Access Client Solutions when it is installed, otherwise tn5250 in a terminal.",
+  "config.5250.client.acs": "IBM i Access Client Solutions (ACS).",
+  "config.5250.client.tn5250": "tn5250 inside a VS Code terminal.",
+  "config.5250.client.command": "Your own emulator: see vanthrex.5250.command.",
+  "config.5250.acsPath": "Path to acslaunch_win-64.exe, acslaunch_linux-64, the ACS app or acsbundle.jar (empty: found automatically).",
+  "config.5250.command": "Command that starts your 5250 emulator, with `${host}`, `${user}`, `${device}` and `${port}` replaced, for example `\"C:\\\\Program Files\\\\IBM\\\\Client Access\\\\Emulator\\\\pcsws.exe\" /H=${host}`.",
+  "config.5250.deviceName": "Display device name to use (tn5250 and your own command).",
+  "config.5250.ssl": "Use TLS (port 992) for tn5250.",
+  "config.5250.port": "Telnet port when it is not the default (23, or 992 with TLS)."
 }

@@ -691,6 +691,10 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 
 - `@vanthrex /errors` explains compile errors with IBM's help text and the lines involved; `/document` and `/test` use the real dependencies, procedure signatures and data structure layouts; `/depends LIB/PGM` explains a program's dependencies and the impact of a change; `/joblog number/user/name` finds the failing statement from the job log and recommends a fix.
 
+### 78. Green screen — new in 2.3
+
+- **Open 5250 Session** (ACS, tn5250 or your own emulator), a **5250-style command line** (F4 / F9 / F12, full messages, printed output shown, interactive commands open the matching screen) and **Work with Active Jobs** with the 3 / 4 / 5 / 6 / 7 / 8 / 10 / 11 options and F5 / F10 / F11.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
@@ -701,6 +705,7 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 | Ctrl+Alt+C | Compile |
 | Ctrl+Enter | Run SQL statement |
 | Ctrl+Alt+L | Run CL command |
+| Ctrl+Alt+K | Command line (5250 style) |
 | Ctrl+Alt+O | Search objects |
 | Ctrl+Alt+F | Search source code |
 | F12 / Shift+F12 / F2 | Go to definition / Find references / Rename |

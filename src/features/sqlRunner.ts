@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { interactiveEquivalent } from '../core/greenScreen';
 import { isPdmCommand } from './pdmView';
 import { ConnectionManager } from '../core/manager';
 import { SqlResult } from '../core/sql';
@@ -209,6 +210,9 @@ export function registerSql(context: vscode.ExtensionContext, manager: Connectio
         cmd = cmd?.trim();
         if (!cmd) { return; }
         if (isPdmCommand(cmd)) { await vscode.commands.executeCommand('vanthrex.pdm', cmd); return; }
+        // Interactive 5250 commands open the Vanthrex screen that does the same (WRKACTJOB, WRKOBJLCK, DSPMSG…).
+        const eq = interactiveEquivalent(cmd, conn.user);
+        if (eq) { await vscode.commands.executeCommand(eq.command, ...eq.args); vscode.window.setStatusBarMessage(vscode.l10n.t('{0}: opened {1}', cmd.split(/\s|\(/)[0], eq.screen), 5000); return; }
         const r = await vscode.window.withProgress(
           { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Running {0}…', cmd.split(/\s|\(/)[0]) },
           () => conn.runCL(cmd!));

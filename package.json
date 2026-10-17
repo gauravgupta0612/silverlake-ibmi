@@ -1887,6 +1887,34 @@
         "command": "vanthrex.ai.openAt",
         "title": "%command.ai.openAt%",
         "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.open5250",
+        "title": "%command.open5250%",
+        "category": "Vanthrex",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "vanthrex.commandLine",
+        "title": "%command.commandLine%",
+        "category": "Vanthrex",
+        "icon": "$(terminal-cmd)"
+      },
+      {
+        "command": "vanthrex.commandLine.key",
+        "title": "%command.commandLine.key%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.wrkactjob",
+        "title": "%command.wrkactjob%",
+        "category": "Vanthrex",
+        "icon": "$(list-flat)"
+      },
+      {
+        "command": "vanthrex.wrkactjob.key",
+        "title": "%command.wrkactjob.key%",
+        "category": "Vanthrex"
       }
     ],
     "menus": {
@@ -2070,6 +2098,16 @@
           "command": "vanthrex.failedJobs",
           "when": "view == vanthrex.jobs",
           "group": "navigation@5"
+        },
+        {
+          "command": "vanthrex.wrkactjob",
+          "when": "view == vanthrex.jobs",
+          "group": "navigation@3"
+        },
+        {
+          "command": "vanthrex.open5250",
+          "when": "view == vanthrex.connections && vanthrex.connected",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -2732,6 +2770,21 @@
           "command": "vanthrex.ai.jobLog",
           "when": "view == vanthrex.jobs && viewItem =~ /^job/",
           "group": "1_info@9"
+        },
+        {
+          "command": "vanthrex.open5250",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "0_5250@1"
+        },
+        {
+          "command": "vanthrex.commandLine",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "0_5250@2"
+        },
+        {
+          "command": "vanthrex.wrkactjob",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "0_5250@3"
         }
       ],
       "editor/title": [
@@ -3534,6 +3587,26 @@
         {
           "command": "vanthrex.ai.errors",
           "when": "editorLangId =~ /^(rpgle|cl|dds|sql|cobol)$/"
+        },
+        {
+          "command": "vanthrex.commandLine.key",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.wrkactjob.key",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.open5250",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.commandLine",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.wrkactjob",
+          "when": "vanthrex.connected"
         }
       ],
       "vanthrex.ai": [
@@ -3732,6 +3805,48 @@
         "command": "vanthrex.systemTracker",
         "key": "ctrl+alt+t",
         "mac": "cmd+alt+t",
+        "when": "vanthrex.connected"
+      },
+      {
+        "command": "vanthrex.commandLine.key",
+        "key": "f4",
+        "args": "F4",
+        "when": "activeWebviewPanelId == 'vanthrex.cmdline'"
+      },
+      {
+        "command": "vanthrex.commandLine.key",
+        "key": "f9",
+        "args": "F9",
+        "when": "activeWebviewPanelId == 'vanthrex.cmdline'"
+      },
+      {
+        "command": "vanthrex.commandLine.key",
+        "key": "f12",
+        "args": "F12",
+        "when": "activeWebviewPanelId == 'vanthrex.cmdline'"
+      },
+      {
+        "command": "vanthrex.wrkactjob.key",
+        "key": "f5",
+        "args": "F5",
+        "when": "activeWebviewPanelId == 'vanthrex.wrkactjob'"
+      },
+      {
+        "command": "vanthrex.wrkactjob.key",
+        "key": "f10",
+        "args": "F10",
+        "when": "activeWebviewPanelId == 'vanthrex.wrkactjob'"
+      },
+      {
+        "command": "vanthrex.wrkactjob.key",
+        "key": "f11",
+        "args": "F11",
+        "when": "activeWebviewPanelId == 'vanthrex.wrkactjob'"
+      },
+      {
+        "command": "vanthrex.commandLine",
+        "key": "ctrl+alt+k",
+        "mac": "cmd+alt+k",
         "when": "vanthrex.connected"
       }
     ],
@@ -4378,6 +4493,48 @@
           "type": "boolean",
           "default": true,
           "description": "%config.dsLayout.hover%"
+        },
+        "vanthrex.5250.client": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "acs",
+            "tn5250",
+            "command"
+          ],
+          "default": "auto",
+          "enumDescriptions": [
+            "%config.5250.client.auto%",
+            "%config.5250.client.acs%",
+            "%config.5250.client.tn5250%",
+            "%config.5250.client.command%"
+          ],
+          "description": "%config.5250.client%"
+        },
+        "vanthrex.5250.acsPath": {
+          "type": "string",
+          "default": "",
+          "description": "%config.5250.acsPath%"
+        },
+        "vanthrex.5250.command": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%config.5250.command%"
+        },
+        "vanthrex.5250.deviceName": {
+          "type": "string",
+          "default": "",
+          "description": "%config.5250.deviceName%"
+        },
+        "vanthrex.5250.ssl": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.5250.ssl%"
+        },
+        "vanthrex.5250.port": {
+          "type": "number",
+          "default": 0,
+          "description": "%config.5250.port%"
         }
       }
     },

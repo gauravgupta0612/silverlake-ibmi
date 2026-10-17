@@ -422,5 +422,20 @@
   "command.ai.openAt": "在行处打开源代码",
   "chat.vanthrex.errors": "结合 IBM 帮助文本和相关行解释编译错误",
   "chat.vanthrex.depends": "解释程序的依赖项：LIB/PGM",
-  "chat.vanthrex.joblog": "查找作业失败的原因及修复方法：编号/用户/名称"
+  "chat.vanthrex.joblog": "查找作业失败的原因及修复方法：编号/用户/名称",
+  "command.open5250": "打开 5250 会话",
+  "command.commandLine": "命令行（5250 样式）",
+  "command.commandLine.key": "命令行功能键",
+  "command.wrkactjob": "处理活动作业",
+  "command.wrkactjob.key": "处理活动作业功能键",
+  "config.5250.client": "为活动系统打开 5250 会话的程序。",
+  "config.5250.client.auto": "如已安装则使用 IBM i Access Client Solutions，否则在终端中使用 tn5250。",
+  "config.5250.client.acs": "IBM i Access Client Solutions (ACS)。",
+  "config.5250.client.tn5250": "VS Code 终端中的 tn5250。",
+  "config.5250.client.command": "自定义仿真器：请参阅 vanthrex.5250.command。",
+  "config.5250.acsPath": "acslaunch_win-64.exe、acslaunch_linux-64、ACS 应用或 acsbundle.jar 的路径（为空：自动查找）。",
+  "config.5250.command": "启动 5250 仿真器的命令，其中 `${host}`、`${user}`、`${device}` 和 `${port}` 会被替换，例如 `\"C:\\\\Program Files\\\\IBM\\\\Client Access\\\\Emulator\\\\pcsws.exe\" /H=${host}`。",
+  "config.5250.deviceName": "要使用的显示设备名称（tn5250 和自定义命令）。",
+  "config.5250.ssl": "对 tn5250 使用 TLS（端口 992）。",
+  "config.5250.port": "非默认值时的 Telnet 端口（23，使用 TLS 时为 992）。"
 }

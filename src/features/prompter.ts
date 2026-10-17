@@ -191,6 +191,18 @@ async function promptClInEditor(manager: ConnectionManager, editor: vscode.TextE
   await target.edit(e => e.replace(new vscode.Range(start, 0, end, doc.lineAt(end).text.length), text));
 }
 
+/** F4: prompt the parameters of a command (name or partly filled command) and return the full command, without running it. */
+export async function promptCommandText(manager: ConnectionManager, input: string): Promise<string | undefined> {
+  const parsed = parseClCommand(input.trim());
+  if (!parsed.command) { return undefined; }
+  const def = await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: vscode.l10n.t('Reading {0} definition…', parsed.command) },
+    () => commandDefinition(manager, parsed.command));
+  const result = await showForm(`${def.name || parsed.command} — ${def.prompt}`, vscode.l10n.t('Fill in the parameters. Leave a field empty to use its default.'),
+    fieldsFor(def, currentValues(parsed, def)));
+  if (!result) { return undefined; }
+  return formatClCommand(parsed.command, def.parms.map(p => ({ kwd: p.kwd, value: result.values[p.kwd] ?? '' })), 'line');
+}
+
 /** Prompt a command, then run it (like F4 on a 5250 command line). */
 async function promptAndRun(manager: ConnectionManager, preset?: string): Promise<void> {
   const input = preset ?? await vscode.window.showInputBox({ title: vscode.l10n.t('Prompt and run a CL command'), placeHolder: vscode.l10n.t('Command name, e.g. CRTSRCPF or SNDMSG'), ignoreFocusOut: true });

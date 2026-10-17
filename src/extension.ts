@@ -49,6 +49,8 @@ import { registerSpoolExtras } from './features/spoolExtras';
 import { registerSecadm } from './features/secadmView';
 import { registerPdm } from './features/pdmView';
 import { registerTracker } from './features/trackerView';
+import { registerGreenScreen } from './features/greenScreenView';
+import { registerActiveJobs } from './features/activeJobsView';
 import { registerPrinterFile } from './features/printerFileView';
 import { registerObjectCopy } from './features/objectCopyView';
 import { registerDatabaseTools } from './features/databaseToolsView';
@@ -153,6 +155,8 @@ export function activate(context: vscode.ExtensionContext): void {
   step('security admin', () => registerSecadm(context, m));
   step('PDM', () => registerPdm(context, m));
   step('System Tracker', () => registerTracker(context, m));
+  step('green screen', () => registerGreenScreen(context, m));
+  step('work with active jobs', () => registerActiveJobs(context, m));
   step('printer file preview', () => registerPrinterFile(context, m));
   step('copy objects and members', () => registerObjectCopy(context, m));
   step('database tools', () => registerDatabaseTools(context, m));

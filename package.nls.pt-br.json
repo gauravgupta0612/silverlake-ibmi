@@ -422,5 +422,20 @@
   "command.ai.openAt": "Abrir origem na linha",
   "chat.vanthrex.errors": "Explicar os erros de compilação com o texto de ajuda da IBM e as linhas envolvidas",
   "chat.vanthrex.depends": "Explicar as dependências de um programa: BIB/PGM",
-  "chat.vanthrex.joblog": "Descobrir por que um job falhou e como corrigir: número/usuário/nome"
+  "chat.vanthrex.joblog": "Descobrir por que um job falhou e como corrigir: número/usuário/nome",
+  "command.open5250": "Abrir sessão 5250",
+  "command.commandLine": "Linha de comandos (estilo 5250)",
+  "command.commandLine.key": "Tecla de função da linha de comandos",
+  "command.wrkactjob": "Trabalhar com jobs ativos",
+  "command.wrkactjob.key": "Tecla de função de Trabalhar com jobs ativos",
+  "config.5250.client": "Programa que abre uma sessão 5250 para o sistema ativo.",
+  "config.5250.client.auto": "IBM i Access Client Solutions quando instalado; caso contrário, tn5250 em um terminal.",
+  "config.5250.client.acs": "IBM i Access Client Solutions (ACS).",
+  "config.5250.client.tn5250": "tn5250 em um terminal do VS Code.",
+  "config.5250.client.command": "Seu próprio emulador: veja vanthrex.5250.command.",
+  "config.5250.acsPath": "Caminho para acslaunch_win-64.exe, acslaunch_linux-64, o aplicativo ACS ou acsbundle.jar (vazio: detectado automaticamente).",
+  "config.5250.command": "Comando que inicia seu emulador 5250, com `${host}`, `${user}`, `${device}` e `${port}` substituídos, por exemplo `\"C:\\\\Program Files\\\\IBM\\\\Client Access\\\\Emulator\\\\pcsws.exe\" /H=${host}`.",
+  "config.5250.deviceName": "Nome do dispositivo de vídeo a ser usado (tn5250 e seu próprio comando).",
+  "config.5250.ssl": "Usar TLS (porta 992) para o tn5250.",
+  "config.5250.port": "Porta Telnet quando não for a padrão (23, ou 992 com TLS)."
 }
