@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.3.0 (not released yet)
+## 2.3.0
 
 **Create from anywhere**
 
