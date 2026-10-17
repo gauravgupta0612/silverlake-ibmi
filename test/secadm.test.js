@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const s = require('../out/core/secadm');
-const r = require('../out/core/robust');
+const r = require('../out/core/protection');
 
 test('*SECADM detection and password redaction', () => {
   assert.ok(s.hasSecadm('*JOBCTL *SECADM'));
