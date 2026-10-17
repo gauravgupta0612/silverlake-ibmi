@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../core/manager';
 import { errorMessage, logError } from '../core/log';
-import { nonce } from './webviewUtil';
+import { loaderHtml, nonce, UI_CSS, uiScript } from './ui/kit';
 
 type Section = { rows?: Record<string, unknown>[]; error?: string };
 
@@ -97,7 +97,7 @@ export class Dashboard {
     const n = nonce();
     return /* html */ `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${n}';">
-<style>
+<style>${UI_CSS}
   :root { --gap: 14px; }
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 12px 20px 30px; }
   header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -130,6 +130,7 @@ export class Dashboard {
   details { margin-top: var(--gap); }
   .loading { opacity: .6; }
 </style></head><body>
+<div class="vx-progress"></div>
 <header>
   <h1>IBM i Dashboard</h1>
   <span class="muted" id="sys"></span>
@@ -137,7 +138,7 @@ export class Dashboard {
   <label class="muted"><input type="checkbox" id="auto" checked> auto-refresh</label>
   <button id="refresh">Refresh</button>
 </header>
-<section class="tiles" id="tiles"></section>
+<section class="tiles" id="tiles">${loaderHtml('Loading…', { tiles: 6, rows: 0 })}</section>
 <section class="grid2">
   <div class="card"><h2>Top jobs by CPU <button data-cmd="vanthrex.jobs.focus">Open Jobs</button></h2><div id="topJobs"></div></div>
   <div class="card"><h2>QSYSOPR messages <button data-cmd="vanthrex.messages.focus">Open Messages</button></h2><div id="qsysopr"></div></div>
@@ -145,7 +146,7 @@ export class Dashboard {
   <div class="card"><h2>System</h2><div id="system"></div></div>
 </section>
 <details><summary class="muted">All system status values</summary><div class="card" id="status"></div></details>
-<script nonce="${n}">
+<script nonce="${n}">${uiScript()}
   const vscode = acquireVsCodeApi();
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -206,10 +207,10 @@ export class Dashboard {
     $('status').innerHTML = kv(d.status);
     $('sys').textContent = m.system;
     $('at').textContent = 'Updated ' + m.at + (m.auto && m.interval ? ' · every ' + m.interval + 's' : '');
-    document.body.classList.remove('loading');
+    document.body.classList.remove('loading'); VX.busy(false);
   }
   window.addEventListener('message', e => {
-    if (e.data.type === 'loading') document.body.classList.add('loading');
+    if (e.data.type === 'loading') { document.body.classList.add('loading'); VX.busy(true); }
     if (e.data.type === 'data') render(e.data);
   });
   $('refresh').addEventListener('click', () => vscode.postMessage({ type: 'refresh' }));

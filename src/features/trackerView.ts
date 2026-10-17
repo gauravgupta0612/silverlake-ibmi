@@ -11,7 +11,7 @@ import { readLibraries } from './libraryLookup';
 import { CompileRecord, latestPerSource } from '../core/compileHistory';
 import { Pin, pinDescription, pinLabel } from '../core/pins';
 import { memberUri } from './fileSystems';
-import { escapeHtml, nonce } from './webviewUtil';
+import { escapeHtml, loaderHtml, nonce, UI_CSS, uiScript } from './ui/kit';
 
 interface Act { label: string; command: string; args?: unknown[] }
 interface Tile { label: string; value: string; sub?: string; tone?: Tone; act?: Act; spark?: string; sparkTitle?: string; meter?: number }
@@ -631,7 +631,7 @@ class Tracker {
     };
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${n}';">
-<style>
+<style>${UI_CSS}
   :root { --ok: var(--vscode-testing-iconPassed, #2e7d32); --warn: var(--vscode-editorWarning-foreground, #b26a00); --bad: var(--vscode-errorForeground, #c62828); --info: var(--vscode-textLink-foreground, #1565c0); }
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 16px 24px; margin: 0; }
   header { position: sticky; top: 0; z-index: 2; background: var(--vscode-editor-background); padding: 10px 0 0; border-bottom: 1px solid var(--vscode-editorWidget-border, #8884); }
@@ -676,10 +676,11 @@ class Tracker {
   svg.spark circle { fill: var(--vscode-focusBorder); stroke: var(--vscode-editorWidget-background); stroke-width: 2; }
   .icon { margin-right: 4px; }
 </style></head><body>
-<header><div class="top"><h1>${escapeHtml(vscode.l10n.t('System Tracker'))} <span id="sysname" class="muted">${escapeHtml(this.manager.connection?.profile.name ?? '')}</span></h1><span id="busy" class="muted">⏳ ${escapeHtml(L.loading)}</span><span id="at" class="muted"></span>
+<div class="vx-progress"></div>
+<header><div class="top"><h1>${escapeHtml(vscode.l10n.t('System Tracker'))} <span id="sysname" class="muted">${escapeHtml(this.manager.connection?.profile.name ?? '')}</span></h1><span id="busy" class="muted"><span class="vx-spinner" style="display:inline-block;vertical-align:middle"></span> ${escapeHtml(L.loading)}</span><span id="at" class="muted"></span>
 <button class="b" id="report">${escapeHtml(L.report)}</button> <label class="muted"><input type="checkbox" id="auto"> ${escapeHtml(L.auto)}</label> <button class="b p" id="refresh">${escapeHtml(L.refresh)}</button></div><nav id="nav"></nav></header>
-<main id="main"><p class="muted">${escapeHtml(L.loading)}</p></main>
-<script nonce="${n}">
+<main id="main">${loaderHtml(L.loading, { tiles: 6, rows: 8 })}</main>
+<script nonce="${n}">${uiScript()}
 const vscode = acquireVsCodeApi();
 const L = ${JSON.stringify(L).replace(/</g, '\\u003c')};
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

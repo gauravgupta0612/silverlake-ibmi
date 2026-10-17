@@ -6,7 +6,7 @@ import { assertSystemName, parseMemberPath, sqlString } from '../core/util';
 import { compareSets, CompareItem } from '../core/compareSets';
 import { compareRows } from '../core/diagrams';
 import { MEMBER_SCHEME } from './fileSystems';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 type Row = Record<string, unknown>;
 const s = (r: Row | undefined, k: string) => String(r?.[k] ?? '').trim();
@@ -55,7 +55,7 @@ async function compareObjects(a: IbmiConnection, b: IbmiConnection): Promise<voi
   if (!libB) { return; }
   const q = (l: string) => `SELECT OBJNAME AS N, OBJTYPE AS T, COALESCE(OBJATTRIBUTE, '') AS A, COALESCE(OBJSIZE, 0) AS SZ, VARCHAR_FORMAT(CHANGE_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS CHG, ` +
     `COALESCE(VARCHAR_FORMAT(SOURCE_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS'), '') AS SRC, VARCHAR_FORMAT(OBJCREATED, 'YYYY-MM-DD HH24:MI:SS') AS CRT FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(l)}, '*ALL')) X`;
-  const [ra, rb] = await progress(vscode.l10n.t('Reading both libraries…'), () => Promise.all([a.rows<Row>(q(assertSystemName(lib, 'library')), 50000), b.rows<Row>(q(assertSystemName(libB, 'library')), 50000)]));
+  const [ra, rb] = await reportProgress('xsysobj', vscode.l10n.t('Reading both libraries…'), () => Promise.all([a.rows<Row>(q(assertSystemName(lib, 'library')), 50000), b.rows<Row>(q(assertSystemName(libB, 'library')), 50000)]));
   const item = (r: Row): CompareItem => ({ key: `${s(r, 'N')} ${s(r, 'T')}`, fingerprint: `${s(r, 'A')}|${s(r, 'SRC') || s(r, 'CRT')}`, changed: s(r, 'CHG'),
     detail: `${s(r, 'A')} · ${Math.round(Number(r.SZ) / 1024)} KB · changed ${s(r, 'CHG')}${s(r, 'SRC') ? ` · source ${s(r, 'SRC')}` : ''}` });
   const rows = compareSets(ra.map(item), rb.map(item));
@@ -88,7 +88,7 @@ async function compareTable(a: IbmiConnection, b: IbmiConnection): Promise<void>
   const keys = picked.map(p => p.label);
   const max = vscode.workspace.getConfiguration('vanthrex.compare').get<number>('maxRows', 50000);
   const sel = (l: string) => `SELECT ${names.map(c => `"${c}"`).join(', ')} FROM ${l}/${tbl} ORDER BY ${keys.map(c => `"${c}"`).join(', ')} FETCH FIRST ${max} ROWS ONLY`;
-  const [ra, rb] = await progress(vscode.l10n.t('Reading {0} from both systems…', tbl), () => Promise.all([a.rows<Row>(sel(lib), max), b.rows<Row>(sel(libB), max)]));
+  const [ra, rb] = await reportProgress('xsystbl', vscode.l10n.t('Reading {0} from both systems…', tbl), () => Promise.all([a.rows<Row>(sel(lib), max), b.rows<Row>(sel(libB), max)]));
   const r = compareRows(keys, ra, rb, names);
   const keyOf = (x: Row) => keys.map(k => String(x[k] ?? '').trimEnd()).join(' · ');
   const show = names.filter(c => !keys.includes(c)).slice(0, 4);
@@ -110,7 +110,7 @@ async function compareSettings(a: IbmiConnection, b: IbmiConnection, what: 'sysv
   const sql = what === 'sysval'
     ? `SELECT SYSTEM_VALUE_NAME AS K, COALESCE(VARCHAR(CURRENT_NUMERIC_VALUE), CURRENT_CHARACTER_VALUE, '') AS V FROM QSYS2.SYSTEM_VALUE_INFO`
     : `SELECT PTF_GROUP_NAME || ' ' || COALESCE(PTF_GROUP_DESCRIPTION, '') AS K, VARCHAR(PTF_GROUP_LEVEL) AS V FROM QSYS2.GROUP_PTF_INFO WHERE PTF_GROUP_STATUS = 'INSTALLED'`;
-  const [ra, rb] = await progress(vscode.l10n.t('Reading both systems…'), () => Promise.all([a.rows<Row>(sql, 5000), b.rows<Row>(sql, 5000)]));
+  const [ra, rb] = await reportProgress('xsysset', vscode.l10n.t('Reading both systems…'), () => Promise.all([a.rows<Row>(sql, 5000), b.rows<Row>(sql, 5000)]));
   const rows = compareSets(ra.map(r => ({ key: s(r, 'K'), fingerprint: s(r, 'V'), detail: s(r, 'V') })), rb.map(r => ({ key: s(r, 'K'), fingerprint: s(r, 'V'), detail: s(r, 'V') })));
   const diff = rows.filter(r => r.status !== 'same');
   showReport('xsysset', {

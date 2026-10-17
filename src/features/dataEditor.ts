@@ -3,7 +3,7 @@ import { ConnectionManager } from '../core/manager';
 import { errorMessage, log, logError } from '../core/log';
 import { assertSystemName, sqlString } from '../core/util';
 import { ColumnInfo, deleteStatement, insertStatement, isEditableType, tableName, updateStatement } from '../core/sqlLiteral';
-import { nonce, escapeHtml } from './webviewUtil';
+import { escapeHtml, loaderHtml, nonce, UI_CSS, uiScript } from './ui/kit';
 
 interface Change {
   op: 'update' | 'insert' | 'delete';
@@ -142,7 +142,7 @@ export class DataEditor {
     const n = nonce();
     return /* html */ `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${n}';">
-<style>
+<style>${UI_CSS}
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 0 10px 20px; margin: 0; }
   header { position: sticky; top: 0; z-index: 3; background: var(--vscode-editor-background); padding: 8px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   h1 { font-size: 1.1em; margin: 0 8px 0 0; }
@@ -170,6 +170,7 @@ export class DataEditor {
   tr.new td { background: var(--vscode-diffEditor-insertedLineBackground, #9bb95522); }
   tr.selected td.rrn { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
 </style></head><body>
+<div class="vx-progress"></div>
 <header id="hdr">
   <h1>${escapeHtml(this.library)}/${escapeHtml(this.file)}</h1>
   <input class="where" id="where" placeholder="Filter: SQL WHERE condition, e.g. CUSTNO > 1000 AND STATUS = 'A'">
@@ -180,8 +181,8 @@ export class DataEditor {
   <button class="primary" id="save" disabled>Save</button>
 </header>
 <div id="error"></div>
-<div class="wrap"><table id="grid"><tr><td class="meta">Loading…</td></tr></table></div>
-<script nonce="${n}">
+<div class="wrap"><table id="grid"><tr><td class="meta">${loaderHtml(vscode.l10n.t('Reading from the IBM i…'), { rows: 8 })}</td></tr></table></div>
+<script nonce="${n}">${uiScript()}
   const vscode = acquireVsCodeApi();
   const $ = id => document.getElementById(id);
   let state = null;           // last data from the extension

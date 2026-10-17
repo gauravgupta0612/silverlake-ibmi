@@ -9,7 +9,7 @@ import {
 } from '../core/insights';
 import { pickScope } from './search';
 import { runSqlAndShow } from './sqlRunner';
-import { Report, showReport } from './reportPanel';
+import { Report, reportProgress, showReport } from './reportPanel';
 
 type ObjArg = { library: string; name: string; type?: string };
 const s = (r: Record<string, unknown>, k: string) => String(r[k] ?? '').trim();
@@ -36,8 +36,7 @@ async function indexAdvisor(manager: ConnectionManager, lib?: string): Promise<v
   const where = scope[0] === '*ALLUSR'
     ? `SYSTEM_TABLE_SCHEMA NOT LIKE 'Q%' AND SYSTEM_TABLE_SCHEMA NOT LIKE 'SYS%'`
     : `SYSTEM_TABLE_SCHEMA IN (${scope.map(sqlString).join(', ')})`;
-  const rows = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Reading the index advisor…') },
-    () => conn.rows<Record<string, unknown>>(
+  const rows = await reportProgress('indexAdvisor', vscode.l10n.t('Reading the index advisor…'), () => conn.rows<Record<string, unknown>>(
       `SELECT * FROM QSYS2.SYSIXADV WHERE ${where} ORDER BY TIMES_ADVISED DESC, MOST_EXPENSIVE_QUERY DESC FETCH FIRST 200 ROWS ONLY`, 200));
   const report: Report = {
     title: vscode.l10n.t('Index advice — {0}', scope.join(', ')),
@@ -118,9 +117,7 @@ async function compareData(manager: ConnectionManager, o?: ObjArg): Promise<void
   if (!picked?.length) { return; }
   const spec = { libA, libB: other, table, keys: picked.map(p => p.label), columns: comparable };
 
-  const [count, onlyA, onlyB, changed] = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Comparing {0}/{1} with {2}/{3}…', libA, table, other, table) },
-    () => Promise.all([
+  const [count, onlyA, onlyB, changed] = await reportProgress('dataCompare', vscode.l10n.t('Comparing {0}/{1} with {2}/{3}…', libA, table, other, table), () => Promise.all([
       conn.rows<Record<string, unknown>>(dataCompareSql(spec, 'count'), 1),
       conn.rows<Record<string, unknown>>(dataCompareSql(spec, 'onlyA', 200), 200),
       conn.rows<Record<string, unknown>>(dataCompareSql(spec, 'onlyB', 200), 200),
@@ -199,8 +196,7 @@ async function analyzeJobLogCmd(manager: ConnectionManager, job?: string): Promi
   const conn = manager.require();
   const j = job ?? (await vscode.window.showInputBox({ title: vscode.l10n.t('Analyze job log'), prompt: vscode.l10n.t('Qualified job name (number/user/name), or * for this job'), placeHolder: '123456/QUSER/ORDENTRY', ignoreFocusOut: true }))?.trim();
   if (!j) { return; }
-  const rows = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Reading the job log of {0}…', j) },
-    () => conn.rows<Record<string, unknown>>(
+  const rows = await reportProgress('joblogAnalysis', vscode.l10n.t('Reading the job log of {0}…', j), () => conn.rows<Record<string, unknown>>(
       `SELECT VARCHAR_FORMAT(MESSAGE_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS TIME, COALESCE(MESSAGE_ID, '') AS MSGID, MESSAGE_TYPE, ` +
       `COALESCE(SEVERITY, 0) AS SEV, COALESCE(MESSAGE_TEXT, '') AS TEXT, COALESCE(MESSAGE_SECOND_LEVEL_TEXT, '') AS HELP, COALESCE(FROM_PROGRAM, '') AS PGM ` +
       `FROM TABLE(QSYS2.JOBLOG_INFO(${sqlString(j)})) ORDER BY ORDINAL_POSITION`, 20000));

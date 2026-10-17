@@ -15,7 +15,7 @@ import { buildPattern, replaceLines, ReplaceOptions } from '../core/sourceReplac
 import { assertSystemName, clString, parseMemberPath, sqlString, substituteVariables } from '../core/util';
 import { compileFinished } from './compile';
 import { MEMBER_SCHEME, memberUri } from './fileSystems';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 /** Commands the report pages may run (anything else posted by a webview is ignored). */
 const ALLOWED = new Set([
@@ -88,7 +88,7 @@ async function outOfSync(manager: ConnectionManager, x?: unknown): Promise<void>
   const conn = manager.require();
   const lib = await askLib(vscode.l10n.t('Objects out of sync with their source'), x, conn);
   if (!lib) { return; }
-  const rows = await progress(vscode.l10n.t('Comparing objects of {0} with their source…', lib), () => conn.rows<Row>(
+  const rows = await reportProgress('outOfSync', vscode.l10n.t('Comparing objects of {0} with their source…', lib), () => conn.rows<Row>(
     `SELECT O.OBJNAME AS N, O.OBJTYPE AS T, COALESCE(O.OBJATTRIBUTE, '') AS A, COALESCE(O.SOURCE_LIBRARY, '') AS SL, COALESCE(O.SOURCE_FILE, '') AS SF, COALESCE(O.SOURCE_MEMBER, '') AS SM, ` +
     `VARCHAR_FORMAT(O.SOURCE_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS COMPILED_FROM, VARCHAR_FORMAT(O.CHANGE_TIMESTAMP, 'YYYY-MM-DD HH24:MI') AS OBJCHG, ` +
     `VARCHAR_FORMAT(P.LAST_SOURCE_UPDATE_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS MBRCHG, P.SYSTEM_TABLE_MEMBER AS PM, COALESCE(P.SOURCE_TYPE, '') AS ST ` +
@@ -119,7 +119,7 @@ async function changeReport(manager: ConnectionManager, x?: unknown): Promise<vo
   if (!lib) { return; }
   const days = Number(await vscode.window.showQuickPick(['1', '7', '14', '30', '90'], { title: vscode.l10n.t('Changes of the last how many days?') }) ?? 0);
   if (!days) { return; }
-  const [objs, mbrs] = await progress(vscode.l10n.t('Reading changes in {0}…', lib), () => Promise.all([
+  const [objs, mbrs] = await reportProgress('changeReport', vscode.l10n.t('Reading changes in {0}…', lib), () => Promise.all([
     conn.rows<Row>(`SELECT OBJNAME AS N, OBJTYPE AS T, VARCHAR_FORMAT(CHANGE_TIMESTAMP, 'YYYY-MM-DD HH24:MI') AS C, COALESCE(OBJTEXT, '') AS X FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(lib)}, '*ALL')) O ` +
       `WHERE CHANGE_TIMESTAMP > CURRENT TIMESTAMP - ${days} DAYS AND NOT (OBJTYPE = '*FILE' AND OBJATTRIBUTE = 'PF' AND SOURCE_FILE IS NULL AND OBJTEXT LIKE '%source%') ORDER BY CHANGE_TIMESTAMP DESC`, 20000),
     conn.rows<Row>(`SELECT P.SYSTEM_TABLE_NAME AS F, P.SYSTEM_TABLE_MEMBER AS M, COALESCE(P.SOURCE_TYPE, '') AS T, VARCHAR_FORMAT(P.LAST_SOURCE_UPDATE_TIMESTAMP, 'YYYY-MM-DD HH24:MI') AS C, COALESCE(P.PARTITION_TEXT, '') AS X ` +
@@ -243,7 +243,7 @@ async function builtFrom(manager: ConnectionManager, a?: unknown): Promise<void>
   const m = memberOf(a);
   if (!m) { throw new Error(vscode.l10n.t('Open a source member (or right-click one) first.')); }
   const conn = manager.require();
-  const r = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Looking for objects built from {0}…', m.member) }, () => loadBuilt(conn, m));
+  const r = await reportProgress('builtFrom', vscode.l10n.t('Looking for objects built from {0}…', m.member), () => loadBuilt(conn, m));
   const stale = r.objects.filter(o => o.status === 'stale').length;
   showReport('builtFrom', {
     title: vscode.l10n.t('Objects built from {0}/{1}({2})', m.library, m.file, m.member),

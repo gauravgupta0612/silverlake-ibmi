@@ -2280,5 +2280,7 @@
   "refreshing…": "正在刷新…",
   "loading the rest…": "正在加载其余部分…",
   "Sort": "排序",
-  "Show {0} more ({1} left)": "再显示 {0} 项（剩余 {1} 项）"
+  "Show {0} more ({1} left)": "再显示 {0} 项（剩余 {1} 项）",
+  "Reading from the IBM i…": "正在从 IBM i 读取…",
+  "{0} s": "{0} 秒"
 }

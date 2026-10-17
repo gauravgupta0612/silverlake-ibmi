@@ -2280,5 +2280,7 @@
   "refreshing…": "atualizando…",
   "loading the rest…": "carregando o restante…",
   "Sort": "Ordenar",
-  "Show {0} more ({1} left)": "Mostrar mais {0} ({1} restantes)"
+  "Show {0} more ({1} left)": "Mostrar mais {0} ({1} restantes)",
+  "Reading from the IBM i…": "Lendo do IBM i…",
+  "{0} s": "{0} s"
 }

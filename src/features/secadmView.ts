@@ -7,7 +7,7 @@ import {
   LIMIT_CAPABILITIES, ProfileSpec, SPECIAL_AUTHORITIES, USER_CLASSES, addAutlEntryCommand, changeAutlEntryCommand, changeProfileCommand, createAutlCommand,
   createProfileCommand, deleteProfileCommand, hasSecadm, inactiveProfiles, redactPasswords, removeAutlEntryCommand, specFromExisting,
 } from '../core/secadm';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 type Row = Record<string, unknown>;
 const s = (r: Row | undefined, k: string) => String(r?.[k] ?? '').trim();
@@ -58,7 +58,7 @@ const USER_COLS = `AUTHORIZATION_NAME AS USR, STATUS, COALESCE(USER_CLASS_NAME, 
 
 async function center(manager: ConnectionManager): Promise<void> {
   const conn = await requireSecadm(manager);
-  const rows = await progress(vscode.l10n.t('Reading user profiles…'), () => conn.rows<Row>(`SELECT ${USER_COLS} FROM QSYS2.USER_INFO WHERE AUTHORIZATION_NAME NOT LIKE 'Q%' ORDER BY AUTHORIZATION_NAME`, 20000));
+  const rows = await reportProgress('secadm', vscode.l10n.t('Reading user profiles…'), () => conn.rows<Row>(`SELECT ${USER_COLS} FROM QSYS2.USER_INFO WHERE AUTHORIZATION_NAME NOT LIKE 'Q%' ORDER BY AUTHORIZATION_NAME`, 20000));
   const enabled = rows.filter(r => s(r, 'STATUS') === '*ENABLED');
   const strong = rows.filter(r => /\*ALLOBJ|\*SECADM/.test(s(r, 'SPC')));
   const idle = inactiveProfiles(rows.map(r => ({ user: s(r, 'USR'), status: s(r, 'STATUS'), lastSignon: s(r, 'LAST'), created: s(r, 'CRT') })), new Date(), 90);
@@ -234,7 +234,7 @@ async function inactive(manager: ConnectionManager, days?: number): Promise<void
   const conn = await requireSecadm(manager);
   const d = days ?? Number((await vscode.window.showQuickPick(['30', '60', '90', '180', '365'], { title: vscode.l10n.t('Not used for how many days?') })) ?? 0);
   if (!d) { return; }
-  const rows = await conn.rows<Row>(`SELECT ${USER_COLS} FROM QSYS2.USER_INFO WHERE STATUS = '*ENABLED' AND AUTHORIZATION_NAME NOT LIKE 'Q%'`, 20000);
+  const rows = await reportProgress('secadmIdle', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT ${USER_COLS} FROM QSYS2.USER_INFO WHERE STATUS = '*ENABLED' AND AUTHORIZATION_NAME NOT LIKE 'Q%'`, 20000));
   const idle = inactiveProfiles(rows.map(r => ({ user: s(r, 'USR'), status: s(r, 'STATUS'), lastSignon: s(r, 'LAST'), created: s(r, 'CRT'), r })), new Date(), d)
     .filter(x => s(x.r, 'NOPWD') !== 'YES' && s(x.r, 'USR') !== conn.user);
   lastIdle = idle.map(x => x.user);
@@ -263,9 +263,9 @@ async function disableInactive(manager: ConnectionManager): Promise<void> {
 
 async function powerful(manager: ConnectionManager): Promise<void> {
   const conn = await requireSecadm(manager);
-  const rows = await conn.rows<Row>(`SELECT ${USER_COLS} FROM QSYS2.USER_INFO WHERE SPECIAL_AUTHORITIES LIKE '%*ALLOBJ%' OR SPECIAL_AUTHORITIES LIKE '%*SECADM%' OR SPECIAL_AUTHORITIES LIKE '%*AUDIT%' ` +
-    `OR SPECIAL_AUTHORITIES LIKE '%*SERVICE%' OR USER_CLASS_NAME IN ('*SECOFR', '*SECADM') ORDER BY AUTHORIZATION_NAME`, 5000);
-  const members = await conn.rows<Row>(`SELECT GROUP_PROFILE_NAME AS G, USER_PROFILE_NAME AS U FROM QSYS2.GROUP_PROFILE_ENTRIES`, 50000).catch(() => []);
+  const rows = await reportProgress('secadmPowerful', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT ${USER_COLS} FROM QSYS2.USER_INFO WHERE SPECIAL_AUTHORITIES LIKE '%*ALLOBJ%' OR SPECIAL_AUTHORITIES LIKE '%*SECADM%' OR SPECIAL_AUTHORITIES LIKE '%*AUDIT%' ` +
+    `OR SPECIAL_AUTHORITIES LIKE '%*SERVICE%' OR USER_CLASS_NAME IN ('*SECOFR', '*SECADM') ORDER BY AUTHORIZATION_NAME`, 5000));
+  const members = await reportProgress('secadmPowerful', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT GROUP_PROFILE_NAME AS G, USER_PROFILE_NAME AS U FROM QSYS2.GROUP_PROFILE_ENTRIES`, 50000).catch(() => []));
   const via = (g: string) => members.filter(m => s(m, 'G') === g).map(m => s(m, 'U'));
   showReport('secadmPowerful', {
     title: vscode.l10n.t('Powerful profiles'), subtitle: vscode.l10n.t('{0} profile(s) with *ALLOBJ, *SECADM, *AUDIT or *SERVICE, or class *SECOFR / *SECADM. Members of a powerful group get its special authorities too.', rows.length),
@@ -279,8 +279,8 @@ async function powerful(manager: ConnectionManager): Promise<void> {
 
 async function groups(manager: ConnectionManager): Promise<void> {
   const conn = await requireSecadm(manager);
-  const g = await conn.rows<Row>(`SELECT ${USER_COLS} FROM QSYS2.USER_INFO WHERE GROUP_ID_NUMBER IS NOT NULL AND GROUP_ID_NUMBER > 0 ORDER BY AUTHORIZATION_NAME`, 5000);
-  const members = await conn.rows<Row>(`SELECT GROUP_PROFILE_NAME AS G, USER_PROFILE_NAME AS U FROM QSYS2.GROUP_PROFILE_ENTRIES`, 50000).catch(() => []);
+  const g = await reportProgress('secadmGroups', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT ${USER_COLS} FROM QSYS2.USER_INFO WHERE GROUP_ID_NUMBER IS NOT NULL AND GROUP_ID_NUMBER > 0 ORDER BY AUTHORIZATION_NAME`, 5000));
+  const members = await reportProgress('secadmGroups', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT GROUP_PROFILE_NAME AS G, USER_PROFILE_NAME AS U FROM QSYS2.GROUP_PROFILE_ENTRIES`, 50000).catch(() => []));
   showReport('secadmGroups', {
     title: vscode.l10n.t('Group profiles'), subtitle: vscode.l10n.t('{0} group profile(s). Users get the group\'s authorities and special authorities.', g.length),
     actions: [{ label: vscode.l10n.t('Create a group (a user with no password)…'), command: 'vanthrex.secadm.createUser' }, { label: vscode.l10n.t('Back'), command: 'vanthrex.securityCenter' }],
@@ -293,7 +293,7 @@ async function groups(manager: ConnectionManager): Promise<void> {
 
 async function autl(manager: ConnectionManager): Promise<void> {
   const conn = await requireSecadm(manager);
-  const lists = await conn.rows<Row>(`SELECT AUTHORIZATION_LIST AS L, COALESCE(OWNER, '') AS O, COALESCE(TEXT_DESCRIPTION, '') AS T FROM QSYS2.AUTHORIZATION_LIST_INFO ORDER BY 1`, 5000)
+  const lists = await reportProgress('secadmAutl', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT AUTHORIZATION_LIST AS L, COALESCE(OWNER, '') AS O, COALESCE(TEXT_DESCRIPTION, '') AS T FROM QSYS2.AUTHORIZATION_LIST_INFO ORDER BY 1`, 5000))
     .catch(async () => conn.rows<Row>(`SELECT OBJNAME AS L, OBJOWNER AS O, COALESCE(OBJTEXT, '') AS T FROM TABLE(QSYS2.OBJECT_STATISTICS('QSYS', '*AUTL')) X ORDER BY 1`, 5000));
   showReport('secadmAutl', {
     title: vscode.l10n.t('Authorization lists'), subtitle: vscode.l10n.t('{0} authorization list(s). Click one to see and change who is on it.', lists.length),
@@ -305,8 +305,8 @@ async function autl(manager: ConnectionManager): Promise<void> {
 
 async function autlEntries(manager: ConnectionManager, list: string): Promise<void> {
   const conn = await requireSecadm(manager);
-  const rows = await conn.rows<Row>(`SELECT AUTHORIZATION_NAME AS U, OBJECT_AUTHORITY AS A, COALESCE(AUTHORIZATION_LIST_MANAGEMENT, '') AS M FROM QSYS2.AUTHORIZATION_LIST_USER_INFO WHERE AUTHORIZATION_LIST = ${sqlString(list)} ORDER BY 1`, 5000);
-  const objs = await conn.rows<Row>(`SELECT DISTINCT SYSTEM_OBJECT_SCHEMA AS L, SYSTEM_OBJECT_NAME AS N, OBJECT_TYPE AS T FROM QSYS2.OBJECT_PRIVILEGES WHERE AUTHORIZATION_LIST = ${sqlString(list)} FETCH FIRST 500 ROWS ONLY`, 500).catch(() => []);
+  const rows = await reportProgress('secadmAutlE', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT AUTHORIZATION_NAME AS U, OBJECT_AUTHORITY AS A, COALESCE(AUTHORIZATION_LIST_MANAGEMENT, '') AS M FROM QSYS2.AUTHORIZATION_LIST_USER_INFO WHERE AUTHORIZATION_LIST = ${sqlString(list)} ORDER BY 1`, 5000));
+  const objs = await reportProgress('secadmAutlE', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT DISTINCT SYSTEM_OBJECT_SCHEMA AS L, SYSTEM_OBJECT_NAME AS N, OBJECT_TYPE AS T FROM QSYS2.OBJECT_PRIVILEGES WHERE AUTHORIZATION_LIST = ${sqlString(list)} FETCH FIRST 500 ROWS ONLY`, 500).catch(() => []));
   showReport('secadmAutlE', {
     title: vscode.l10n.t('Authorization list {0}', list), subtitle: vscode.l10n.t('{0} entr(ies); secures {1}{2} object(s). Click an entry to change or remove it.', rows.length, objs.length, objs.length >= 500 ? '+' : ''),
     actions: [{ label: vscode.l10n.t('Add a user…'), command: 'vanthrex.secadm.addAutlEntry', args: [list] }, { label: vscode.l10n.t('All lists'), command: 'vanthrex.secadm.autl' }],

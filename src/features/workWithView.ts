@@ -10,7 +10,7 @@ import {
   saveCommand, serverStatus, targetReleases, TCP_SERVERS,
 } from '../core/workWith';
 import { printable } from '../core/admin';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 type Row = Record<string, unknown>;
 const s = (r: Row | undefined, k: string) => String(r?.[k] ?? '').trim();
@@ -46,7 +46,7 @@ function rowAction(kind: string, data: Row): { label: string; command: string; a
 
 async function subsystems(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const rows = await progress('Reading subsystems…', () => conn.rows<Row>(
+  const rows = await reportProgress('wrksbs', 'Reading subsystems…', () => conn.rows<Row>(
     `SELECT SUBSYSTEM_DESCRIPTION_LIBRARY AS LIB, SUBSYSTEM_DESCRIPTION AS SBS, STATUS, COALESCE(CURRENT_ACTIVE_JOBS, 0) AS JOBS, ` +
     `COALESCE(MAXIMUM_ACTIVE_JOBS, 0) AS MAXJ, COALESCE(TEXT_DESCRIPTION, '') AS TXT FROM QSYS2.SUBSYSTEM_INFO ORDER BY STATUS, SUBSYSTEM_DESCRIPTION`, 1000));
   showReport('wrksbs', {
@@ -63,7 +63,7 @@ async function subsystems(manager: ConnectionManager): Promise<void> {
 
 async function subsystemJobs(manager: ConnectionManager, sbs: string): Promise<void> {
   const conn = manager.require();
-  const rows = await progress(`Reading the jobs in ${sbs}…`, () => conn.rows<Row>(
+  const rows = await reportProgress('wrksbsjob', `Reading the jobs in ${sbs}…`, () => conn.rows<Row>(
     `SELECT JOB_NAME, JOB_TYPE, JOB_STATUS, COALESCE(AUTHORIZATION_NAME, '') AS USR, COALESCE(FUNCTION, '') AS FN, COALESCE(ELAPSED_CPU_PERCENTAGE, 0) AS CPU ` +
     `FROM TABLE(QSYS2.ACTIVE_JOB_INFO(SUBSYSTEM_LIST_FILTER => ${sqlString(sbs)}, DETAILED_INFO => 'NONE')) X ORDER BY JOB_NAME`, 5000));
   showReport('wrksbsjob', {
@@ -77,7 +77,7 @@ async function subsystemJobs(manager: ConnectionManager, sbs: string): Promise<v
 
 async function jobQueues(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const rows = await progress('Reading job queues…', () => conn.rows<Row>(
+  const rows = await reportProgress('wrkjobq', 'Reading job queues…', () => conn.rows<Row>(
     `SELECT JOB_QUEUE_LIBRARY AS LIB, JOB_QUEUE_NAME AS Q, JOB_QUEUE_STATUS AS ST, COALESCE(NUMBER_OF_JOBS, 0) AS N, COALESCE(HELD_JOBS, 0) AS HELD, ` +
     `COALESCE(SUBSYSTEM_NAME, '') AS SBS, COALESCE(TEXT_DESCRIPTION, '') AS TXT FROM QSYS2.JOB_QUEUE_INFO ORDER BY NUMBER_OF_JOBS DESC, JOB_QUEUE_NAME`, 2000));
   showReport('wrkjobq', {
@@ -91,7 +91,7 @@ async function jobQueues(manager: ConnectionManager): Promise<void> {
 
 async function jobQueue(manager: ConnectionManager, lib: string, q: string): Promise<void> {
   const conn = manager.require();
-  const rows = await progress(`Reading ${lib}/${q}…`, () => conn.rows<Row>(
+  const rows = await reportProgress('wrkjobqjobs', `Reading ${lib}/${q}…`, () => conn.rows<Row>(
     `SELECT JOB_NAME, JOB_STATUS, COALESCE(JOB_QUEUE_STATUS, '') AS QST, VARCHAR_FORMAT(JOB_ENTERED_SYSTEM_TIME, 'YYYY-MM-DD HH24:MI:SS') AS T, COALESCE(JOB_QUEUE_PRIORITY, 0) AS PRTY ` +
     `FROM TABLE(QSYS2.JOB_INFO(JOB_STATUS_FILTER => '*JOBQ', JOB_USER_FILTER => '*ALL')) X ` +
     `WHERE JOB_QUEUE_LIBRARY = ${sqlString(lib)} AND JOB_QUEUE_NAME = ${sqlString(q)} ORDER BY JOB_QUEUE_PRIORITY, JOB_ENTERED_SYSTEM_TIME`, 5000));
@@ -106,7 +106,7 @@ async function jobQueue(manager: ConnectionManager, lib: string, q: string): Pro
 
 async function outputQueues(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const rows = await progress('Reading output queues…', () => conn.rows<Row>(
+  const rows = await reportProgress('wrkoutq', 'Reading output queues…', () => conn.rows<Row>(
     `SELECT OUTPUT_QUEUE_LIBRARY_NAME AS LIB, OUTPUT_QUEUE_NAME AS Q, COALESCE(NUMBER_OF_FILES, 0) AS N, COALESCE(OUTPUT_QUEUE_STATUS, '') AS ST, ` +
     `COALESCE(WRITER_JOB_NAME, '') AS WTR, COALESCE(PRINTER_DEVICE_NAME, '') AS DEV, COALESCE(TEXT_DESCRIPTION, '') AS TXT ` +
     `FROM QSYS2.OUTPUT_QUEUE_INFO ORDER BY NUMBER_OF_FILES DESC, OUTPUT_QUEUE_NAME`, 2000));
@@ -121,7 +121,7 @@ async function outputQueues(manager: ConnectionManager): Promise<void> {
 
 async function outputQueue(manager: ConnectionManager, lib: string, q: string): Promise<void> {
   const conn = manager.require();
-  const rows = await progress(`Reading ${lib}/${q}…`, () => conn.rows<Row>(
+  const rows = await reportProgress('wrkoutqsplf', `Reading ${lib}/${q}…`, () => conn.rows<Row>(
     `SELECT SPOOLED_FILE_NAME AS NAME, JOB_NAME AS JOB, FILE_NUMBER AS NBR, COALESCE(USER_NAME, '') AS USR, COALESCE(USER_DATA, '') AS UDATA, STATUS, ` +
     `COALESCE(TOTAL_PAGES, 0) AS PAGES, COALESCE(SIZE, 0) AS SZ, VARCHAR_FORMAT(CREATE_TIMESTAMP, 'YYYY-MM-DD HH24:MI') AS T ` +
     `FROM QSYS2.OUTPUT_QUEUE_ENTRIES_BASIC WHERE OUTPUT_QUEUE_LIBRARY_NAME = ${sqlString(lib)} AND OUTPUT_QUEUE_NAME = ${sqlString(q)} ` +
@@ -137,7 +137,7 @@ async function outputQueue(manager: ConnectionManager, lib: string, q: string): 
 
 async function jobSchedule(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const rows = await progress('Reading the job scheduler…', () => conn.rows<Row>(
+  const rows = await reportProgress('wrkjobscde', 'Reading the job scheduler…', () => conn.rows<Row>(
     `SELECT SCHEDULED_JOB_NAME AS NAME, SCHEDULED_JOB_ENTRY_NUMBER AS NBR, STATUS, FREQUENCY AS FRQ, COALESCE(SCHEDULED_DATE_VALUE, '') AS SDATE, ` +
     `COALESCE(VARCHAR(SCHEDULED_TIME), '') AS STIME, COALESCE(SCHEDULED_DAYS, '') AS SDAYS, COALESCE(VARCHAR(NEXT_SUBMISSION_DATE), '') AS NEXT, ` +
     `COALESCE(COMMAND_STRING, '') AS CMD, COALESCE(USER_PROFILE_FOR_SUBMITTED_JOB, '') AS USR, COALESCE(DESCRIPTION, '') AS TXT ` +
@@ -190,7 +190,7 @@ async function userProfiles(manager: ConnectionManager): Promise<void> {
     { label: vscode.l10n.t('Group profiles'), where: `GROUP_ID_NUMBER IS NOT NULL AND GROUP_ID_NUMBER > 0` },
   ], { title: vscode.l10n.t('Work with user profiles') });
   if (!scope) { return; }
-  const rows = await progress('Reading user profiles…', () => conn.rows<Row>(
+  const rows = await reportProgress('wrkusrprf', 'Reading user profiles…', () => conn.rows<Row>(
     `SELECT AUTHORIZATION_NAME AS USR, STATUS, COALESCE(USER_CLASS_NAME, '') AS CLS, COALESCE(SPECIAL_AUTHORITIES, '') AS SPC, ` +
     `COALESCE(GROUP_PROFILE_NAME, '') AS GRP, VARCHAR_FORMAT(PREVIOUS_SIGNON, 'YYYY-MM-DD HH24:MI') AS LAST, ` +
     `COALESCE(SIGN_ON_ATTEMPTS_NOT_VALID, 0) AS BAD, VARCHAR_FORMAT(DATE_PASSWORD_EXPIRES, 'YYYY-MM-DD') AS PWDEXP, COALESCE(TEXT_DESCRIPTION, '') AS TXT ` +
@@ -208,7 +208,7 @@ async function userProfiles(manager: ConnectionManager): Promise<void> {
 
 async function userDetails(manager: ConnectionManager, user: string): Promise<void> {
   const conn = manager.require();
-  const [jobs, owned] = await progress(`Reading ${user}…`, () => Promise.all([
+  const [jobs, owned] = await reportProgress('usrdetail', `Reading ${user}…`, () => Promise.all([
     conn.rows<Row>(`SELECT JOB_NAME, JOB_STATUS, COALESCE(SUBSYSTEM, '') AS SBS, COALESCE(FUNCTION, '') AS FN FROM TABLE(QSYS2.ACTIVE_JOB_INFO(CURRENT_USER_LIST_FILTER => ${sqlString(user)}, DETAILED_INFO => 'NONE')) X`, 500).catch(() => []),
     conn.rows<Row>(`SELECT OBJECT_LIBRARY AS LIB, OBJECT_NAME AS OBJ, OBJECT_TYPE AS TYPE FROM QSYS2.OBJECT_OWNERSHIP WHERE AUTHORIZATION_NAME = ${sqlString(user)} AND OBJECT_LIBRARY IS NOT NULL ORDER BY 1, 2 FETCH FIRST 1000 ROWS ONLY`, 1000).catch(() => []),
   ]));
@@ -225,7 +225,7 @@ async function userDetails(manager: ConnectionManager, user: string): Promise<vo
 
 async function systemValues(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const rows = await progress('Reading system values…', () => conn.rows<Row>(
+  const rows = await reportProgress('wrksysval', 'Reading system values…', () => conn.rows<Row>(
     `SELECT SYSTEM_VALUE_NAME AS NAME, COALESCE(VARCHAR(CURRENT_NUMERIC_VALUE), '') AS NUM, COALESCE(CURRENT_CHARACTER_VALUE, '') AS CHR ` +
     `FROM QSYS2.SYSTEM_VALUE_INFO ORDER BY SYSTEM_VALUE_NAME`, 2000));
   const known = (n: string) => SYSTEM_VALUES[n];
@@ -248,7 +248,7 @@ async function auditJournal(manager: ConnectionManager): Promise<void> {
   if (!range) { return; }
   const user = await vscode.window.showInputBox({ title: vscode.l10n.t('Only one user? (optional)'), prompt: vscode.l10n.t('User profile, or leave empty for everyone') });
   if (user === undefined) { return; }
-  const rows = await progress('Reading QAUDJRN…', () => conn.rows<Row>(auditJournalSql(picks.map(p => p.label), range.hours, user), 500));
+  const rows = await reportProgress('audit', 'Reading QAUDJRN…', () => conn.rows<Row>(auditJournalSql(picks.map(p => p.label), range.hours, user), 500));
   const byType = new Map<string, number>(); rows.forEach(r => byType.set(s(r, 'TYPE'), (byType.get(s(r, 'TYPE')) ?? 0) + 1));
   showReport('audit', {
     title: vscode.l10n.t('Security audit journal'), subtitle: `${rows.length} event(s) in the ${range.label.toLowerCase()}${user.trim() ? ` for ${user.trim().toUpperCase()}` : ''}, newest first (max 500).`,
@@ -268,7 +268,7 @@ async function saveFiles(manager: ConnectionManager, lib?: string): Promise<void
   const l = lib ?? (await vscode.window.showInputBox({ title: vscode.l10n.t('Work with save files'), prompt: vscode.l10n.t('Library'), value: conn.profile.currentLibrary ?? '', ignoreFocusOut: true }))?.trim().toUpperCase();
   if (!l) { return; }
   assertSystemName(l, 'library');
-  const rows = await progress(`Reading save files in ${l}…`, () => conn.rows<Row>(
+  const rows = await reportProgress('wrksavf', `Reading save files in ${l}…`, () => conn.rows<Row>(
     `SELECT OBJNAME AS NAME, COALESCE(OBJSIZE, 0) AS SZ, VARCHAR_FORMAT(OBJCREATED, 'YYYY-MM-DD HH24:MI') AS CREATED, VARCHAR_FORMAT(CHANGE_TIMESTAMP, 'YYYY-MM-DD HH24:MI') AS CHANGED, COALESCE(OBJTEXT, '') AS TXT ` +
     `FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(l)}, '*FILE')) X WHERE OBJATTRIBUTE = 'SAVF' ORDER BY OBJNAME`, 5000));
   showReport('wrksavf', {
@@ -283,7 +283,7 @@ async function saveFiles(manager: ConnectionManager, lib?: string): Promise<void
 
 async function saveFileContents(manager: ConnectionManager, lib: string, f: string): Promise<void> {
   const conn = manager.require();
-  const rows = await progress(`Reading ${lib}/${f}…`, () => conn.rows<Row>(
+  const rows = await reportProgress('savfcontents', `Reading ${lib}/${f}…`, () => conn.rows<Row>(
     `SELECT LIBRARY_NAME AS SAVLIB, OBJECT_NAME AS OBJ, OBJECT_TYPE AS TYPE, COALESCE(OBJECT_ATTRIBUTE, '') AS ATTR, COALESCE(OBJECT_SIZE, 0) AS SZ, ` +
     `VARCHAR_FORMAT(SAVE_TIMESTAMP, 'YYYY-MM-DD HH24:MI') AS SAVED, COALESCE(TEXT_DESCRIPTION, '') AS TXT ` +
     `FROM TABLE(QSYS2.SAVE_FILE_OBJECTS(SAVE_FILE => ${sqlString(f)}, SAVE_FILE_LIBRARY => ${sqlString(lib)})) X ORDER BY LIBRARY_NAME, OBJECT_NAME`, 20000));
@@ -408,7 +408,7 @@ async function uploadSaveFile(manager: ConnectionManager, lib?: string): Promise
 
 async function connections(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const rows = await progress('Reading TCP/IP connections…', () => conn.rows<Row>(
+  const rows = await reportProgress('netstat', 'Reading TCP/IP connections…', () => conn.rows<Row>(
     `SELECT N.LOCAL_ADDRESS AS LADDR, N.LOCAL_PORT AS LPORT, COALESCE(N.LOCAL_PORT_NAME, '') AS LNAME, N.REMOTE_ADDRESS AS RADDR, N.REMOTE_PORT AS RPORT, ` +
     `N.TCP_STATE AS ST, COALESCE(N.IDLE_TIME, 0) AS IDLE, COALESCE(J.JOB_NAME, '') AS JOB, COALESCE(J.AUTHORIZATION_NAME, '') AS USR ` +
     `FROM QSYS2.NETSTAT_INFO N LEFT JOIN QSYS2.NETSTAT_JOB_INFO J ON J.LOCAL_ADDRESS = N.LOCAL_ADDRESS AND J.LOCAL_PORT = N.LOCAL_PORT ` +
@@ -431,7 +431,7 @@ async function connections(manager: ConnectionManager): Promise<void> {
 
 async function tcpServers(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const rows = await progress('Checking TCP servers…', () => conn.rows<Row>(
+  const rows = await reportProgress('tcpsvr', 'Checking TCP servers…', () => conn.rows<Row>(
     `SELECT DISTINCT LOCAL_PORT AS P FROM QSYS2.NETSTAT_INFO WHERE TCP_STATE = 'LISTEN'`, 5000));
   const st = serverStatus(rows.map(r => Number(r.P)));
   showReport('tcpsvr', {
@@ -447,7 +447,7 @@ async function tcpServers(manager: ConnectionManager): Promise<void> {
 
 async function interfaces(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const [ifs, routes] = await progress('Reading IP interfaces…', () => Promise.all([
+  const [ifs, routes] = await reportProgress('netif', 'Reading IP interfaces…', () => Promise.all([
     conn.rows<Row>(`SELECT * FROM QSYS2.NETSTAT_INTERFACE_INFO`, 500),
     conn.rows<Row>(`SELECT * FROM QSYS2.NETSTAT_ROUTE_INFO`, 500).catch(() => []),
   ]));

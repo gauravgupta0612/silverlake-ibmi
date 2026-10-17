@@ -9,7 +9,7 @@ import { formatBytes } from '../core/storage';
 import { alterScript, ColDef, compareStructure } from '../core/tableCompare';
 import { testRows } from '../core/testData';
 import { assertSystemName, sqlString } from '../core/util';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 /** Commands the report pages may run (anything else posted by a webview is ignored). */
 const ALLOWED = new Set([
@@ -49,7 +49,7 @@ async function tableStatistics(manager: ConnectionManager, lib?: string): Promis
   const conn = manager.require();
   const l = lib ?? (await vscode.window.showInputBox({ title: vscode.l10n.t('Table statistics'), prompt: vscode.l10n.t('Library'), value: conn.profile.currentLibrary ?? '', ignoreFocusOut: true }))?.trim().toUpperCase();
   if (!l) { return; }
-  const rows = await progress(vscode.l10n.t('Reading table statistics of {0}…', l), () => conn.rows<Row>(`SELECT * FROM QSYS2.SYSTABLESTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(assertSystemName(l, 'library'))} ORDER BY DATA_SIZE DESC`, 5000));
+  const rows = await reportProgress('tablestats', vscode.l10n.t('Reading table statistics of {0}…', l), () => conn.rows<Row>(`SELECT * FROM QSYS2.SYSTABLESTAT WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(assertSystemName(l, 'library'))} ORDER BY DATA_SIZE DESC`, 5000));
   const n = (r: Row, k: string) => Number(r[k] ?? 0) || 0;
   const date = (r: Row, k: string) => s(r, k).replace(/\.\d+$/, '').slice(0, 16);
   showReport('tablestats', {
@@ -76,7 +76,7 @@ async function generateTestData(manager: ConnectionManager, o?: Obj): Promise<vo
   const pk = cols.filter(c => c.pk);
   let start = 0;
   if (pk.length === 1 && /DEC|NUM|INT/i.test(pk[0].type)) {
-    const m = await conn.rows<Row>(`SELECT COALESCE(MAX("${pk[0].name}"), 0) AS M FROM ${t.library}/${t.name}`, 1).catch(() => []);
+    const m = await reportProgress('testdata', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT COALESCE(MAX("${pk[0].name}"), 0) AS M FROM ${t.library}/${t.name}`, 1).catch(() => []));
     start = Number(m[0]?.M ?? 0) || 0;
   }
   const rows = testRows(cols, count, start, Date.now() % 100000);
@@ -115,7 +115,7 @@ async function run(conn: IbmiConnection, cmd: string, warn = ''): Promise<boolea
 async function rowLocks(manager: ConnectionManager, o?: Obj): Promise<void> {
   const conn = manager.require();
   if (!o?.library || !o.name) { throw new Error(vscode.l10n.t('Right-click a file in the Libraries view.')); }
-  const rows = await progress(vscode.l10n.t('Reading row locks…'), () => conn.rows<Row>(
+  const rows = await reportProgress('rowLocks', vscode.l10n.t('Reading row locks…'), () => conn.rows<Row>(
     `SELECT SYSTEM_TABLE_MEMBER AS MBR, RELATIVE_RECORD_NUMBER AS RRN, LOCK_STATE AS STATE, LOCK_STATUS AS STATUS, COALESCE(LOCK_TYPE, '') AS TYPE, JOB_NAME AS JOB ` +
     `FROM QSYS2.RECORD_LOCK_INFO WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(o.library)} AND SYSTEM_TABLE_NAME = ${sqlString(o.name)} ORDER BY RELATIVE_RECORD_NUMBER`, 2000));
   const sample = await Promise.all(rows.slice(0, 15).map(r => conn.rows<Row>(`SELECT * FROM ${o.library}/${o.name} X WHERE RRN(X) = ${Number(r.RRN)}`, 1).catch(() => [])));
@@ -154,7 +154,7 @@ async function compareStructureCmd(manager: ConnectionManager, o?: { library?: s
     `FROM QSYS2.SYSCOLUMNS WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(l)} AND SYSTEM_TABLE_NAME = ${sqlString(tbl!)} ORDER BY ORDINAL_POSITION`;
   const iq = (l: string) => `SELECT I.SYSTEM_INDEX_NAME AS N, LISTAGG(K.COLUMN_NAME, ', ') WITHIN GROUP (ORDER BY K.ORDINAL_POSITION) AS K FROM QSYS2.SYSINDEXES I JOIN QSYS2.SYSKEYS K ON K.INDEX_SCHEMA = I.INDEX_SCHEMA AND K.INDEX_NAME = I.INDEX_NAME ` +
     `WHERE I.SYSTEM_TABLE_SCHEMA = ${sqlString(l)} AND I.SYSTEM_TABLE_NAME = ${sqlString(tbl!)} GROUP BY I.SYSTEM_INDEX_NAME`;
-  const [ra, rb, ia, ib] = await progress(vscode.l10n.t('Reading both definitions…'), () => Promise.all([a.rows<Row>(q(lib!), 2000), b.rows<Row>(q(libB), 2000), a.rows<Row>(iq(lib!), 500).catch(() => []), b.rows<Row>(iq(libB), 500).catch(() => [])]));
+  const [ra, rb, ia, ib] = await reportProgress('structCompare', vscode.l10n.t('Reading both definitions…'), () => Promise.all([a.rows<Row>(q(lib!), 2000), b.rows<Row>(q(libB), 2000), a.rows<Row>(iq(lib!), 500).catch(() => []), b.rows<Row>(iq(libB), 500).catch(() => [])]));
   if (!ra.length) { throw new Error(vscode.l10n.t('{0}/{1} was not found.', lib, tbl)); }
   if (!rb.length) { throw new Error(vscode.l10n.t('{0}/{1} was not found on {2}.', libB, tbl, b.profile.name)); }
   const cols = (rs: Row[]): ColDef[] => rs.map(r => ({ name: s(r, 'N'), type: s(r, 'T'), length: Number(r.L), scale: Number(r.S), nullable: s(r, 'NL') === 'Y', dflt: s(r, 'D') || undefined, text: s(r, 'X') }));
@@ -186,7 +186,7 @@ async function tableDependents(manager: ConnectionManager, o?: { library?: strin
   if (!o?.library || !o.name) { throw new Error(vscode.l10n.t('Right-click a file in the Libraries view.')); }
   const lib = assertSystemName(o.library, 'library'); const f = assertSystemName(o.name, 'file');
   if (conn.sqlKeepsJob) { await conn.sql(`CALL QSYS2.QCMDEXC('DSPDBR FILE(${lib}/${f}) OUTPUT(*OUTFILE) OUTFILE(QTEMP/VTXDBR)')`, 1).catch(e => log(errorMessage(e))); }
-  const [dbr, idx, views, cst, trg] = await progress(vscode.l10n.t('Finding what depends on {0}/{1}…', lib, f), () => Promise.all([
+  const [dbr, idx, views, cst, trg] = await reportProgress('dependents', vscode.l10n.t('Finding what depends on {0}/{1}…', lib, f), () => Promise.all([
     conn.sqlKeepsJob ? q(conn, `SELECT WHRELI AS L, WHREFI AS F, COALESCE(WHTYPE, '') AS T FROM QTEMP/VTXDBR WHERE WHREFI <> ' '`, 2000) : Promise.resolve([] as Row[]),
     q(conn, `SELECT SYSTEM_INDEX_SCHEMA AS L, SYSTEM_INDEX_NAME AS N, COALESCE(IS_UNIQUE, '') AS U FROM QSYS2.SYSINDEXES WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND SYSTEM_TABLE_NAME = ${sqlString(f)}`, 500),
     q(conn, `SELECT DISTINCT SYSTEM_VIEW_SCHEMA AS L, SYSTEM_VIEW_NAME AS N FROM QSYS2.SYSVIEWDEP WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND SYSTEM_TABLE_NAME = ${sqlString(f)}`, 500),

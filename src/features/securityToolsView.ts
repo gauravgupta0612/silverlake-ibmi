@@ -7,7 +7,7 @@ import {
   bulkAuthorityCommand, chgobjownCommand, matchesGeneric, NETWORK_EXIT_POINTS, publicRisk, setPublicCommand, unprotectedExitPoints,
 } from '../core/security';
 import { assertSystemName, sqlString } from '../core/util';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 /** Commands the report pages may run (anything else posted by a webview is ignored). */
 const ALLOWED = new Set([
@@ -37,7 +37,7 @@ async function run(conn: IbmiConnection, cmd: string, warn = ''): Promise<boolea
 
 async function exitPoints(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const progs = await progress(vscode.l10n.t('Reading exit programs…'), () => conn.rows<Row>(
+  const progs = await reportProgress('exitPoints', vscode.l10n.t('Reading exit programs…'), () => conn.rows<Row>(
     `SELECT EXIT_POINT_NAME AS P, EXIT_POINT_FORMAT AS F, EXIT_PROGRAM_NUMBER AS N, EXIT_PROGRAM_LIBRARY AS L, EXIT_PROGRAM AS PGM, COALESCE(EXIT_PROGRAM_DESCRIPTION, '') AS D FROM QSYS2.EXIT_PROGRAM_INFO ORDER BY 1, 3`, 5000));
   const open = unprotectedExitPoints(progs.map(p => ({ point: s(p, 'P') })));
   showReport('exitPoints', {
@@ -108,7 +108,7 @@ async function publicAuthorityScan(manager: ConnectionManager, a?: unknown): Pro
   const lib = ((a as { library?: string } | undefined)?.library ?? (typeof a === 'string' ? a : undefined)
     ?? await vscode.window.showInputBox({ title: vscode.l10n.t('*PUBLIC authority scan'), prompt: vscode.l10n.t('Library'), validateInput: nameCheck, ignoreFocusOut: true }))?.trim().toUpperCase();
   if (!lib) { return; }
-  const rows = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Reading *PUBLIC authority in {0}…', lib) }, () =>
+  const rows = await reportProgress('publicAuthority', vscode.l10n.t('Reading *PUBLIC authority in {0}…', lib), () =>
     conn.rows<Row>(`SELECT * FROM QSYS2.OBJECT_PRIVILEGES WHERE SYSTEM_OBJECT_SCHEMA = ${sqlString(lib)} AND AUTHORIZATION_NAME = '*PUBLIC'`, 20000));
   const list = rows.map(r => {
     const aut = pick(r, 'OBJECT_AUTHORITY'); const autl = pick(r, 'AUTHORIZATION_LIST');

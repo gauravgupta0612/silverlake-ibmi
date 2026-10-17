@@ -4,7 +4,7 @@ import { errorMessage, log, logError, showLog } from '../core/log';
 import { sqlString, statementAtOffset } from '../core/util';
 import { isReadOnlySql, limitRows } from '../core/sqlSafety';
 import { createIndexSql, summarizeMonitor } from '../core/explainSummary';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 const ALLOWED = new Set(['vanthrex.explain.createIndexSql', 'vanthrex.objectInfo']);
 const MONITOR = 'QTEMP/SLKDBMON';
@@ -24,9 +24,7 @@ export async function explainSql(manager: ConnectionManager, statement: string):
   }
   const cmd = (c: string) => conn.sql(`CALL QSYS2.QCMDEXC(${sqlString(c)})`, 1);
 
-  const result = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Explaining the query (running it under a database monitor)…') },
-    async () => {
+  const result = await reportProgress('explain', vscode.l10n.t('Explaining the query (running it under a database monitor)…'), async () => {
       await cmd(`DLTF FILE(${MONITOR})`).catch(() => undefined);
       await cmd(`STRDBMON OUTFILE(${MONITOR}) JOB(*) TYPE(*DETAIL)`);
       let elapsed = 0; let rows = 0; let error = '';

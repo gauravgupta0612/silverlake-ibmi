@@ -10,7 +10,7 @@ import { ConnectionManager } from '../core/manager';
 import { formatBytes } from '../core/storage';
 import { shSingleQuote, sqlString } from '../core/util';
 import { ifsUri } from './fileSystems';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 /** Commands the report pages may run (anything else posted by a webview is ignored). */
 const ALLOWED = new Set([
@@ -28,7 +28,7 @@ async function searchIfs(manager: ConnectionManager, n?: { path?: string; isDire
   if (!text) { return; }
   const include = await vscode.window.showInputBox({ title: vscode.l10n.t('Only files named (optional)'), placeHolder: vscode.l10n.t('*.rpgle'), ignoreFocusOut: true });
   if (include === undefined) { return; }
-  const r = await progress(vscode.l10n.t('Searching {0}…', folder), () => conn.exec(ifsGrepCommand(folder, text, { include, max: 2000 })));
+  const r = await reportProgress('ifsSearch', vscode.l10n.t('Searching {0}…', folder), () => conn.exec(ifsGrepCommand(folder, text, { include, max: 2000 })));
   const hits = parseGrep(r.stdout);
   showReport('ifsSearch', {
     title: `"${text}" in ${folder}`, subtitle: vscode.l10n.t('{0} match(es) in {1} file(s){2}. Click one to open it at that line.', hits.length, new Set(hits.map(h => h.file)).size, hits.length >= 2000 ? ' (first 2000)' : ''),
@@ -56,8 +56,8 @@ async function ifsPermissions(manager: ConnectionManager, n?: { path?: string; i
   const conn = manager.require();
   const path = n?.path ?? (await vscode.window.showInputBox({ title: vscode.l10n.t('IFS permissions'), prompt: vscode.l10n.t('Path'), value: conn.profile.ifsHome ?? '/home', ignoreFocusOut: true }))?.trim();
   if (!path) { return; }
-  const rows = await conn.rows<Row>(`SELECT * FROM TABLE(QSYS2.IFS_OBJECT_PRIVILEGES(PATH_NAME => ${sqlString(path)})) X`, 500);
-  const owner = await conn.rows<Row>(`SELECT * FROM TABLE(QSYS2.IFS_OBJECT_STATISTICS(START_PATH_NAME => ${sqlString(path)}, SUBTREE_DIRECTORIES => 'NO')) X WHERE PATH_NAME = ${sqlString(path)}`, 1).catch(() => []);
+  const rows = await reportProgress('ifsPerm', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT * FROM TABLE(QSYS2.IFS_OBJECT_PRIVILEGES(PATH_NAME => ${sqlString(path)})) X`, 500));
+  const owner = await reportProgress('ifsPerm', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT * FROM TABLE(QSYS2.IFS_OBJECT_STATISTICS(START_PATH_NAME => ${sqlString(path)}, SUBTREE_DIRECTORIES => 'NO')) X WHERE PATH_NAME = ${sqlString(path)}`, 1).catch(() => []));
   const isDir = n?.isDirectory ?? /DIR/i.test(pick(owner[0], 'OBJECT_TYPE'));
   showReport('ifsPerm', {
     title: vscode.l10n.t('Permissions — {0}', path), subtitle: `Owner ${pick(owner[0], 'OBJECT_OWNER') || '?'}${pick(owner[0], 'PRIMARY_GROUP') ? `, primary group ${pick(owner[0], 'PRIMARY_GROUP')}` : ''}. Click a line to change it.`,
@@ -93,7 +93,7 @@ async function ifsCcsid(manager: ConnectionManager, n?: { path?: string; isDirec
   const conn = manager.require();
   const path = n?.path ?? (await vscode.window.showInputBox({ title: vscode.l10n.t('IFS file or folder'), value: conn.profile.ifsHome ?? '/home', ignoreFocusOut: true }))?.trim();
   if (!path) { return; }
-  const rows = await progress(vscode.l10n.t('Reading CCSIDs…'), () => conn.rows<Row>(
+  const rows = await reportProgress('ifsCcsid', vscode.l10n.t('Reading CCSIDs…'), () => conn.rows<Row>(
     `SELECT PATH_NAME AS P, OBJECT_TYPE AS T, COALESCE(CCSID, 0) AS C, COALESCE(DATA_SIZE, 0) AS SZ FROM TABLE(QSYS2.IFS_OBJECT_STATISTICS(START_PATH_NAME => ${sqlString(path)}, SUBTREE_DIRECTORIES => 'NO', OBJECT_TYPE_LIST => '*ALLSTMF')) X ORDER BY PATH_NAME FETCH FIRST 2000 ROWS ONLY`, 2000));
   const byC = new Map<number, number>(); rows.forEach(r => byC.set(Number(r.C), (byC.get(Number(r.C)) ?? 0) + 1));
   showReport('ifsCcsid', {

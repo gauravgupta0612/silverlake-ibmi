@@ -15,7 +15,7 @@ import {
 import { memberUri, memberViewUri } from './fileSystems';
 import { readLibraries } from './libraryLookup';
 import { showReport } from './reportPanel';
-import { escapeHtml, nonce } from './webviewUtil';
+import { escapeHtml, loaderHtml, nonce, UI_CSS, uiScript } from './ui/kit';
 
 type Row = Record<string, unknown>;
 const s = (r: Row | undefined, k: string) => String(r?.[k] ?? '').trim();
@@ -639,7 +639,7 @@ class PdmPanel {
     };
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${n}';">
-<style>
+<style>${UI_CSS}
   body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 6px 14px 90px; margin: 0; }
   h1 { font-size: 1.25em; margin: 6px 0; font-weight: 600; }
   .mono, table, input { font-family: var(--vscode-editor-font-family); font-size: var(--vscode-editor-font-size); }
@@ -678,6 +678,7 @@ class PdmPanel {
   #pvTitle { color: var(--vscode-descriptionForeground); }
   label.cb { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; }
 </style></head><body>
+<div class="vx-progress"></div>
 <h1 id="title"></h1>
 <div class="hdr mono">
   <span class="crumb" id="crumb"></span>
@@ -687,7 +688,7 @@ class PdmPanel {
   <label>${escapeHtml(L.position)} <input class="n" id="pos"></label>
   <span id="objLib" class="dim"></span>
   <label class="cb" id="pvBox"><input type="checkbox" id="pvOn">${escapeHtml(L.preview)}</label>
-  <span id="busy" class="dim">⏳</span>
+  <span id="busy" class="dim"><span class="vx-spinner" style="display:inline-block;vertical-align:middle"></span></span>
 </div>
 <div class="bar" id="subsetBar">
   <label>${escapeHtml(L.subset)}: ${escapeHtml(L.name)} <input class="n" id="sName" placeholder="*ALL"></label>
@@ -701,14 +702,14 @@ class PdmPanel {
 <div class="chips mono" id="chips"></div>
 <div class="dim">${escapeHtml(L.typeOptions)}</div>
 <div class="legend mono" id="legend"></div>
-<div id="main"><div><table class="mono"><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table>
+<div id="main"><div><table class="mono"><thead><tr id="head"></tr></thead><tbody id="body"><tr><td colspan="10">${loaderHtml(vscode.l10n.t('Reading from the IBM i…'), { rows: 10 })}</td></tr></tbody></table>
 <div id="moreRow"></div></div><div id="pv"><div id="pvTitle" class="mono"></div><pre id="pvText"></pre></div></div>
 <div class="foot">
   <div id="msg" class="mono"></div>
   <div class="bar"><label>${escapeHtml(L.params)}</label><input class="cmd" id="cmd"><button class="primary" id="enter">${escapeHtml(L.enter)}</button></div>
   <div class="keys mono">${L.keys.map(([k, t]) => `<a data-key="${k}">${k}=${escapeHtml(t)}</a>`).join('')}</div>
 </div>
-<script nonce="${n}">
+<script nonce="${n}">${uiScript()}
 const vscode = acquireVsCodeApi();
 const L = ${JSON.stringify(L).replace(/</g, '\\u003c')};
 let D = null, shown = 0, sort = null, sortDir = 1;

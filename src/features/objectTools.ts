@@ -5,7 +5,7 @@ import { errorMessage } from '../core/log';
 import { assertSystemName, clString, sqlString } from '../core/util';
 import { CompareItem, compareSets, summarize } from '../core/compareSets';
 import { memberUri } from './fileSystems';
-import { Report, ReportAction, showReport } from './reportPanel';
+import { Report, ReportAction, reportProgress, showReport } from './reportPanel';
 
 type ObjArg = { library: string; name: string; type?: string };
 
@@ -49,8 +49,8 @@ async function sourceTypeOf(conn: IbmiConnection, lib: string, file: string, mem
 
 async function objectInfo(manager: ConnectionManager, o: ObjArg): Promise<void> {
   const conn = manager.require();
-  const rows = await conn.rows<Record<string, unknown>>(
-    `SELECT * FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(o.library)}, ${sqlString(o.type && o.type !== '*ALL' ? o.type : '*ALL')}, ${sqlString(o.name)}))`, 20);
+  const rows = await reportProgress('objectInfo', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Record<string, unknown>>(
+    `SELECT * FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(o.library)}, ${sqlString(o.type && o.type !== '*ALL' ? o.type : '*ALL')}, ${sqlString(o.name)}))`, 20));
   if (!rows.length) { throw new Error(vscode.l10n.t('{0}/{1} {2} was not found.', o.library, o.name, o.type ?? '')); }
   const r = rows[0];
   const type = String(r.OBJTYPE ?? o.type ?? '').trim();
@@ -105,16 +105,16 @@ async function objectLocks(manager: ConnectionManager, o: ObjArg): Promise<void>
   const conn = manager.require();
   let type = o.type && o.type !== '*ALL' ? o.type : '';
   if (!type) {
-    const t = await conn.rows<{ T: string }>(`SELECT OBJTYPE AS T FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(o.library)}, '*ALL', ${sqlString(o.name)}))`, 5);
+    const t = await reportProgress('objectLocks', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<{ T: string }>(`SELECT OBJTYPE AS T FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(o.library)}, '*ALL', ${sqlString(o.name)}))`, 5));
     type = String(t[0]?.T ?? '*FILE').trim();
   }
-  const holders = await conn.lockHolders(o.library, o.name, type);
+  const holders = await reportProgress('objectLocks', vscode.l10n.t('Reading from the IBM i…'), () => conn.lockHolders(o.library, o.name, type));
   const jobs = holders.map(h => String(h.JOB).trim());
   let detail = new Map<string, { status: string; fn: string; text: string }>();
   if (jobs.length) {
     const users = [...new Set(jobs.map(j => j.split('/')[1]).filter(Boolean))];
-    const u = await conn.rows<{ U: string; T: string }>(
-      `SELECT AUTHORIZATION_NAME AS U, COALESCE(TEXT_DESCRIPTION, '') AS T FROM QSYS2.USER_INFO WHERE AUTHORIZATION_NAME IN (${users.map(sqlString).join(', ')})`, 50)
+    const u = await reportProgress('objectLocks', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<{ U: string; T: string }>(
+      `SELECT AUTHORIZATION_NAME AS U, COALESCE(TEXT_DESCRIPTION, '') AS T FROM QSYS2.USER_INFO WHERE AUTHORIZATION_NAME IN (${users.map(sqlString).join(', ')})`, 50))
       .catch(() => []);
     detail = new Map(jobs.map(j => [j, { status: '', fn: '', text: String(u.find(x => String(x.U).trim() === j.split('/')[1])?.T ?? '').trim() }]));
   }
@@ -167,12 +167,12 @@ async function serviceProgramInfo(manager: ConnectionManager, o: ObjArg): Promis
   const conn = manager.require();
   const type = o.type && o.type !== '*ALL' ? o.type : '*SRVPGM';
   const where = `PROGRAM_LIBRARY = ${sqlString(o.library)} AND PROGRAM_NAME = ${sqlString(o.name)} AND OBJECT_TYPE = ${sqlString(type)}`;
-  const [exports, modules] = await Promise.all([
+  const [exports, modules] = await reportProgress('srvpgm', vscode.l10n.t('Reading from the IBM i…'), () => Promise.all([
     type === '*SRVPGM'
       ? conn.rows<Record<string, unknown>>(`SELECT SYMBOL_NAME, SYMBOL_USAGE FROM QSYS2.PROGRAM_EXPORT_IMPORT_INFO WHERE ${where} ORDER BY SYMBOL_USAGE, SYMBOL_NAME`, 5000)
       : Promise.resolve([] as Record<string, unknown>[]),
     conn.rows<Record<string, unknown>>(`SELECT * FROM QSYS2.BOUND_MODULE_INFO WHERE ${where} ORDER BY BOUND_MODULE`, 2000),
-  ]);
+  ]));
   const s = (r: Record<string, unknown>, k: string) => String(r[k] ?? '').trim();
   const usage: Record<string, string> = { '*PROCEXP': 'procedure', '*DATAEXP': 'data' };
   const report: Report = {
@@ -248,9 +248,7 @@ async function compareLibraries(manager: ConnectionManager): Promise<void> {
       changed: String(r.CHG ?? ''),
       detail: vscode.l10n.t('{0} · {1} lines', String(r.T).trim(), String(r.N)),
     }));
-  const [oa, ob, ma, mb] = await vscode.window.withProgress(
-    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Comparing {0} and {1}…', a, b) },
-    () => Promise.all([objects(a), objects(b), members(a), members(b)]));
+  const [oa, ob, ma, mb] = await reportProgress('compareLibs', vscode.l10n.t('Comparing {0} and {1}…', a, b), () => Promise.all([objects(a), objects(b), members(a), members(b)]));
   const objRows = compareSets(oa, ob);
   const mbrRows = compareSets(ma, mb);
   const so = summarize(objRows); const sm = summarize(mbrRows);

@@ -5,7 +5,7 @@ import { IbmiConnection } from '../core/connection';
 import { errorMessage, log, logError } from '../core/log';
 import { sqlString } from '../core/util';
 import { CheckResult, evaluateSelfCheck, missingServices, SERVICES } from '../core/serviceCatalog';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 type Row = Record<string, unknown>;
 const s = (r: Row | undefined, k: string) => String(r?.[k] ?? '').trim();
@@ -57,7 +57,7 @@ export async function runSelfCheck(conn: IbmiConnection): Promise<{ results: Che
 
 async function selfCheck(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const { results, missing, latency } = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Checking {0}…', conn.profile.name) }, () => runSelfCheck(conn));
+  const { results, missing, latency } = await reportProgress('selfcheck', vscode.l10n.t('Checking {0}…', conn.profile.name), () => runSelfCheck(conn));
   const bad = results.filter(r => r.ok === false).length; const warn = results.filter(r => r.ok === 'warn').length;
   const icon = (ok: CheckResult['ok']) => (ok === true ? '✔' : ok === 'warn' ? '!' : '✘');
   lastText = [`Vanthrex self-check — ${conn.profile.name} (${conn.user}@${conn.profile.host})`, `SSH round trip ${latency.ssh} ms, SQL round trip ${latency.sql} ms`, '',

@@ -6,7 +6,7 @@ import { errorMessage, logError } from '../core/log';
 import { ConnectionManager } from '../core/manager';
 import { parseMemberPath, sqlString } from '../core/util';
 import { MEMBER_SCHEME, memberUri } from './fileSystems';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 /** Commands the report pages may run (anything else posted by a webview is ignored). */
 const ALLOWED = new Set([
@@ -50,7 +50,7 @@ async function retrieveBinderSource(manager: ConnectionManager, o?: Obj): Promis
 async function bindingDirectory(manager: ConnectionManager, o?: Obj): Promise<void> {
   const conn = manager.require();
   if (!o?.library || !o.name) { throw new Error(vscode.l10n.t('Right-click a binding directory in the Libraries view.')); }
-  const rows = await conn.rows<Row>(`SELECT * FROM QSYS2.BINDING_DIRECTORY_INFO WHERE BINDING_DIRECTORY_LIBRARY = ${sqlString(o.library)} AND BINDING_DIRECTORY = ${sqlString(o.name)}`, 5000);
+  const rows = await reportProgress('bnddir', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT * FROM QSYS2.BINDING_DIRECTORY_INFO WHERE BINDING_DIRECTORY_LIBRARY = ${sqlString(o.library)} AND BINDING_DIRECTORY = ${sqlString(o.name)}`, 5000));
   const bd = `${o.library}/${o.name}`;
   showReport('bnddir', {
     title: vscode.l10n.t('Binding directory {0}', bd), subtitle: vscode.l10n.t('{0} entr(ies). Click one to remove it.', rows.length),
@@ -61,7 +61,6 @@ async function bindingDirectory(manager: ConnectionManager, o?: Obj): Promise<vo
   }, ALLOWED);
 }
 
-const windowProgress = <T>(title: string, fn: () => Promise<T>) => vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title }, fn);
 
 function libraryList(conn: IbmiConnection, uri?: vscode.Uri): string[] {
   const own = uri?.scheme === MEMBER_SCHEME ? parseMemberPath(uri.path).library : undefined;
@@ -92,7 +91,7 @@ async function signatureCheck(manager: ConnectionManager, a?: unknown, scopeArg?
     scope = p.k;
   }
   const libs = [...new Set([lib!, ...libraryList(conn)])];
-  const [info, bound] = await windowProgress(vscode.l10n.t('Checking who is bound to {0}…', srv!), () => Promise.all([
+  const [info, bound] = await reportProgress('signatureCheck', vscode.l10n.t('Checking who is bound to {0}…', srv!), () => Promise.all([
     conn.rows<Row>(`SELECT HEX(CAST(SUBSTR(EXPORT_SIGNATURES, 1, 3400) AS VARBINARY(3400))) AS SIGS FROM QSYS2.PROGRAM_INFO WHERE PROGRAM_LIBRARY = ${sqlString(lib!)} AND PROGRAM_NAME = ${sqlString(srv!)} AND OBJECT_TYPE = '*SRVPGM'`, 1),
     conn.rows<Row>(`SELECT PROGRAM_LIBRARY AS L, PROGRAM_NAME AS N, OBJECT_TYPE AS T, BOUND_SERVICE_PROGRAM_LIBRARY AS BL, HEX(BOUND_SERVICE_PROGRAM_SIGNATURE) AS SIG ` +
       `FROM QSYS2.BOUND_SRVPGM_INFO WHERE BOUND_SERVICE_PROGRAM = ${sqlString(srv!)} AND BOUND_SERVICE_PROGRAM_LIBRARY IN (${sqlString(lib!)}, '*LIBL')` +

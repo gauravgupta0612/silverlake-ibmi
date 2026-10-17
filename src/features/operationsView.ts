@@ -8,7 +8,7 @@ import { addMessageCommand, changeMessageCommand, likePattern, nextMessageId, re
 import { carriesData, promoteStatus, promotionCommands, PromotionPlan, undoPromotionCommand } from '../core/promotion';
 import { deleteCommand, formatBytes, receiverAdvice, reorgCandidates, reorgCommand } from '../core/storage';
 import { assertSystemName, sqlString } from '../core/util';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 import { pickScope } from './search';
 
 /** Commands the report pages may run (anything else posted by a webview is ignored). */
@@ -55,7 +55,7 @@ async function storageAdvisor(manager: ConnectionManager, lib?: string): Promise
   const days = Number(daysPick);
   const libsWhere = scope[0] === '*ALLUSR' ? `SYSTEM_TABLE_SCHEMA NOT LIKE 'Q%' AND SYSTEM_TABLE_SCHEMA NOT LIKE 'SYS%'` : `SYSTEM_TABLE_SCHEMA IN (${scope.map(sqlString).join(', ')})`;
   const objs = `(${libUnion(scope)})`;
-  const [byLib, biggest, unused, tables, receivers, spool] = await progress('Analysing storage (this can take a minute on big systems)…', () => Promise.all([
+  const [byLib, biggest, unused, tables, receivers, spool] = await reportProgress('storage', 'Analysing storage (this can take a minute on big systems)…', () => Promise.all([
     conn.rows<Row>(`SELECT OBJLIB AS LIB, COUNT(*) AS N, SUM(OBJSIZE) AS SZ FROM ${objs} O GROUP BY OBJLIB ORDER BY SZ DESC FETCH FIRST 50 ROWS ONLY`, 50),
     conn.rows<Row>(`SELECT OBJLIB AS LIB, OBJNAME AS NAME, OBJTYPE AS TYPE, COALESCE(OBJATTRIBUTE, '') AS ATTR, OBJSIZE AS SZ, VARCHAR_FORMAT(LAST_USED_TIMESTAMP, 'YYYY-MM-DD') AS USED, COALESCE(OBJTEXT, '') AS TXT ` +
       `FROM ${objs} O ORDER BY OBJSIZE DESC FETCH FIRST 100 ROWS ONLY`, 100),
@@ -113,7 +113,7 @@ async function ifsStorage(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
   const start = await vscode.window.showInputBox({ title: vscode.l10n.t('IFS folders by size'), prompt: vscode.l10n.t('Start folder'), value: '/home', ignoreFocusOut: true });
   if (!start) { return; }
-  const rows = await progress(`Measuring ${start} (large trees take a while)…`, () => conn.rows<Row>(
+  const rows = await reportProgress('ifsstorage', `Measuring ${start} (large trees take a while)…`, () => conn.rows<Row>(
     `SELECT CASE WHEN LOCATE('/', PATH_NAME, LENGTH(${sqlString(start.replace(/\/$/, ''))}) + 2) > 0 ` +
     `THEN SUBSTR(PATH_NAME, 1, LOCATE('/', PATH_NAME, LENGTH(${sqlString(start.replace(/\/$/, ''))}) + 2) - 1) ELSE PATH_NAME END AS DIR, ` +
     `COUNT(*) AS N, SUM(COALESCE(DATA_SIZE, 0)) AS SZ, VARCHAR_FORMAT(MAX(DATA_CHANGE_TIMESTAMP), 'YYYY-MM-DD') AS CHANGED ` +
@@ -239,7 +239,7 @@ async function messageFile(manager: ConnectionManager, o?: Obj): Promise<void> {
     [lib, f] = v.trim().toUpperCase().split('/');
   }
   lib = assertSystemName(lib, 'library'); f = assertSystemName(f, 'message file');
-  const rows = await progress(`Reading ${lib}/${f}…`, () => conn.rows<Row>(
+  const rows = await reportProgress('msgf', `Reading ${lib}/${f}…`, () => conn.rows<Row>(
     `SELECT MESSAGE_ID AS ID, COALESCE(MESSAGE_TEXT, '') AS T, COALESCE(MESSAGE_SECOND_LEVEL_TEXT, '') AS H, COALESCE(SEVERITY, 0) AS SEV ` +
     `FROM QSYS2.MESSAGE_FILE_DATA WHERE MESSAGE_FILE_LIBRARY = ${sqlString(lib)} AND MESSAGE_FILE = ${sqlString(f)} ORDER BY MESSAGE_ID`, 20000));
   const target = { library: lib, name: f };
@@ -288,7 +288,7 @@ async function fieldFinder(manager: ConnectionManager): Promise<void> {
   const like = sqlString(likePattern(q));
   const libs = scope[0] === '*ALLUSR' ? `C.SYSTEM_TABLE_SCHEMA NOT LIKE 'Q%' AND C.SYSTEM_TABLE_SCHEMA NOT LIKE 'SYS%'` : `C.SYSTEM_TABLE_SCHEMA IN (${scope.map(sqlString).join(', ')})`;
   const textCond = alsoText.v ? ` OR UPPER(COALESCE(C.COLUMN_TEXT, '')) LIKE ${like} OR UPPER(COALESCE(C.COLUMN_HEADING, '')) LIKE ${like}` : '';
-  const rows = await progress(`Searching for ${q}…`, () => conn.rows<Row>(
+  const rows = await reportProgress('fieldfinder', `Searching for ${q}…`, () => conn.rows<Row>(
     `SELECT C.SYSTEM_TABLE_SCHEMA AS LIB, C.SYSTEM_TABLE_NAME AS TBL, C.SYSTEM_COLUMN_NAME AS COL, C.COLUMN_NAME AS SQLCOL, C.DATA_TYPE AS TYPE, C.LENGTH AS LEN, ` +
     `COALESCE(C.NUMERIC_SCALE, 0) AS SCALE, COALESCE(C.COLUMN_TEXT, '') AS TXT, T.TABLE_TYPE AS TT FROM QSYS2.SYSCOLUMNS C ` +
     `JOIN QSYS2.SYSTABLES T ON T.SYSTEM_TABLE_SCHEMA = C.SYSTEM_TABLE_SCHEMA AND T.SYSTEM_TABLE_NAME = C.SYSTEM_TABLE_NAME ` +
@@ -313,7 +313,7 @@ async function promoteObjects(manager: ConnectionManager, state: vscode.Memento,
   const src = (o?.library ?? (await vscode.window.showInputBox({ title: vscode.l10n.t('Promote objects (1/3)'), prompt: vscode.l10n.t('From library (e.g. DEV)'), value: conn.profile.currentLibrary ?? '', ignoreFocusOut: true })))?.trim().toUpperCase();
   if (!src) { return; }
   assertSystemName(src, 'library');
-  const all = await progress(`Reading ${src}…`, () => conn.rows<Row>(
+  const all = await reportProgress('promote', `Reading ${src}…`, () => conn.rows<Row>(
     `SELECT OBJNAME AS NAME, OBJTYPE AS TYPE, COALESCE(OBJATTRIBUTE, '') AS ATTR, VARCHAR_FORMAT(CHANGE_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS CHG, COALESCE(OBJTEXT, '') AS TXT ` +
     `FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(src)}, '*ALL')) X WHERE OBJTYPE NOT IN ('*JRN', '*JRNRCV') AND NOT (OBJTYPE = '*FILE' AND OBJATTRIBUTE = 'SAVF') ORDER BY CHANGE_TIMESTAMP DESC`, 20000));
   const picks = await vscode.window.showQuickPick(all.map(r => ({ label: s(r, 'NAME'), description: `${s(r, 'TYPE')} ${s(r, 'ATTR')} · ${s(r, 'CHG')}`, detail: s(r, 'TXT'), r,

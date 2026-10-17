@@ -7,7 +7,7 @@ import {
   AuthFlag, JOURNAL_ENTRY_TYPES, NEEDS, Privilege, changeDataAreaCommand, diffImages, grantCommand,
   healthFindings, journalSql, pairJournalEntries, printable, resolveAuthority, summarizeChanges,
 } from '../core/admin';
-import { Report, showReport } from './reportPanel';
+import { Report, reportProgress, showReport } from './reportPanel';
 
 type ObjArg = { library: string; name: string; type?: string };
 const s = (r: Record<string, unknown> | undefined, k: string) => String(r?.[k] ?? '').trim();
@@ -56,11 +56,11 @@ async function journalExplorer(manager: ConnectionManager, o?: ObjArg, rrn?: num
   let rows: Record<string, unknown>[];
   let withData = true;
   try {
-    rows = await progress('Reading the journal…', () => conn.rows<Record<string, unknown>>(journalSql({ ...q, withData: true }), 500));
+    rows = await reportProgress('journal', 'Reading the journal…', () => conn.rows<Record<string, unknown>>(journalSql({ ...q, withData: true }), 500));
   } catch (e) {
     log(`Journal with entry data failed, retrying without: ${errorMessage(e)}`);
     withData = false;
-    rows = await progress('Reading the journal…', () => conn.rows<Record<string, unknown>>(journalSql(q), 500));
+    rows = await reportProgress('journal', 'Reading the journal…', () => conn.rows<Record<string, unknown>>(journalSql(q), 500));
   }
   const changes = pairJournalEntries(rows.reverse().map(r => ({
     seq: s(r, 'SEQ'), time: s(r, 'TIME'), type: s(r, 'TYPE'), rrn: s(r, 'RRN'), user: s(r, 'USR'), job: s(r, 'JOB'), program: s(r, 'PGM'),
@@ -136,7 +136,7 @@ async function checkAuthority(manager: ConnectionManager, o?: ObjArg): Promise<v
   if (!need) { return; }
   const n = NEEDS[need.key];
 
-  const [{ rows, privs }, libPrivs, uinfo] = await progress(`Checking ${user}'s authority…`, () => Promise.all([
+  const [{ rows, privs }, libPrivs, uinfo] = await reportProgress('authority', `Checking ${user}'s authority…`, () => Promise.all([
     privilegesOf(conn, obj!.library, obj!.name, type),
     privilegesOf(conn, 'QSYS', obj!.library, '*LIB'),
     conn.rows<Record<string, unknown>>(
@@ -308,7 +308,7 @@ async function trySql<T = Record<string, unknown>>(conn: IbmiConnection, what: s
 async function systemHealth(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
   const skipped: string[] = [];
-  const [env, status, currency, groupsLocal, pending, certs, users] = await progress('Checking PTFs and system health (PTF currency asks IBM, this can take a minute)…', () => Promise.all([
+  const [env, status, currency, groupsLocal, pending, certs, users] = await reportProgress('health', 'Checking PTFs and system health (PTF currency asks IBM, this can take a minute)…', () => Promise.all([
     trySql(conn, 'Release', `SELECT OS_NAME, OS_VERSION, OS_RELEASE, HOST_NAME FROM SYSIBMADM.ENV_SYS_INFO`, 1, skipped),
     trySql(conn, 'Storage', `SELECT * FROM QSYS2.SYSTEM_STATUS_INFO`, 1, skipped),
     trySql(conn, 'PTF group currency (needs internet access from the IBM i)',

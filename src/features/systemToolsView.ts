@@ -13,7 +13,7 @@ import {
 } from '../core/systemCommands';
 import { sqlString } from '../core/util';
 import { readLibraries } from './libraryLookup';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 /** Commands the report pages may run (anything else posted by a webview is ignored). */
 const ALLOWED = new Set([
@@ -52,7 +52,7 @@ async function run(conn: IbmiConnection, cmd: string, warn = ''): Promise<boolea
 
 async function installedSoftware(manager: ConnectionManager): Promise<void> {
   const conn = manager.require();
-  const [prods, lic] = await progress(vscode.l10n.t('Reading installed software…'), () => Promise.all([
+  const [prods, lic] = await reportProgress('software', vscode.l10n.t('Reading installed software…'), () => Promise.all([
     conn.rows<Row>(`SELECT * FROM QSYS2.SOFTWARE_PRODUCT_INFO ORDER BY PRODUCT_ID, PRODUCT_OPTION`, 5000).catch(e => { log(errorMessage(e)); return [] as Row[]; }),
     conn.rows<Row>(`SELECT * FROM QSYS2.LICENSE_INFO`, 2000).catch(e => { log(errorMessage(e)); return [] as Row[]; }),
   ]));
@@ -80,8 +80,8 @@ async function ptfLookup(manager: ConnectionManager): Promise<void> {
   if (!v) { return; }
   const ids = parsePtfIds(v);
   if (!ids.length) { throw new Error(vscode.l10n.t('No PTF ID found (two letters and five digits, like SI12345).')); }
-  const rows = await conn.rows<Row>(`SELECT PTF_IDENTIFIER AS ID, PTF_PRODUCT_ID AS PROD, PTF_LOADED_STATUS AS ST, COALESCE(PTF_IPL_ACTION, '') AS IPL, COALESCE(PTF_SUPERSEDED_BY_PTF, '') AS SUP, ` +
-    `VARCHAR_FORMAT(PTF_STATUS_TIMESTAMP, 'YYYY-MM-DD') AS D FROM QSYS2.PTF_INFO WHERE PTF_IDENTIFIER IN (${ids.map(sqlString).join(', ')})`, 500);
+  const rows = await reportProgress('ptfLookup', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT PTF_IDENTIFIER AS ID, PTF_PRODUCT_ID AS PROD, PTF_LOADED_STATUS AS ST, COALESCE(PTF_IPL_ACTION, '') AS IPL, COALESCE(PTF_SUPERSEDED_BY_PTF, '') AS SUP, ` +
+    `VARCHAR_FORMAT(PTF_STATUS_TIMESTAMP, 'YYYY-MM-DD') AS D FROM QSYS2.PTF_INFO WHERE PTF_IDENTIFIER IN (${ids.map(sqlString).join(', ')})`, 500));
   const by = new Map(rows.map(r => [s(r, 'ID'), r]));
   showReport('ptfLookup', {
     title: vscode.l10n.t('PTF lookup — {0}', conn.profile.name), subtitle: vscode.l10n.t('{0} of {1} applied (or superseded by a newer one).', ids.filter(i => /APPLIED|SUPERSEDED/i.test(s(by.get(i), 'ST'))).length, ids.length),
@@ -96,7 +96,7 @@ async function ptfLookup(manager: ConnectionManager): Promise<void> {
 async function journals(manager: ConnectionManager, x?: unknown): Promise<void> {
   const conn = manager.require();
   const lib = typeof x === 'string' ? x : (x as { library?: string } | undefined)?.library;
-  const rows = await progress(vscode.l10n.t('Reading journals…'), () => conn.rows<Row>(`SELECT * FROM QSYS2.JOURNAL_INFO${lib ? ` WHERE JOURNAL_LIBRARY = ${sqlString(lib)}` : ` WHERE JOURNAL_LIBRARY NOT LIKE 'Q%'`} ORDER BY JOURNAL_LIBRARY, JOURNAL_NAME`, 2000));
+  const rows = await reportProgress('journals', vscode.l10n.t('Reading journals…'), () => conn.rows<Row>(`SELECT * FROM QSYS2.JOURNAL_INFO${lib ? ` WHERE JOURNAL_LIBRARY = ${sqlString(lib)}` : ` WHERE JOURNAL_LIBRARY NOT LIKE 'Q%'`} ORDER BY JOURNAL_LIBRARY, JOURNAL_NAME`, 2000));
   const kb = (r: Row) => Number(pick(r, 'TOTAL_SIZE_JOURNAL_RECEIVERS') || 0);
   showReport('journals', {
     title: `Journals${lib ? ` in ${lib}` : ''}`, subtitle: vscode.l10n.t('{0} journal(s). Click one to change its receiver or see what it journals.', rows.length),
@@ -123,7 +123,7 @@ async function journalRow(manager: ConnectionManager, lib: string, jrn: string):
     if (l) { await run(conn, strjrnlibCommand(l, lib, jrn), vscode.l10n.t('Tables, data areas and data queues created in the library from now on are journaled automatically (with before and after images).')); }
     return;
   }
-  const objs = await conn.rows<Row>(`SELECT * FROM QSYS2.JOURNALED_OBJECTS WHERE JOURNAL_LIBRARY = ${sqlString(lib)} AND JOURNAL_NAME = ${sqlString(jrn)} ORDER BY OBJECT_LIBRARY, OBJECT_NAME FETCH FIRST 5000 ROWS ONLY`, 5000);
+  const objs = await reportProgress('journalObjs', vscode.l10n.t('Reading from the IBM i…'), () => conn.rows<Row>(`SELECT * FROM QSYS2.JOURNALED_OBJECTS WHERE JOURNAL_LIBRARY = ${sqlString(lib)} AND JOURNAL_NAME = ${sqlString(jrn)} ORDER BY OBJECT_LIBRARY, OBJECT_NAME FETCH FIRST 5000 ROWS ONLY`, 5000));
   showReport('journalObjs', {
     title: vscode.l10n.t('Objects journaled to {0}/{1}', lib, jrn), subtitle: vscode.l10n.t('{0} object(s).', objs.length),
     actions: [{ label: vscode.l10n.t('All journals'), command: 'vanthrex.journals' }],
@@ -231,7 +231,7 @@ async function compareSystemValues(manager: ConnectionManager): Promise<void> {
   const b = others.length === 1 ? others[0] : (await vscode.window.showQuickPick(others.map(c => ({ label: c.profile.name, c })), { title: vscode.l10n.t('Compare {0} with…', a.profile.name) }))?.c;
   if (!b) { return; }
   const sql = `SELECT SYSTEM_VALUE_NAME AS N, COALESCE(CURRENT_CHARACTER_VALUE, VARCHAR(CURRENT_NUMERIC_VALUE), '') AS V FROM QSYS2.SYSTEM_VALUE_INFO`;
-  const [ra, rb] = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Reading system values…') }, () => Promise.all([a.rows<Row>(sql, 2000), b.rows<Row>(sql, 2000)]));
+  const [ra, rb] = await reportProgress('compareSysval', vscode.l10n.t('Reading system values…'), () => Promise.all([a.rows<Row>(sql, 2000), b.rows<Row>(sql, 2000)]));
   const toMap = (rows: Row[]) => Object.fromEntries(rows.map(r => [s(r, 'N'), s(r, 'V')]));
   const diff = diffSystemValues(toMap(ra), toMap(rb));
   const real = diff.filter(d => !d.same && !EXPECTED_DIFFERENT.test(d.name));

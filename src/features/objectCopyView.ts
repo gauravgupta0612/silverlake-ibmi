@@ -6,7 +6,7 @@ import { errorMessage, logError } from '../core/log';
 import { ConnectionManager } from '../core/manager';
 import { cpysrcfCommand, crtdupobjCommand, duplicatesSql, moveCommand, renameCommand } from '../core/objectCommands';
 import { assertSystemName, parseMemberPath, sqlString } from '../core/util';
-import { showReport } from './reportPanel';
+import { reportProgress, showReport } from './reportPanel';
 
 /** Commands the report pages may run (anything else posted by a webview is ignored). */
 const ALLOWED = new Set([
@@ -127,7 +127,7 @@ async function findDuplicates(manager: ConnectionManager, o?: Obj): Promise<void
   const picked = await vscode.window.showQuickPick(cols.map(c => ({ label: c.name, description: c.type, picked: c.pk })), { canPickMany: true, title: vscode.l10n.t('Rows count as duplicates when these columns are equal') });
   if (!picked?.length) { return; }
   const keys = picked.map(p => p.label);
-  const rows = await progress(vscode.l10n.t('Looking for duplicates…'), () => conn.rows<Row>(duplicatesSql(t.library, t.name, keys), 500));
+  const rows = await reportProgress('dups', vscode.l10n.t('Looking for duplicates…'), () => conn.rows<Row>(duplicatesSql(t.library, t.name, keys), 500));
   showReport('dups', {
     title: vscode.l10n.t('Duplicates in {0}/{1}', t.library, t.name), subtitle: rows.length ? `${rows.length} value(s) appear more than once (by ${keys.join(', ')}), most copies first.` : `No duplicates by ${keys.join(', ')}.`,
     actions: [{ label: vscode.l10n.t('Check other columns'), command: 'vanthrex.findDuplicates', args: [t] }, { label: vscode.l10n.t('Edit data'), command: 'vanthrex.editData', args: [t] }],
