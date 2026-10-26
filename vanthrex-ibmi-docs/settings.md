@@ -103,6 +103,8 @@ Open **File → Preferences → Settings** and search for *Vanthrex*, or edit `s
 | `vanthrex.editor.checkCharacters` | boolean | `true` | Underline characters that break a compile or a CCSID conversion (tabs, control characters, no-break spaces, curly quotes, characters lost in a conversion) when a source is opened or saved. |
 | `vanthrex.csvSeparator` | string | `","` | Separator of CSV files written by **Report to CSV** (`;` for spreadsheets set up for a comma as decimal separator). Values: `,`, `;`, `	`. |
 | `vanthrex.jobHistoryDays` | number | `30` | Days of history log read by **Job Run History**. |
+| `vanthrex.unusedIndexDays` | number | `180` | Days without query use or open before **Unused Indexes** proposes an index. |
+| `vanthrex.spoolSearchDays` | number | `7` | Days of spooled files searched by **Find a Text in Spooled Files**. |
 
 ## RPG check rules
 

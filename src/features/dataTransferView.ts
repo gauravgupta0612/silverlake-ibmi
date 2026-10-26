@@ -9,7 +9,7 @@ import { insertScript } from '../core/testData';
 import { Column, buildXlsx, insertStatements, mapColumns, parseCsv, readSheet, toJson, unzip } from '../core/dataTransfer';
 import { showReport } from './reportPanel';
 
-type Obj = { library: string; name: string };
+type Obj = { library: string; name: string; file?: vscode.Uri };
 type Row = Record<string, unknown>;
 const progress = <T>(title: string, fn: () => Promise<T>) =>
   vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title }, fn);
@@ -94,7 +94,7 @@ async function exportQuery(manager: ConnectionManager): Promise<void> {
 interface Pending { table: Obj; columns: Column[]; mapping: number[]; rows: string[][]; replace: boolean; file: string }
 let pending: Pending | undefined;
 
-async function readFileRows(uri: vscode.Uri): Promise<string[][]> {
+export async function readFileRows(uri: vscode.Uri): Promise<string[][]> {
   const data = await vscode.workspace.fs.readFile(uri);
   if (/\.xlsx$/i.test(uri.fsPath)) {
     const files = unzip(data, d => new Uint8Array(zlib.inflateRawSync(d)));
@@ -115,7 +115,7 @@ async function importData(manager: ConnectionManager, o?: Obj): Promise<void> {
   const conn = manager.require();
   const t = await askTable('Import into table', o);
   if (!t) { return; }
-  const src = await vscode.window.showOpenDialog({ canSelectMany: false, filters: { 'CSV or Excel': ['csv', 'txt', 'xlsx'] }, openLabel: 'Import' });
+  const src = o?.file ? [o.file] : await vscode.window.showOpenDialog({ canSelectMany: false, filters: { 'CSV or Excel': ['csv', 'txt', 'xlsx'] }, openLabel: 'Import' });
   if (!src?.[0]) { return; }
   const all = await readFileRows(src[0]);
   if (all.length < 2) { throw new Error(vscode.l10n.t('The file needs a header row and at least one data row.')); }
@@ -173,7 +173,7 @@ export function registerDataTransfer(context: vscode.ExtensionContext, manager: 
   const guard = <A extends unknown[]>(fn: (...a: A) => Promise<unknown>) => async (...a: A) => {
     try { await fn(...a); } catch (e) { logError(e); vscode.window.showErrorMessage(errorMessage(e)); }
   };
-  const obj = (x: unknown) => { const o = x as Partial<Obj> | undefined; return o?.library && o?.name ? { library: o.library, name: o.name } : undefined; };
+  const obj = (x: unknown) => { const o = x as Partial<Obj> | undefined; return o?.library && o?.name ? { library: o.library, name: o.name, file: o.file instanceof vscode.Uri ? o.file : undefined } : undefined; };
   context.subscriptions.push(
     vscode.commands.registerCommand('vanthrex.exportData', guard((x?: unknown) => exportData(manager, obj(x)))),
     vscode.commands.registerCommand('vanthrex.exportQuery', guard(() => exportQuery(manager))),

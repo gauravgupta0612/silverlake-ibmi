@@ -84,6 +84,7 @@ async function rowOptions(manager: ConnectionManager, state: vscode.Memento, sch
     ...(o.kind === 'procedure' ? [{ label: vscode.l10n.t('$(play) Call this procedure…'), id: 'call' }] : []),
     ...(data ? [{ label: vscode.l10n.t('$(table) Query the data…'), id: 'query' }, { label: vscode.l10n.t('$(edit) Edit the data…'), id: 'edit' }] : []),
     ...(o.kind === 'table' || o.kind === 'physical' ? [{ label: vscode.l10n.t('$(references) What depends on this table?'), id: 'deps' }] : []),
+    ...(o.kind === 'trigger' ? [{ label: vscode.l10n.t('$(debug-start) Enable this trigger'), id: 'trgOn' }, { label: vscode.l10n.t('$(debug-pause) Disable this trigger'), id: 'trgOff' }] : []),
     { label: vscode.l10n.t('$(copy) Copy name'), id: 'copy' },
   ];
   const pick = await vscode.window.showQuickPick(items, { title: `${kindText(o.kind)} ${schema}.${o.name}` });
@@ -95,6 +96,15 @@ async function rowOptions(manager: ConnectionManager, state: vscode.Memento, sch
     case 'query': await vscode.commands.executeCommand('vanthrex.sqlQuery', sys); break;
     case 'edit': await vscode.commands.executeCommand('vanthrex.editData', sys); break;
     case 'deps': await vscode.commands.executeCommand('vanthrex.tableDependents', sys); break;
+    case 'trgOn': case 'trgOff': {
+      const on = pick.id === 'trgOn';
+      const stmt = `ALTER TRIGGER ${schema}.${/^[A-Z$#@_][A-Z0-9$#@_]*$/.test(o.name) ? o.name : `"${o.name.replace(/"/g, '""')}"`} ${on ? 'ENABLE' : 'DISABLE'}`;
+      const go = on ? vscode.l10n.t('Enable') : vscode.l10n.t('Disable');
+      if (await vscode.window.showWarningMessage(on ? vscode.l10n.t('Enable trigger {0}?', o.name) : vscode.l10n.t('Disable trigger {0}? Its rules stop running until it is enabled again.', o.name), { modal: true, detail: stmt }, go) !== go) { break; }
+      await manager.require().sql(stmt);
+      vscode.window.setStatusBarMessage(on ? vscode.l10n.t('Trigger {0} enabled.', o.name) : vscode.l10n.t('Trigger {0} disabled.', o.name), 5000);
+      break;
+    }
     case 'copy': await vscode.env.clipboard.writeText(`${schema}.${o.name}`); break;
   }
 }

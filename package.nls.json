@@ -546,5 +546,17 @@
   "command.findMessageInJobLogs": "Find a Message in Job Logs…",
   "config.editor.checkCharacters": "Underline characters that break a compile or a CCSID conversion (tabs, control characters, no-break spaces, curly quotes, characters lost in a conversion) when a source is opened or saved.",
   "config.csvSeparator": "Separator of CSV files written by **Report to CSV** (`;` for spreadsheets set up for a comma as decimal separator).",
-  "config.jobHistoryDays": "Days of history log read by **Job Run History**."
+  "config.jobHistoryDays": "Days of history log read by **Job Run History**.",
+  "command.unusedIndexes": "Unused Indexes of a Library…",
+  "command.dropIndex": "Drop Unused Index",
+  "command.journalCoverage": "Journal Coverage of a Library…",
+  "command.journalCoverage.start": "Start Journaling the Files Not Journaled",
+  "command.levelCheck": "Programs That Would Get a Level Check…",
+  "command.librarySnapshot": "Take a Library Snapshot",
+  "command.compareSnapshot": "Compare Library With Snapshot…",
+  "command.csvToTable": "Create Table From CSV or Excel File…",
+  "command.jsonTable": "JSON_TABLE Query From a JSON Sample",
+  "command.searchSpooledFiles": "Find a Text in Spooled Files…",
+  "config.unusedIndexDays": "Days without query use or open before **Unused Indexes** proposes an index.",
+  "config.spoolSearchDays": "Days of spooled files searched by **Find a Text in Spooled Files**."
 }

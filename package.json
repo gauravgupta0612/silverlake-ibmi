@@ -2268,6 +2268,66 @@
         "title": "%command.findMessageInJobLogs%",
         "category": "Vanthrex",
         "icon": "$(search)"
+      },
+      {
+        "command": "vanthrex.unusedIndexes",
+        "title": "%command.unusedIndexes%",
+        "category": "Vanthrex",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "vanthrex.dropIndex",
+        "title": "%command.dropIndex%",
+        "category": "Vanthrex",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "vanthrex.journalCoverage",
+        "title": "%command.journalCoverage%",
+        "category": "Vanthrex",
+        "icon": "$(book)"
+      },
+      {
+        "command": "vanthrex.journalCoverage.start",
+        "title": "%command.journalCoverage.start%",
+        "category": "Vanthrex",
+        "icon": "$(book)"
+      },
+      {
+        "command": "vanthrex.levelCheck",
+        "title": "%command.levelCheck%",
+        "category": "Vanthrex",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "vanthrex.librarySnapshot",
+        "title": "%command.librarySnapshot%",
+        "category": "Vanthrex",
+        "icon": "$(device-camera)"
+      },
+      {
+        "command": "vanthrex.compareSnapshot",
+        "title": "%command.compareSnapshot%",
+        "category": "Vanthrex",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "vanthrex.csvToTable",
+        "title": "%command.csvToTable%",
+        "category": "Vanthrex",
+        "icon": "$(table)"
+      },
+      {
+        "command": "vanthrex.jsonTable",
+        "title": "%command.jsonTable%",
+        "category": "Vanthrex",
+        "icon": "$(json)"
+      },
+      {
+        "command": "vanthrex.searchSpooledFiles",
+        "title": "%command.searchSpooledFiles%",
+        "category": "Vanthrex",
+        "icon": "$(search)"
       }
     ],
     "menus": {
@@ -3268,6 +3328,31 @@
           "command": "vanthrex.reportToCsv",
           "when": "view == vanthrex.spool && viewItem == spool",
           "group": "2@9"
+        },
+        {
+          "command": "vanthrex.unusedIndexes",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@13"
+        },
+        {
+          "command": "vanthrex.journalCoverage",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@14"
+        },
+        {
+          "command": "vanthrex.librarySnapshot",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@15"
+        },
+        {
+          "command": "vanthrex.compareSnapshot",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@16"
+        },
+        {
+          "command": "vanthrex.levelCheck",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@11"
         }
       ],
       "editor/title": [
@@ -4332,6 +4417,38 @@
         {
           "command": "vanthrex.findMessageInJobLogs",
           "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.dropIndex",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.journalCoverage.start",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.unusedIndexes",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.journalCoverage",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.levelCheck",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.librarySnapshot",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.compareSnapshot",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.searchSpooledFiles",
+          "when": "vanthrex.connected"
         }
       ],
       "vanthrex.ai": [
@@ -4432,6 +4549,16 @@
           "command": "vanthrex.createProject",
           "when": "explorerResourceIsRoot",
           "group": "7_vanthrex@6"
+        },
+        {
+          "command": "vanthrex.csvToTable",
+          "when": "resourceExtname =~ /^\\.(csv|xlsx)$/",
+          "group": "7_vanthrex@7"
+        },
+        {
+          "command": "vanthrex.jsonTable",
+          "when": "resourceExtname == .json",
+          "group": "7_vanthrex@8"
         }
       ],
       "notebook/toolbar": [
@@ -5582,6 +5709,20 @@
           "minimum": 1,
           "maximum": 366,
           "markdownDescription": "%config.jobHistoryDays%"
+        },
+        "vanthrex.unusedIndexDays": {
+          "type": "number",
+          "default": 180,
+          "minimum": 7,
+          "maximum": 3660,
+          "markdownDescription": "%config.unusedIndexDays%"
+        },
+        "vanthrex.spoolSearchDays": {
+          "type": "number",
+          "default": 7,
+          "minimum": 1,
+          "maximum": 90,
+          "markdownDescription": "%config.spoolSearchDays%"
         }
       }
     },

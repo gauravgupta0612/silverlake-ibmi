@@ -57,6 +57,24 @@ Everything sent to the AI now goes through one guard, and nothing the AI does ca
 - **Job Run History…**: how long each run of a batch job took over the last 30 days (`vanthrex.jobHistoryDays`) from the history log — start, end, elapsed and CPU time, end code — with the average, the longest, failed runs in red and runs twice as long as usual marked; click a run for its job log.
 - **Find a Message in Job Logs…**: where a message ID (CPF4131, CPF41*) or words of a message ("level check") appeared in the job logs of a user's recent jobs, with the program that sent it; click for the whole job log.
 
+**Database care**
+
+- **Unused Indexes of a Library…** (right-click a library, quick menu): indexes and keyed logical files no query used and nothing opened for 180 days (`vanthrex.unusedIndexDays`), largest first, with the space they take; unique, primary-key and constraint indexes and new ones are never proposed; **Drop…** on a row shows the `DROP INDEX` / `DLTF` and asks first.
+- **Journal Coverage of a Library…** (right-click a library): every physical file with its journal and images, files not journaled in red, and **Commands to journal the files…**: `STRJRNPF` commands (50 files each, `*BOTH` or `*AFTER`, `OMTJRNE(*OPNCLO)`) opened for review and run only when you confirm.
+- **Programs That Would Get a Level Check…** (right-click a file): compares the record format level of the file now with the level each program was compiled with (DSPFD / DSPPGMREF, in the file library or the user library list) and lists the programs to recompile before they end with CPF4131.
+- **Take a Library Snapshot** / **Compare Library With Snapshot…** (right-click a library): the list of objects with size, change date and source member saved on this computer (never data); after a release, see what was added, changed or removed.
+- **Enable / Disable this trigger** in the options of a trigger in the schema browser (`ALTER TRIGGER … ENABLE / DISABLE`, after a confirmation).
+
+**SQL generators**
+
+- **Create Table From CSV or Excel File…** (Explorer right-click on a .csv / .xlsx, quick menu): column names made valid for Db2, types guessed from the data (INTEGER, BIGINT, DECIMAL with its precision, DATE, TIMESTAMP, VARCHAR; codes with leading zeros stay text; nullable when a value is missing), `LABEL ON` with the original headers; the statements open for review, then **Create and Import** creates the table from the editor text and imports the rows.
+- **JSON_TABLE Query From a JSON Sample** (Explorer right-click on a .json, selected JSON in an editor): a `SELECT` over `JSON_TABLE` with one typed column per value, nested objects flattened and `NESTED PATH` for arrays of objects — reading from an IFS file (`GET_CLOB_FROM_FILE`), a table column or a host variable.
+- **Find a Text in Spooled Files…**: an order number or an error text across the recent spooled files of a user (`vanthrex.spoolSearchDays`), the lines found with one click to open the spooled file.
+
+**Editor**
+
+- **Comment blocks fold** in RPG and CL: three or more comment lines in a row (`//`, `*` in column 7, `/* */`) fold like code, and *Fold All Block Comments* folds them all.
+
 ## 2.4.0
 
 **Local development (like Code for IBM i, with less setup)**

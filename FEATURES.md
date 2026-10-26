@@ -902,6 +902,42 @@ Also in the right-click menus: *AI: Generate Test Data for This Table* and *AI: 
 
 - **What:** *Find a Message in Job Logs…*: a message ID or words of a message across the job logs of a user's recent jobs, with the sending program.
 
+### 123. Unused indexes — new in 2.5
+
+- **What:** *Unused Indexes of a Library…*: indexes and keyed logical files not used by a query and not opened for 180 days (`vanthrex.unusedIndexDays`); unique and constraint indexes never proposed; *Drop…* asks first.
+
+### 124. Journal coverage — new in 2.5
+
+- **What:** *Journal Coverage of a Library…*: physical files not journaled in red, with the `STRJRNPF` commands to journal them — reviewed first, run only on confirmation.
+
+### 125. Level check finder — new in 2.5
+
+- **What:** *Programs That Would Get a Level Check…* (right-click a file): programs compiled against another record format level than the file has now, to recompile before they end with CPF4131.
+
+### 126. Library snapshots — new in 2.5
+
+- **What:** *Take a Library Snapshot* and *Compare Library With Snapshot…*: objects added, changed or removed since the snapshot (kept on this computer, never data).
+
+### 127. Create table from CSV — new in 2.5
+
+- **What:** *Create Table From CSV or Excel File…*: valid column names, types guessed from the data, `LABEL ON` with the headers; *Create and Import* loads the rows.
+
+### 128. JSON_TABLE builder — new in 2.5
+
+- **What:** *JSON_TABLE Query From a JSON Sample*: one typed column per value, nested objects flattened, `NESTED PATH` for arrays — from the IFS, a column or a host variable.
+
+### 129. Search spooled files — new in 2.5
+
+- **What:** *Find a Text in Spooled Files…*: a text across a user's recent spooled files, one click to open the one found.
+
+### 130. Triggers on and off — new in 2.5
+
+- **What:** Trigger options in the schema browser: *Enable this trigger* / *Disable this trigger* (`ALTER TRIGGER`), after a confirmation.
+
+### 131. Comment folding — new in 2.5
+
+- **What:** Blocks of three or more comment lines fold in RPG and CL.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

@@ -1,6 +1,7 @@
 // Editor help for RPG and CL: folding, parameter hints while typing a call, Format Document for fully free RPG, the
 // fixed-format field under the cursor (status bar, jump to next/previous field, field list), and for CL an outline,
 // folding, Go to Definition, Find All References and hovers on variables.
+import { commentBlocks } from '../core/sqlGen';
 import * as vscode from 'vscode';
 import { activeCall, BIF_SIGNATURES, fieldAt, formatFreeRpg, nextFieldColumn, rpgFolds, rpgSignatures } from '../rpg/editing';
 import { clDefinition, clFolds, clReferences, clSymbols, ClSymbolKind } from '../core/clLanguage';
@@ -38,13 +39,15 @@ function fixedLanguage(doc: vscode.TextDocument): 'rpgle' | 'dds' | undefined {
   return doc.languageId === 'rpgle' ? 'rpgle' : doc.languageId === 'dds' ? 'dds' : undefined;
 }
 
+const commentFolds = (doc: vscode.TextDocument, language: string) => commentBlocks(doc.getText(), language).map(b => new vscode.FoldingRange(b.start, b.end, vscode.FoldingRangeKind.Comment));
+
 export function registerEditorAssist(context: vscode.ExtensionContext, _manager: ConnectionManager): void {
   const cfg = () => vscode.workspace.getConfiguration('vanthrex.editor');
 
   // ---------------------------------------------------------------- RPG
   context.subscriptions.push(
     vscode.languages.registerFoldingRangeProvider(RPG, {
-      provideFoldingRanges: doc => rpgFolds(doc.getText()).map(f => new vscode.FoldingRange(f.start, f.end)),
+      provideFoldingRanges: doc => [...rpgFolds(doc.getText()).map(f => new vscode.FoldingRange(f.start, f.end)), ...commentFolds(doc, 'rpgle')],
     }),
     vscode.languages.registerSignatureHelpProvider(RPG, {
       provideSignatureHelp: (doc, pos) => {
@@ -151,7 +154,7 @@ export function registerEditorAssist(context: vscode.ExtensionContext, _manager:
       }),
     }),
     vscode.languages.registerFoldingRangeProvider(CL, {
-      provideFoldingRanges: doc => clFolds(doc.getText()).map(f => new vscode.FoldingRange(f.start, f.end)),
+      provideFoldingRanges: doc => [...clFolds(doc.getText()).map(f => new vscode.FoldingRange(f.start, f.end)), ...commentFolds(doc, 'cl')],
     }),
     vscode.languages.registerDefinitionProvider(CL, {
       provideDefinition: (doc, pos) => {

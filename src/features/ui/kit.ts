@@ -26,6 +26,7 @@ body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size
 .vx-table tr.link { cursor: pointer; } .vx-table tr.link:hover td { background: var(--vscode-list-hoverBackground); }
 .vx-table tr.bad td { color: var(--vscode-errorForeground); }
 .vx-table tr.different td:first-child { border-left: 3px solid var(--vscode-gitDecoration-modifiedResourceForeground, #c93); }
+.vx-table tr.good td:first-child { border-left: 3px solid var(--vscode-gitDecoration-addedResourceForeground, #3a3); }
 .vx-table tr.onlyA td:first-child { border-left: 3px solid var(--vscode-gitDecoration-addedResourceForeground, #4a4); }
 .vx-table tr.onlyB td:first-child { border-left: 3px solid var(--vscode-gitDecoration-deletedResourceForeground, #c44); }
 .vx-more { margin-top: 6px; }

@@ -87,6 +87,8 @@ import { registerMultiSystem } from './features/multiSystemView';
 import { registerProjectDocs } from './features/projectDocsView';
 import { registerSourceHelpers } from './features/sourceHelpersView';
 import { registerJobHistory } from './features/jobHistoryView';
+import { registerDbCare } from './features/dbCareView';
+import { registerSqlGen } from './features/sqlGenView';
 
 let manager: ConnectionManager | undefined;
 
@@ -213,6 +215,8 @@ export function activate(context: vscode.ExtensionContext): void {
   step('project and docs', () => registerProjectDocs(context, m));
   step('source helpers', () => registerSourceHelpers(context, m));
   step('job history', () => registerJobHistory(context, m));
+  step('database care', () => registerDbCare(context, m));
+  step('sql generators', () => registerSqlGen(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))
