@@ -2,6 +2,7 @@
 // and the job log with the failing source statement.
 
 import * as vscode from 'vscode';
+import { isDenied } from './guard';
 import { IbmiConnection } from '../core/connection';
 import { errorMessage, log } from '../core/log';
 import { parseMemberPath, sqlString } from '../core/util';
@@ -123,7 +124,7 @@ export async function dependencyContext(conn: IbmiConnection, ref: { library: st
   const src = deps.source ?? deps.modules.find(m => m.source)?.source;
   let sourceText: string | undefined;
   const m = src ? /^([^/]+)\/([^(]+)\(([^)]+)\)$/.exec(src) : null;
-  if (m) { sourceText = await conn.readMember(m[1], m[2], m[3]).catch(() => undefined); }
+  if (m && !isDenied(m[1])) { sourceText = await conn.readMember(m[1], m[2], m[3]).catch(() => undefined); }
   return { text, deps, sourceText, sourceLabel: src };
 }
 
@@ -172,6 +173,7 @@ export async function jobLogContext(conn: IbmiConnection, jobArg: string): Promi
   if (!failing) { text.push('No user program could be identified in the job log as the place of the error.'); return out; }
   text.push(`The error happened in ${failing.lib}/${failing.pgm}${failing.module ? `, module ${failing.module}` : ''}${failing.proc ? `, procedure ${failing.proc}` : ''}${failing.stmt ? `, statement ${failing.stmt}` : ''} (message ${failing.message.id} ${failing.message.text}).`);
   const src = await failingSource(conn, failing);
+  if (src && isDenied(src.lib)) { text.push(`Its source ${src.label} is in a library that is not shared with the AI.`); return out; }
   if (!src) { text.push('Its source member was not found (the program may have been compiled from the IFS or a deleted member).'); return out; }
   let body = ''; let seqs: number[] | undefined;
   try {

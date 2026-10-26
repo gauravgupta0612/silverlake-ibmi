@@ -165,3 +165,33 @@ export function parseSpooledJobLog(text: string): JobLogRow[] {
   }
   return out;
 }
+
+/** Tables a query reads (FROM / JOIN), qualified or not; IBM i catalog and services are left out. */
+export function tablesInSql(sql: string): { library?: string; name: string }[] {
+  const clean = sql.replace(/'(?:[^']|'')*'/g, "''").replace(/--[^\n]*/g, ' ');
+  const ctes = new Set([...clean.matchAll(/(?:\bWITH|,)\s*([A-Za-z_][A-Za-z0-9_]*)\s+AS\s*\(/gi)].map(m => m[1].toUpperCase()));
+  const out = new Map<string, { library?: string; name: string }>();
+  for (const m of clean.matchAll(/\b(?:FROM|JOIN|UPDATE|INTO)\s+("?[A-Za-z$#@][A-Za-z0-9_$#@]*"?)(?:\s*([./])\s*("?[A-Za-z$#@][A-Za-z0-9_$#@]*"?))?/gi)) {
+    const a = m[1].replace(/"/g, '').toUpperCase(); const b = m[3]?.replace(/"/g, '').toUpperCase();
+    const t = b ? { library: a, name: b } : { name: a };
+    if (!b && (ctes.has(a) || /^(TABLE|LATERAL|SELECT|FINAL|NEW|OLD)$/.test(a))) { continue; }
+    if (t.library && /^(QSYS2|SYSIBM|SYSIBMADM|SYSTOOLS|QSYS)$/.test(t.library)) { continue; }
+    out.set(`${t.library ?? ''}/${t.name}`, t);
+  }
+  return [...out.values()].slice(0, 10);
+}
+
+/** Lines changed on or after a source date (YYMMDD), with context lines, marked >> — the IBM i way to see "what I changed". */
+export function datedChanges(lines: string[], dates: number[], since: number, context = 3, maxLines = 600): string {
+  const changed = lines.map((_, i) => ((dates[i] ?? 0) >= since ? i : -1)).filter(i => i >= 0);
+  if (!changed.length) { return ''; }
+  const keep = new Set<number>();
+  for (const i of changed) { for (let k = Math.max(0, i - context); k <= Math.min(lines.length - 1, i + context); k++) { keep.add(k); } }
+  const out: string[] = []; let last = -2;
+  for (const i of [...keep].sort((a, b) => a - b).slice(0, maxLines)) {
+    if (i !== last + 1) { out.push(`@@ line ${i + 1} @@`); }
+    out.push(`${changed.includes(i) ? '>>' : '  '}${String(i + 1).padStart(5)}| ${lines[i]}`);
+    last = i;
+  }
+  return out.join('\n');
+}

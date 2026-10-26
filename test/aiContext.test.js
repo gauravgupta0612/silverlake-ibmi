@@ -83,3 +83,13 @@ test('new AI commands have instructions and default questions', () => {
   }
   assert.match(p.instructions('test'), /behaviours worth testing/);
 });
+
+test('tables in a query, dated changes', () => {
+  assert.deepStrictEqual(c.tablesInSql("WITH T AS (SELECT * FROM APP.ORDERS) SELECT * FROM T JOIN cust C ON 1=1, TABLE(QSYS2.X()) Y JOIN QSYS2.SYSCOLUMNS Z ON 1=1 WHERE A = 'FROM FAKE.T'"),
+    [{ library: 'APP', name: 'ORDERS' }, { name: 'CUST' }]);
+  assert.deepStrictEqual(c.tablesInSql('select * from app/x'), [{ library: 'APP', name: 'X' }]);
+  const lines = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+  const d = c.datedChanges(lines, [1, 1, 261020, 1, 1, 1, 1, 1, 261020, 1], 261020, 1);
+  assert.strictEqual(d, '@@ line 2 @@\n      2| b\n>>    3| c\n      4| d\n@@ line 8 @@\n      8| h\n>>    9| i\n     10| j');
+  assert.strictEqual(c.datedChanges(lines, [], 1), '');
+});

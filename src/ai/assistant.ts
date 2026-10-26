@@ -11,6 +11,11 @@ import { registerAiTools } from './tools';
 import { compileErrorContext, dependencyContext, jobLogContext, programsFromMember, testContext, dependencies } from './systemContext';
 import { dependenciesForModel } from './context';
 import { memberUri } from '../features/fileSystems';
+import { spoolUri } from '../features/spool';
+import { changesContext, dataContext, securityContext, tuneContext } from './moreContext';
+import { systemStatusText } from './tools';
+import { beginScope, checkLibraries, checkSource, dataAccess, endScope, guard, initGuard, isDenied, outbound, restorer, setKnownHosts } from './guard';
+import { registerAiExtras } from './aiExtras';
 
 const PARTICIPANT = 'vanthrex.assistant';
 const LANGS = new Set(['rpgle', 'cl', 'dds', 'sql', 'cobol', 'clle']);
@@ -76,13 +81,14 @@ async function objectContext(conn: IbmiConnection | undefined, prompt: string): 
   if (!ref || !conn) { return []; }
   const out: string[] = [];
   try {
+    checkLibraries(`${ref.library}/${ref.name}`);
     const rows = await conn.rows<Record<string, unknown>>(
       `SELECT OBJNAME, OBJTYPE, OBJATTRIBUTE, OBJTEXT, OBJOWNER, OBJSIZE, VARCHAR(OBJCREATED) AS CREATED, VARCHAR(LAST_USED_TIMESTAMP) AS LAST_USED, DAYS_USED_COUNT, ` +
       `SOURCE_LIBRARY, SOURCE_FILE, SOURCE_MEMBER, JOURNALED FROM TABLE(QSYS2.OBJECT_STATISTICS(${sqlString(ref.library)}, ${sqlString(ref.type ?? '*ALL')}, ${sqlString(ref.name)}))`, 5);
     if (rows.length) { out.push(`Object ${ref.library}/${ref.name}:\n${rowsToText(Object.keys(rows[0]), rows)}`); }
     const r = rows[0];
     const lib = String(r?.SOURCE_LIBRARY ?? '').trim(), file = String(r?.SOURCE_FILE ?? '').trim(), mbr = String(r?.SOURCE_MEMBER ?? '').trim();
-    if (lib && file && mbr) {
+    if (lib && file && mbr && !isDenied(lib)) {
       const text = await conn.readMember(lib, file, mbr).catch(() => '');
       if (text) { out.push(`Its source ${lib}/${file}(${mbr}) (first part):\n\`\`\`\n${text.substring(0, 20000)}\n\`\`\``); }
     }
@@ -94,10 +100,10 @@ function historyMessages(context: vscode.ChatContext): vscode.LanguageModelChatM
   const out: vscode.LanguageModelChatMessage[] = [];
   for (const turn of context.history.slice(-10)) {
     if (turn instanceof vscode.ChatRequestTurn) {
-      out.push(vscode.LanguageModelChatMessage.User(`${turn.command ? '/' + turn.command + ' ' : ''}${turn.prompt}`));
+      out.push(vscode.LanguageModelChatMessage.User(outbound('chat history', 'previous question', `${turn.command ? '/' + turn.command + ' ' : ''}${turn.prompt}`)));
     } else if (turn instanceof vscode.ChatResponseTurn) {
       const text = turn.response.map(p => (p instanceof vscode.ChatResponseMarkdownPart ? p.value.value : '')).join('');
-      if (text) { out.push(vscode.LanguageModelChatMessage.Assistant(text)); }
+      if (text) { out.push(vscode.LanguageModelChatMessage.Assistant(outbound('chat history', 'previous answer', text))); }
     }
   }
   return out;
@@ -110,9 +116,15 @@ async function handle(manager: ConnectionManager, request: vscode.ChatRequest, c
     return {};
   }
   const command = (request.command as AiCommand | undefined) ?? undefined;
-  const conn = manager.connection;
-  const needsSource = command && ['explain', 'document', 'fix', 'modernize', 'test', 'review', 'errors'].includes(command);
+  // A system the AI may not read is treated as not connected (no system facts, no tools).
+  const conn = manager.connection && dataAccess(manager.connection) !== 'none' ? manager.connection : undefined;
+  const needsSource = command && ['explain', 'document', 'fix', 'modernize', 'test', 'review', 'errors', 'sqlio', 'changes', 'spool'].includes(command);
+  const hiddenBefore = Object.values(guard().counts).reduce((a, b) => a + b, 0);
   const source = await sourceContext(request);
+  if (source?.uri) {
+    try { checkSource(source.uri, manager.connection); }
+    catch (e) { stream.markdown(errorMessage(e)); return {}; }
+  }
   if (needsSource && !source) {
     stream.markdown('Open an RPG, CL, DDS or SQL source (or select some code) first, then ask again. You can also attach a file with **#**.');
     return {};
@@ -123,7 +135,7 @@ async function handle(manager: ConnectionManager, request: vscode.ChatRequest, c
       name: conn.profile.name, user: conn.user, libraries: conn.profile.libraries, currentLibrary: conn.profile.currentLibrary,
       osRelease: await osRelease(conn),
     } : undefined,
-    source: source && (needsSource || command === undefined || command === 'sql') ? source : undefined,
+    source: source && (needsSource || command === undefined || command === 'sql' || command === 'tune') && command !== 'changes' ? source : undefined,
     diagnostics: command === 'fix' || command === 'errors' ? compileDiagnostics(source?.uri) : undefined,
     extra: command === 'object' ? await objectContext(conn, request.prompt) : [],
   };
@@ -138,6 +150,35 @@ async function handle(manager: ConnectionManager, request: vscode.ChatRequest, c
       const pgm = (await programsFromMember(conn, source.uri).catch(() => []))[0];
       if (pgm) { stream.progress(vscode.l10n.t('Reading what {0}/{1} uses…', pgm.lib, pgm.name)); ctx.extra!.push(`The program compiled from this source, as read from the system:\n${dependenciesForModel(await dependencies(conn, pgm.lib, pgm.name, pgm.type))}`); }
     }
+    if (command === 'tune') {
+      const sql = /\b(SELECT|WITH|UPDATE|DELETE|INSERT)\b/i.test(request.prompt) ? request.prompt : source?.text ?? '';
+      if (!sql.trim()) { stream.markdown(vscode.l10n.t('Select the SQL statement in an SQL editor (or paste it after /tune), then ask again.')); return {}; }
+      if (conn) { stream.progress(vscode.l10n.t('Reading table sizes, indexes and index advice…')); ctx.extra!.push(...await tuneContext(manager, sql)); }
+    }
+    if (command === 'changes') {
+      if (!source?.uri) { stream.markdown(vscode.l10n.t('Open the source you changed, then ask again.')); return {}; }
+      const ch = await changesContext(manager, source.uri);
+      if (!ch || !ch.diff) { stream.markdown(vscode.l10n.t('No changes found in {0} (nothing unsaved, not in Git, or no source dates). Select the changed lines and use /review instead.', source.label)); return {}; }
+      stream.markdown(vscode.l10n.t('Reviewing only the changes of {0}: {1}.', source.label, ch.how) + '\n\n');
+      ctx.extra!.push(`Changes in ${source.label} (${ch.how}):\n\`\`\`diff\n${ch.diff}\n\`\`\``);
+    }
+    if (command === 'health' || command === 'data' || command === 'security') {
+      if (!conn) { stream.markdown(vscode.l10n.t('Connect to an IBM i system first: this command reads the real system.')); return {}; }
+      if (command === 'health') { stream.progress(vscode.l10n.t('Reading the system status…')); ctx.extra!.push(await systemStatusText(manager)); }
+      if (command === 'data') {
+        const ref = parseObjectRef(request.prompt);
+        if (!ref) { stream.markdown(vscode.l10n.t('Name the table: `@vanthrex /data MYLIB/CUSTOMER 50 rows`.')); return {}; }
+        stream.progress(vscode.l10n.t('Reading the structure of {0}/{1}…', ref.library, ref.name));
+        ctx.extra!.push(...await dataContext(conn, ref.library, ref.name));
+      }
+      if (command === 'security') {
+        const ref = parseObjectRef(request.prompt);
+        const lib = ref?.library ?? /\b([A-Z$#@][A-Z0-9$#@_.]{0,9})\b/i.exec(request.prompt)?.[1]?.toUpperCase();
+        if (!lib) { stream.markdown(vscode.l10n.t('Name the object or library: `@vanthrex /security MYLIB/ORDPGM *PGM` or `@vanthrex /security MYLIB`.')); return {}; }
+        stream.progress(vscode.l10n.t('Reading the authorities…'));
+        ctx.extra!.push(...await securityContext(conn, lib, ref?.name, ref?.type));
+      }
+    }
     if (command === 'depends' || command === 'joblog') {
       if (!conn) { stream.markdown(vscode.l10n.t('Connect to an IBM i system first: this command reads the real program and job information.')); return {}; }
       if (command === 'depends') {
@@ -148,6 +189,7 @@ async function handle(manager: ConnectionManager, request: vscode.ChatRequest, c
           if (p) { ref = { library: p.lib, name: p.name, type: p.type }; }
         }
         if (!ref) { stream.markdown(vscode.l10n.t('Name the program: `@vanthrex /depends MYLIB/ORDPGM` (or open its source).')); return {}; }
+        checkLibraries(`${ref.library}/${ref.name}`);
         ctx.question = request.prompt.replace(/[A-Z$#@][A-Z0-9$#@_.]{0,9}\/[A-Z$#@][A-Z0-9$#@_.]{0,9}(\s+\*[A-Z]+)?/i, '').trim(); if (ctx.question.split(/\s+/).length < 3) { ctx.question = ''; }
         stream.progress(vscode.l10n.t('Reading the dependencies of {0}/{1}…', ref.library, ref.name));
         const d = await dependencyContext(conn, ref);
@@ -168,31 +210,37 @@ async function handle(manager: ConnectionManager, request: vscode.ChatRequest, c
       }
     }
   } catch (e) {
-    if (command === 'depends' || command === 'joblog') { stream.markdown(errorMessage(e)); return {}; }
+    if (['depends', 'joblog', 'data', 'security', 'health', 'changes', 'tune'].includes(command ?? '')) { stream.markdown(errorMessage(e)); return {}; }
     log(`AI context: ${errorMessage(e)}`);
   }
   if ((command === 'fix' || command === 'errors') && !ctx.diagnostics?.length) {
     stream.markdown('No compile errors are listed for this source. Compile it first (**Ctrl+Alt+C**), then ask again — or describe the problem.\n\n');
   }
 
+  // Everything leaves through the guard: secrets, personal data and internal names replaced by xxxx placeholders.
+  // Only the placeholders sent in this request are put back in its answer.
+  const scope = beginScope();
+  setTimeout(() => endScope(scope), 10 * 60 * 1000);
   const messages: vscode.LanguageModelChatMessage[] = [
     vscode.LanguageModelChatMessage.User(instructions(command)),
     ...historyMessages(chat),
-    vscode.LanguageModelChatMessage.User(buildUserMessage(ctx, cfg().get<number>('ai.maxSourceChars', 60000))),
+    vscode.LanguageModelChatMessage.User(outbound(`chat${command ? ' /' + command : ''}`, source?.label ?? 'question', buildUserMessage(ctx, cfg().get<number>('ai.maxSourceChars', 60000)), conn)),
   ];
   const tools = conn && cfg().get<boolean>('ai.useTools', true) ? vscode.lm.tools.filter(t => t.name.startsWith('vanthrex_')) : [];
   if (source?.uri) { stream.reference(source.uri); }
 
   let answer = '';
+  const shown = restorer(scope);
   for (let round = 0; round < 8; round++) {
     const response = await request.model.sendRequest(messages, { tools, justification: 'Vanthrex uses the language model to answer IBM i questions.' }, token);
     const calls: vscode.LanguageModelToolCallPart[] = [];
     let text = '';
     for await (const part of response.stream) {
-      if (part instanceof vscode.LanguageModelTextPart) { stream.markdown(part.value); text += part.value; }
+      // The model only ever sees placeholders; the real values are put back here, on this computer.
+      if (part instanceof vscode.LanguageModelTextPart) { const out = shown.push(part.value); if (out) { stream.markdown(out); } text += part.value; answer += out; }
       else if (part instanceof vscode.LanguageModelToolCallPart) { calls.push(part); }
     }
-    answer += text;
+    const rest = shown.flush(); if (rest) { stream.markdown(rest); answer += rest; }
     if (!calls.length) { break; }
     messages.push(vscode.LanguageModelChatMessage.Assistant([...(text ? [new vscode.LanguageModelTextPart(text)] : []), ...calls]));
     for (const call of calls) {
@@ -201,14 +249,20 @@ async function handle(manager: ConnectionManager, request: vscode.ChatRequest, c
       try {
         result = await vscode.lm.invokeTool(call.name, { input: call.input, toolInvocationToken: request.toolInvocationToken }, token);
       } catch (e) {
-        result = new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(`Tool failed: ${errorMessage(e)}`)]);
+        result = new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(outbound('tool error', call.name, `Tool failed: ${errorMessage(e)}`, conn))]);
       }
       messages.push(vscode.LanguageModelChatMessage.User([new vscode.LanguageModelToolResultPart(call.callId, result.content)]));
     }
   }
 
+  endScope(scope);
+  const hidden = Object.values(guard().counts).reduce((a, b) => a + b, 0) - hiddenBefore;
+  if (hidden > 0 && cfg().get<boolean>('ai.showPrivacyNote', true)) {
+    stream.markdown('\n\n' + vscode.l10n.t('🔒 {0} value(s) (passwords, keys, personal data, host names) were replaced by placeholders before anything was sent to the AI.', hidden));
+    stream.button({ command: 'vanthrex.ai.privacy', title: vscode.l10n.t('$(shield) What is sent to the AI') });
+  }
   const sql = firstCodeBlock(answer, ['sql']);
-  if (sql && (command === 'sql' || !command)) {
+  if (sql && (command === 'sql' || command === 'tune' || command === 'data' || !command)) {
     stream.button({ command: 'vanthrex.ai.openSql', title: vscode.l10n.t('$(database) Open in SQL scratchpad'), arguments: [sql] });
     if (/^\s*(select|with|values)\b/i.test(sql)) {
       stream.button({ command: 'vanthrex.explainSql', title: vscode.l10n.t('$(pulse) Explain performance'), arguments: [sql] });
@@ -253,7 +307,12 @@ class FixWithAi implements vscode.CodeActionProvider {
 }
 
 export function registerAi(context: vscode.ExtensionContext, manager: ConnectionManager): void {
+  initGuard(context);
+  // Host names of every saved connection are hidden from the AI.
+  const hosts = () => { try { setKnownHosts(manager.profiles.list().map(p => String(p.host ?? ''))); } catch (e) { logError(e); } };
+  hosts(); context.subscriptions.push(manager.profiles.onDidChange(hosts));
   registerAiTools(context, manager);
+  registerAiExtras(context, manager);
   if (!vscode.chat?.createChatParticipant) { log('Chat API not available in this VS Code — @vanthrex disabled'); return; }
 
   const participant = vscode.chat.createChatParticipant(PARTICIPANT, (req, chat, stream, token) =>
@@ -277,12 +336,18 @@ export function registerAi(context: vscode.ExtensionContext, manager: Connection
       if (cmd === 'errors') { f.push({ prompt: '', command: 'fix', label: vscode.l10n.t('Fix the errors in the code') }); }
       if (cmd === 'depends') { f.push({ prompt: vscode.l10n.t('What do I have to recompile or promote if I change this program?'), label: vscode.l10n.t('Impact of a change') }); }
       if (cmd === 'joblog') { f.push({ prompt: vscode.l10n.t('Write the corrected code with error handling'), label: vscode.l10n.t('Write the fix') }); }
-      if (cmd === 'sql') { f.push({ prompt: vscode.l10n.t('Make it faster and explain which index would help'), label: vscode.l10n.t('Tune this query') }); }
+      if (cmd === 'sql') { f.push({ prompt: '', command: 'tune', label: vscode.l10n.t('Tune this query') }); }
+      if (cmd === 'review' || cmd === 'changes') { f.push({ prompt: '', command: 'test', label: vscode.l10n.t('Write unit tests') }); }
+      if (cmd === 'health') { f.push({ prompt: vscode.l10n.t('Which of these jobs should I look at first, and how?'), label: vscode.l10n.t('What first?') }); }
+      if (cmd === 'modernize') { f.push({ prompt: '', command: 'sqlio', label: vscode.l10n.t('Convert the file I/O to SQL') }); }
       return f;
     },
   };
 
-  const ask = (cmd: AiCommand) => () => { rememberEditor(); return openChat(`@vanthrex /${cmd} `); };
+  const ask = (cmd: AiCommand) => (uri?: unknown, range?: unknown) => {
+    if (uri instanceof vscode.Uri) { pending = { uri, range: range instanceof vscode.Range ? range : undefined, at: Date.now() }; } else { rememberEditor(); }
+    return openChat(`@vanthrex /${cmd} `);
+  };
   context.subscriptions.push(
     participant,
     vscode.languages.registerCodeActionsProvider([{ language: 'rpgle' }, { language: 'cl' }, { language: 'dds' }, { language: 'sql' }, { language: 'cobol' }],
@@ -324,6 +389,25 @@ export function registerAi(context: vscode.ExtensionContext, manager: Connection
     }),
     vscode.commands.registerCommand('vanthrex.ai.explainObject', (n?: { library: string; name: string; type?: string }) =>
       openChat(n?.library ? `@vanthrex /object ${n.library}/${n.name} ${n.type ?? ''}` : '@vanthrex /object ', !n?.library)),
+    vscode.commands.registerCommand('vanthrex.ai.tune', ask('tune')),
+    vscode.commands.registerCommand('vanthrex.ai.sqlio', ask('sqlio')),
+    vscode.commands.registerCommand('vanthrex.ai.changes', ask('changes')),
+    vscode.commands.registerCommand('vanthrex.ai.cl', async () => {
+      const what = await vscode.window.showInputBox({ title: vscode.l10n.t('Describe the CL you need'), prompt: vscode.l10n.t('For example: save library APP to a save file and send it by FTP every night'), ignoreFocusOut: true });
+      if (what?.trim()) { pending = undefined; return openChat(`@vanthrex /cl ${what.trim()}`); }
+    }),
+    vscode.commands.registerCommand('vanthrex.ai.health', () => openChat('@vanthrex /health')),
+    vscode.commands.registerCommand('vanthrex.ai.testData', (n?: { library?: string; name?: string }) =>
+      openChat(n?.library ? `@vanthrex /data ${n.library}/${n.name} 20 rows` : '@vanthrex /data ', !n?.library)),
+    vscode.commands.registerCommand('vanthrex.ai.security', (n?: { library?: string; name?: string; type?: string; kind?: string }) =>
+      openChat(n?.kind === 'library' && n.name ? `@vanthrex /security ${n.name}` : n?.library ? `@vanthrex /security ${n.library}/${n.name} ${n.type ?? ''}`.trim() : '@vanthrex /security ', !n?.library && n?.kind !== 'library')),
+    vscode.commands.registerCommand('vanthrex.ai.explainSpool', async (n?: { job: string; name: string; number: number }) => {
+      const uri = n?.job ? spoolUri(n) : vscode.window.activeTextEditor?.document.uri;
+      if (!uri) { vscode.window.showInformationMessage(vscode.l10n.t('Right-click a spooled file, or open one first.')); return; }
+      if (n?.job) { await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri), { preview: true }); }
+      pending = { uri, at: Date.now() };
+      return openChat('@vanthrex /spool ');
+    }),
     vscode.commands.registerCommand('vanthrex.ai.openSql', async (sql: string) => {
       const doc = await vscode.workspace.openTextDocument({ language: 'sql', content: `-- Written by the Vanthrex AI assistant. Check it, then run with Ctrl+Enter.\n${sql.trim()}\n` });
       await vscode.window.showTextDocument(doc);

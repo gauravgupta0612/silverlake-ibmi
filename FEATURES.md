@@ -829,6 +829,39 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 
 - **What:** right-click a library (or the quick menu) → *Work with Job Descriptions*: user, job queue, output queue, initial library list and logging of each job description. Click one to change its initial library list or job queue (CHGJOBD, after a confirmation) or to use its library list for your connection.
 
+### 108. AI with your data protected — new in 2.5
+
+- **What:** everything Vanthrex sends to an AI model goes through one guard. Passwords, keys, tokens, private keys and credentials in URLs; e-mails, card numbers and IBANs; IP addresses and the host names of your connections; and your own list of words are replaced by placeholders (xxxx1, xxxx2…). The model only sees the placeholders; the real values are put back **on your computer** in the answer and in code you apply — only for what that request sent, and never inside a link or URL of an answer.
+- **Also:** sensitive columns (PASSWORD, EMAIL, PHONE, IBAN, CARD, SALARY, BIRTH… — `vanthrex.ai.sensitiveColumns`) come back as `xxxx`; on protected (production) connections the AI reads source and catalog facts but cannot run queries of its own, nor read spooled files or non-source IFS files (`vanthrex.ai.productionData`); queries it writes elsewhere may not call HTTP, IFS-read, spooled-file, journal or QCMDEXC functions nor rename a sensitive column; only members of source files are read as source; libraries in `vanthrex.ai.deniedLibraries` (wildcards like `PAY*`) are refused; IFS files that look like keys or credentials are refused; system data is framed so instructions hidden in a comment or a row are not obeyed; the AI never changes anything on the IBM i.
+- **See it:** after each answer, how many values were hidden. **AI: Privacy and Security** shows the settings, the counts and every request (time, system, feature, size — never the content); **AI: Preview What the AI Sees** puts the open file next to what would be sent. The audit trail is also in the *Vanthrex AI Audit* output and a file (`vanthrex.ai.audit`).
+
+### 109. AI: change the selected code — new in 2.5
+
+- **What:** **Ctrl+Alt+E** (or right-click → AI): say what to change; the proposal opens as a diff and is applied only when you click *Apply* — one Ctrl+Z undoes it, and nothing is applied if the source changed meanwhile. `vanthrex.ai.modelFamily` chooses the model.
+
+### 110. ✨ AI links above procedures — new in 2.5
+
+- **What:** *✨ Explain · Document · Tests* above every RPG procedure and subroutine, for exactly that block (`vanthrex.ai.codeLens`).
+
+### 111. More @vanthrex commands — new in 2.5
+
+| Command | What it does |
+|---|---|
+| `/tune` | Makes the SQL at the cursor faster: reads each table's size, indexes (and how often they were used) and the optimizer's index advice, then rewrites the statement and writes the CREATE INDEX worth creating. |
+| `/sqlio` | Converts native file I/O (CHAIN, READ, SETLL, WRITE, UPDATE…) to embedded SQL, with SQLSTATE checks and locking notes. |
+| `/changes` | Reviews only what you changed: against Git HEAD for local files, the copy on the IBM i for unsaved changes, or the latest change day (source dates) for members. Only the changed lines are sent. |
+| `/cl` | Writes a CL program or command from a description, with the real command definitions of the system. |
+| `/data LIB/TABLE` | Invented, realistic test data (INSERTs) that respects types, keys and foreign keys — only the table structure is read. |
+| `/health` | Is the system healthy? CPU, storage, MSGW jobs, top CPU jobs, QSYSOPR, subsystems — what needs attention first. |
+| `/security LIB/OBJ` or `LIB` | Reviews authorities: *PUBLIC exposure, owners, adopted authority — with the commands to fix each finding. |
+| `/spool` | Explains a spooled file (right-click it → *AI: Explain This Spooled File*). |
+
+Also in the right-click menus: *AI: Generate Test Data for This Table* and *AI: Review Authorities* (Libraries view), *AI: Is the System Healthy?* (connection), *AI: Explain This Spooled File* (spooled files).
+
+### 112. More tools for Copilot agent mode — new in 2.5
+
+- `#ibmiMessage` (IBM message help), `#ibmiMembers` (members of a source file), `#ibmiCommand` (CL command definitions), `#ibmiIndexes` (table size, indexes and index advice) — read-only, through the same guard as the other Vanthrex tools.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
@@ -841,6 +874,7 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 | Ctrl+Alt+L | Run CL command |
 | Ctrl+Alt+K | Command line (5250 style) |
 | Ctrl+Alt+P | PASE terminal |
+| Ctrl+Alt+E | AI: change the selected code (shown as a diff first) |
 | Ctrl+Alt+] / Ctrl+Alt+[ | Next / previous fixed-format field (RPG, DDS) |
 | Shift+Enter | Run a notebook cell |
 | Ctrl+Alt+O | Search objects |
