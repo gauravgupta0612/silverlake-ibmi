@@ -530,5 +530,21 @@
   "config.ai.audit": "Mantenere un audit trail di ciò che viene inviato all'IA (ora, sistema, funzione, dimensione, numero di valori nascosti — mai il contenuto) nell'output *Vanthrex AI Audit* e in un file nello spazio di archiviazione dell'estensione.",
   "config.ai.showPrivacyNote": "Dopo una risposta, indicare quanti valori sono stati nascosti all'IA.",
   "config.ai.codeLens": "Mostra ✨ **Spiega · Documenta · Test** sopra ogni procedura e subroutine RPG.",
-  "config.ai.modelFamily": "Famiglia di modelli linguistici per **IA: modifica il codice selezionato** (ad esempio `gpt-4o` o `claude-sonnet-4`); vuoto = il primo modello disponibile. La chat usa il modello scelto nella finestra della chat."
+  "config.ai.modelFamily": "Famiglia di modelli linguistici per **IA: modifica il codice selezionato** (ad esempio `gpt-4o` o `claude-sonnet-4`); vuoto = il primo modello disponibile. La chat usa il modello scelto nella finestra della chat.",
+  "command.sqlOnSystems": "Esegui SQL su più sistemi…",
+  "command.clOnSystems": "Esegui comando CL su più sistemi…",
+  "command.createProject": "Crea progetto IBM i (iproj.json, Rules.mk)…",
+  "command.documentLibrary": "Documenta questa libreria (Markdown)",
+  "command.crudMatrix": "Matrice CRUD (quale programma usa quale file)",
+  "command.crudMatrix.csv": "Salva matrice CRUD come CSV",
+  "command.rpgFromDspf": "Genera programma RPG per questo file video",
+  "command.checkCharacters": "Controlla caratteri problematici",
+  "command.fixCharacters": "Correggi caratteri problematici",
+  "command.sourceNotes": "Note TODO e FIXME nelle origini aperte…",
+  "command.reportToCsv": "Report in CSV (Excel)…",
+  "command.jobRunHistory": "Cronologia esecuzioni lavoro (durata di ogni esecuzione)…",
+  "command.findMessageInJobLogs": "Trova un messaggio nelle registrazioni lavoro…",
+  "config.editor.checkCharacters": "Sottolinea i caratteri che compromettono una compilazione o una conversione CCSID (tabulazioni, caratteri di controllo, spazi unificatori, virgolette tipografiche, caratteri persi in una conversione) quando un'origine viene aperta o salvata.",
+  "config.csvSeparator": "Separatore dei file CSV scritti da **Report in CSV** (`;` per i fogli di calcolo configurati con la virgola come separatore decimale).",
+  "config.jobHistoryDays": "Giorni di registrazione cronologica letti da **Cronologia esecuzioni lavoro**."
 }

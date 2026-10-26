@@ -2192,6 +2192,82 @@
         "title": "%command.ai.showAudit%",
         "category": "Vanthrex",
         "icon": "$(history)"
+      },
+      {
+        "command": "vanthrex.sqlOnSystems",
+        "title": "%command.sqlOnSystems%",
+        "category": "Vanthrex",
+        "icon": "$(server-environment)"
+      },
+      {
+        "command": "vanthrex.clOnSystems",
+        "title": "%command.clOnSystems%",
+        "category": "Vanthrex",
+        "icon": "$(server-environment)"
+      },
+      {
+        "command": "vanthrex.createProject",
+        "title": "%command.createProject%",
+        "category": "Vanthrex",
+        "icon": "$(project)"
+      },
+      {
+        "command": "vanthrex.documentLibrary",
+        "title": "%command.documentLibrary%",
+        "category": "Vanthrex",
+        "icon": "$(book)"
+      },
+      {
+        "command": "vanthrex.crudMatrix",
+        "title": "%command.crudMatrix%",
+        "category": "Vanthrex",
+        "icon": "$(table)"
+      },
+      {
+        "command": "vanthrex.crudMatrix.csv",
+        "title": "%command.crudMatrix.csv%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.rpgFromDspf",
+        "title": "%command.rpgFromDspf%",
+        "category": "Vanthrex",
+        "icon": "$(code)"
+      },
+      {
+        "command": "vanthrex.checkCharacters",
+        "title": "%command.checkCharacters%",
+        "category": "Vanthrex",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "vanthrex.fixCharacters",
+        "title": "%command.fixCharacters%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.sourceNotes",
+        "title": "%command.sourceNotes%",
+        "category": "Vanthrex",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "vanthrex.reportToCsv",
+        "title": "%command.reportToCsv%",
+        "category": "Vanthrex",
+        "icon": "$(table)"
+      },
+      {
+        "command": "vanthrex.jobRunHistory",
+        "title": "%command.jobRunHistory%",
+        "category": "Vanthrex",
+        "icon": "$(history)"
+      },
+      {
+        "command": "vanthrex.findMessageInJobLogs",
+        "title": "%command.findMessageInJobLogs%",
+        "category": "Vanthrex",
+        "icon": "$(search)"
       }
     ],
     "menus": {
@@ -2400,6 +2476,16 @@
           "command": "vanthrex.ai.privacy",
           "when": "view == vanthrex.connections",
           "group": "9_help@5"
+        },
+        {
+          "command": "vanthrex.sqlOnSystems",
+          "when": "view == vanthrex.connections && vanthrex.multipleConnections",
+          "group": "1_connections@7"
+        },
+        {
+          "command": "vanthrex.clOnSystems",
+          "when": "view == vanthrex.connections && vanthrex.multipleConnections",
+          "group": "1_connections@8"
         }
       ],
       "view/item/context": [
@@ -3167,6 +3253,21 @@
           "command": "vanthrex.ai.health",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "9_ai@1"
+        },
+        {
+          "command": "vanthrex.documentLibrary",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@11"
+        },
+        {
+          "command": "vanthrex.crudMatrix",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@12"
+        },
+        {
+          "command": "vanthrex.reportToCsv",
+          "when": "view == vanthrex.spool && viewItem == spool",
+          "group": "2@9"
         }
       ],
       "editor/title": [
@@ -3431,6 +3532,21 @@
           "command": "vanthrex.previewCommandSource",
           "when": "editorLangId == cl && resourcePath =~ /\\.cmd$/i",
           "group": "vanthrex@7"
+        },
+        {
+          "command": "vanthrex.sqlOnSystems",
+          "when": "vanthrex.multipleConnections && editorLangId == sql",
+          "group": "vanthrex@8"
+        },
+        {
+          "command": "vanthrex.rpgFromDspf",
+          "when": "resourcePath =~ /\\.dspf$/i || resourceFilename =~ /\\.DSPF$/",
+          "group": "vanthrex@9"
+        },
+        {
+          "command": "vanthrex.checkCharacters",
+          "when": "editorLangId =~ /^(rpgle|cl|dds|sql|cobol)$/",
+          "group": "vanthrex@10"
         }
       ],
       "commandPalette": [
@@ -4184,6 +4300,38 @@
         {
           "command": "vanthrex.ai.security",
           "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.crudMatrix.csv",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.fixCharacters",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.sqlOnSystems",
+          "when": "vanthrex.multipleConnections"
+        },
+        {
+          "command": "vanthrex.clOnSystems",
+          "when": "vanthrex.multipleConnections"
+        },
+        {
+          "command": "vanthrex.documentLibrary",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.crudMatrix",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.jobRunHistory",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.findMessageInJobLogs",
+          "when": "vanthrex.connected"
         }
       ],
       "vanthrex.ai": [
@@ -4279,6 +4427,11 @@
           "command": "vanthrex.compareWithIfs",
           "when": "vanthrex.connected && explorerResourceIsRoot",
           "group": "7_vanthrex@4"
+        },
+        {
+          "command": "vanthrex.createProject",
+          "when": "explorerResourceIsRoot",
+          "group": "7_vanthrex@6"
         }
       ],
       "notebook/toolbar": [
@@ -5407,6 +5560,28 @@
           "type": "string",
           "default": "",
           "markdownDescription": "%config.ai.modelFamily%"
+        },
+        "vanthrex.editor.checkCharacters": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.editor.checkCharacters%"
+        },
+        "vanthrex.csvSeparator": {
+          "type": "string",
+          "default": ",",
+          "enum": [
+            ",",
+            ";",
+            "\t"
+          ],
+          "markdownDescription": "%config.csvSeparator%"
+        },
+        "vanthrex.jobHistoryDays": {
+          "type": "number",
+          "default": 30,
+          "minimum": 1,
+          "maximum": 366,
+          "markdownDescription": "%config.jobHistoryDays%"
         }
       }
     },

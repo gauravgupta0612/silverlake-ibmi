@@ -530,5 +530,21 @@
   "config.ai.audit": "Manter uma trilha de auditoria do que é enviado à IA (hora, sistema, recurso, tamanho, número de valores ocultados — nunca o conteúdo) na saída *Vanthrex AI Audit* e em um arquivo no armazenamento da extensão.",
   "config.ai.showPrivacyNote": "Após uma resposta, informar quantos valores foram ocultados da IA.",
   "config.ai.codeLens": "Mostrar ✨ **Explicar · Documentar · Testes** acima de cada procedimento e sub-rotina RPG.",
-  "config.ai.modelFamily": "Família de modelos de linguagem para **IA: Alterar o Código Selecionado** (por exemplo `gpt-4o` ou `claude-sonnet-4`); vazio = o primeiro modelo disponível. O chat usa o modelo escolhido na janela de chat."
+  "config.ai.modelFamily": "Família de modelos de linguagem para **IA: Alterar o Código Selecionado** (por exemplo `gpt-4o` ou `claude-sonnet-4`); vazio = o primeiro modelo disponível. O chat usa o modelo escolhido na janela de chat.",
+  "command.sqlOnSystems": "Executar SQL em Vários Sistemas…",
+  "command.clOnSystems": "Executar Comando CL em Vários Sistemas…",
+  "command.createProject": "Criar Projeto IBM i (iproj.json, Rules.mk)…",
+  "command.documentLibrary": "Documentar Esta Biblioteca (Markdown)",
+  "command.crudMatrix": "Matriz CRUD (Qual Programa Usa Qual Arquivo)",
+  "command.crudMatrix.csv": "Salvar Matriz CRUD como CSV",
+  "command.rpgFromDspf": "Gerar Programa RPG para Este Arquivo de Exibição",
+  "command.checkCharacters": "Verificar Caracteres Problemáticos",
+  "command.fixCharacters": "Corrigir Caracteres Problemáticos",
+  "command.sourceNotes": "Notas TODO e FIXME nas Origens Abertas…",
+  "command.reportToCsv": "Relatório para CSV (Excel)…",
+  "command.jobRunHistory": "Histórico de Execuções de Job (Quanto Tempo Cada Execução Levou)…",
+  "command.findMessageInJobLogs": "Localizar uma Mensagem nos Logs de Job…",
+  "config.editor.checkCharacters": "Sublinhar caracteres que quebram uma compilação ou uma conversão de CCSID (tabulações, caracteres de controle, espaços não separáveis, aspas curvas, caracteres perdidos em uma conversão) quando uma origem é aberta ou salva.",
+  "config.csvSeparator": "Separador dos arquivos CSV gravados por **Relatório para CSV** (`;` para planilhas configuradas com vírgula como separador decimal).",
+  "config.jobHistoryDays": "Dias do log de histórico lidos por **Histórico de Execuções de Job**."
 }

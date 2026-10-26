@@ -530,5 +530,21 @@
   "config.ai.audit": "Mantener un registro de auditoría de lo que se envía a la IA (hora, sistema, función, tamaño, número de valores ocultos — nunca el contenido) en la salida *Vanthrex AI Audit* y en un archivo del almacenamiento de la extensión.",
   "config.ai.showPrivacyNote": "Tras una respuesta, indicar cuántos valores se ocultaron a la IA.",
   "config.ai.codeLens": "Mostrar ✨ **Explicar · Documentar · Pruebas** encima de cada procedimiento y subrutina RPG.",
-  "config.ai.modelFamily": "Familia de modelos de lenguaje para **IA: cambiar el código seleccionado** (por ejemplo `gpt-4o` o `claude-sonnet-4`); vacío = el primer modelo disponible. El chat usa el modelo elegido en la ventana de chat."
+  "config.ai.modelFamily": "Familia de modelos de lenguaje para **IA: cambiar el código seleccionado** (por ejemplo `gpt-4o` o `claude-sonnet-4`); vacío = el primer modelo disponible. El chat usa el modelo elegido en la ventana de chat.",
+  "command.sqlOnSystems": "Ejecutar SQL en varios sistemas…",
+  "command.clOnSystems": "Ejecutar mandato CL en varios sistemas…",
+  "command.createProject": "Crear proyecto IBM i (iproj.json, Rules.mk)…",
+  "command.documentLibrary": "Documentar esta biblioteca (Markdown)",
+  "command.crudMatrix": "Matriz CRUD (qué programa usa qué archivo)",
+  "command.crudMatrix.csv": "Guardar matriz CRUD como CSV",
+  "command.rpgFromDspf": "Generar programa RPG para este archivo de pantalla",
+  "command.checkCharacters": "Buscar caracteres problemáticos",
+  "command.fixCharacters": "Corregir caracteres problemáticos",
+  "command.sourceNotes": "Notas TODO y FIXME en las fuentes abiertas…",
+  "command.reportToCsv": "Informe a CSV (Excel)…",
+  "command.jobRunHistory": "Historial de ejecución de trabajos (cuánto tardó cada ejecución)…",
+  "command.findMessageInJobLogs": "Buscar un mensaje en las anotaciones de trabajo…",
+  "config.editor.checkCharacters": "Subrayar los caracteres que hacen fallar una compilación o una conversión de CCSID (tabulaciones, caracteres de control, espacios de no separación, comillas tipográficas, caracteres perdidos en una conversión) al abrir o guardar una fuente.",
+  "config.csvSeparator": "Separador de los archivos CSV escritos por **Informe a CSV** (`;` para hojas de cálculo configuradas con la coma como separador decimal).",
+  "config.jobHistoryDays": "Días de anotaciones de historial que lee **Historial de ejecución de trabajos**."
 }

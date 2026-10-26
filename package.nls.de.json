@@ -530,5 +530,21 @@
   "config.ai.audit": "Einen Audit-Trail darüber führen, was an die KI gesendet wird (Zeit, System, Funktion, Größe, Anzahl ausgeblendeter Werte — nie der Inhalt), in der Ausgabe *Vanthrex AI Audit* und in einer Datei im Speicher der Erweiterung.",
   "config.ai.showPrivacyNote": "Nach einer Antwort angeben, wie viele Werte vor der KI ausgeblendet wurden.",
   "config.ai.codeLens": "✨ **Erklären · Dokumentieren · Tests** über jeder RPG-Prozedur und -Unterroutine anzeigen.",
-  "config.ai.modelFamily": "Sprachmodellfamilie für **KI: Ausgewählten Code ändern** (zum Beispiel `gpt-4o` oder `claude-sonnet-4`); leer = das erste verfügbare Modell. Der Chat verwendet das im Chatfenster gewählte Modell."
+  "config.ai.modelFamily": "Sprachmodellfamilie für **KI: Ausgewählten Code ändern** (zum Beispiel `gpt-4o` oder `claude-sonnet-4`); leer = das erste verfügbare Modell. Der Chat verwendet das im Chatfenster gewählte Modell.",
+  "command.sqlOnSystems": "SQL auf mehreren Systemen ausführen…",
+  "command.clOnSystems": "CL-Befehl auf mehreren Systemen ausführen…",
+  "command.createProject": "IBM i-Projekt erstellen (iproj.json, Rules.mk)…",
+  "command.documentLibrary": "Diese Bibliothek dokumentieren (Markdown)",
+  "command.crudMatrix": "CRUD-Matrix (welches Programm verwendet welche Datei)",
+  "command.crudMatrix.csv": "CRUD-Matrix als CSV speichern",
+  "command.rpgFromDspf": "RPG-Programm für diese Bildschirmdatei generieren",
+  "command.checkCharacters": "Auf problematische Zeichen prüfen",
+  "command.fixCharacters": "Problematische Zeichen korrigieren",
+  "command.sourceNotes": "TODO- und FIXME-Notizen in geöffneten Quellen…",
+  "command.reportToCsv": "Bericht nach CSV (Excel)…",
+  "command.jobRunHistory": "Ausführungsverlauf eines Jobs (Dauer jeder Ausführung)…",
+  "command.findMessageInJobLogs": "Nachricht in Joblogs suchen…",
+  "config.editor.checkCharacters": "Zeichen unterstreichen, die eine Kompilierung oder CCSID-Umsetzung stören (Tabulatoren, Steuerzeichen, geschützte Leerzeichen, typografische Anführungszeichen, bei einer Umsetzung verlorene Zeichen), wenn eine Quelle geöffnet oder gespeichert wird.",
+  "config.csvSeparator": "Trennzeichen der CSV-Dateien, die **Bericht nach CSV** schreibt (`;` für Tabellenkalkulationen, die das Komma als Dezimaltrennzeichen verwenden).",
+  "config.jobHistoryDays": "Anzahl Tage des Protokolls QHST, die **Ausführungsverlauf eines Jobs** liest."
 }

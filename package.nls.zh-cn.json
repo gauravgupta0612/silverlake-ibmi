@@ -530,5 +530,21 @@
   "config.ai.audit": "在 *Vanthrex AI Audit* 输出和扩展存储中的文件里保留发送给 AI 的内容的审计跟踪（时间、系统、功能、大小、隐藏值的数量 — 从不记录内容）。",
   "config.ai.showPrivacyNote": "在回答之后，说明有多少值对 AI 隐藏。",
   "config.ai.codeLens": "在每个 RPG 过程和子例程上方显示 ✨ **解释 · 文档 · 测试**。",
-  "config.ai.modelFamily": "**AI：更改所选代码** 使用的语言模型系列(例如 `gpt-4o` 或 `claude-sonnet-4`)；为空 = 第一个可用模型。聊天使用在聊天窗口中选择的模型。"
+  "config.ai.modelFamily": "**AI：更改所选代码** 使用的语言模型系列(例如 `gpt-4o` 或 `claude-sonnet-4`)；为空 = 第一个可用模型。聊天使用在聊天窗口中选择的模型。",
+  "command.sqlOnSystems": "在多个系统上运行 SQL…",
+  "command.clOnSystems": "在多个系统上运行 CL 命令…",
+  "command.createProject": "创建 IBM i 项目 (iproj.json、Rules.mk)…",
+  "command.documentLibrary": "为此库生成文档 (Markdown)",
+  "command.crudMatrix": "CRUD 矩阵（哪个程序使用哪个文件）",
+  "command.crudMatrix.csv": "将 CRUD 矩阵另存为 CSV",
+  "command.rpgFromDspf": "为此显示文件生成 RPG 程序",
+  "command.checkCharacters": "检查问题字符",
+  "command.fixCharacters": "修复问题字符",
+  "command.sourceNotes": "已打开源中的 TODO 和 FIXME 注释…",
+  "command.reportToCsv": "将报表转换为 CSV (Excel)…",
+  "command.jobRunHistory": "作业运行历史（每次运行的耗时）…",
+  "command.findMessageInJobLogs": "在作业日志中查找消息…",
+  "config.editor.checkCharacters": "打开或保存源时，为会导致编译或 CCSID 转换失败的字符（制表符、控制字符、不间断空格、弯引号、转换中丢失的字符）添加下划线。",
+  "config.csvSeparator": "**将报表转换为 CSV** 写入的 CSV 文件的分隔符(对于设置为使用逗号作为小数分隔符的电子表格，请使用 `;`)。",
+  "config.jobHistoryDays": "**作业运行历史** 读取的历史日志天数。"
 }

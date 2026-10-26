@@ -83,6 +83,10 @@ import { registerTableTools } from './features/tableToolsView';
 import { registerCmdPreview } from './features/cmdPreviewView';
 import { registerIfsSync } from './features/ifsSyncView';
 import { registerWorkExtras } from './features/workExtrasView';
+import { registerMultiSystem } from './features/multiSystemView';
+import { registerProjectDocs } from './features/projectDocsView';
+import { registerSourceHelpers } from './features/sourceHelpersView';
+import { registerJobHistory } from './features/jobHistoryView';
 
 let manager: ConnectionManager | undefined;
 
@@ -205,6 +209,10 @@ export function activate(context: vscode.ExtensionContext): void {
   step('command source preview', () => registerCmdPreview(context, m));
   step('IFS sync', () => registerIfsSync(context, m));
   step('work extras', () => registerWorkExtras(context, m));
+  step('several systems', () => registerMultiSystem(context, m));
+  step('project and docs', () => registerProjectDocs(context, m));
+  step('source helpers', () => registerSourceHelpers(context, m));
+  step('job history', () => registerJobHistory(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

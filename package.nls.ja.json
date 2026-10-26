@@ -530,5 +530,21 @@
   "config.ai.audit": "AI に送信した内容の監査証跡 (時刻、システム、機能、サイズ、隠した値の数。内容は記録しない) を *Vanthrex AI Audit* 出力と拡張機能のストレージ内のファイルに保持します。",
   "config.ai.showPrivacyNote": "回答の後に、AI から隠した値の数を表示します。",
   "config.ai.codeLens": "各 RPG プロシージャーとサブルーチンの上に ✨ **説明 · 文書化 · テスト** を表示します。",
-  "config.ai.modelFamily": "**AI: 選択したコードを変更** で使用する言語モデル・ファミリー (例: `gpt-4o` または `claude-sonnet-4`)。空の場合は最初に使用可能なモデルを使用します。チャットではチャット・ウィンドウで選択したモデルを使用します。"
+  "config.ai.modelFamily": "**AI: 選択したコードを変更** で使用する言語モデル・ファミリー (例: `gpt-4o` または `claude-sonnet-4`)。空の場合は最初に使用可能なモデルを使用します。チャットではチャット・ウィンドウで選択したモデルを使用します。",
+  "command.sqlOnSystems": "複数のシステムで SQL を実行…",
+  "command.clOnSystems": "複数のシステムで CL コマンドを実行…",
+  "command.createProject": "IBM i プロジェクトを作成 (iproj.json、Rules.mk)…",
+  "command.documentLibrary": "このライブラリーを文書化 (Markdown)",
+  "command.crudMatrix": "CRUD マトリックス (どのプログラムがどのファイルを使用するか)",
+  "command.crudMatrix.csv": "CRUD マトリックスを CSV として保存",
+  "command.rpgFromDspf": "この表示装置ファイルの RPG プログラムを生成",
+  "command.checkCharacters": "問題のある文字を検査",
+  "command.fixCharacters": "問題のある文字を修正",
+  "command.sourceNotes": "開いているソース内の TODO と FIXME のメモ…",
+  "command.reportToCsv": "レポートを CSV に変換 (Excel)…",
+  "command.jobRunHistory": "ジョブ実行履歴 (各実行の所要時間)…",
+  "command.findMessageInJobLogs": "ジョブ・ログでメッセージを検索…",
+  "config.editor.checkCharacters": "ソースを開くときまたは保存するときに、コンパイルや CCSID 変換を妨げる文字 (タブ、制御文字、ノーブレーク・スペース、カーリー引用符、変換で失われる文字) に下線を引きます。",
+  "config.csvSeparator": "**レポートを CSV に変換** で書き込む CSV ファイルの区切り文字 (小数点にコンマを使用するよう設定されたスプレッドシートには `;`)。",
+  "config.jobHistoryDays": "**ジョブ実行履歴** が読み取るヒストリー・ログの日数。"
 }

@@ -862,6 +862,46 @@ Also in the right-click menus: *AI: Generate Test Data for This Table* and *AI: 
 
 - `#ibmiMessage` (IBM message help), `#ibmiMembers` (members of a source file), `#ibmiCommand` (CL command definitions), `#ibmiIndexes` (table size, indexes and index advice) — read-only, through the same guard as the other Vanthrex tools.
 
+### 113. Run on several systems — new in 2.5
+
+- **What:** *Run SQL on Several Systems…* and *Run CL Command on Several Systems…* — the same statement on every chosen connection; rows that are not on every system are listed first, with each system's time or error. Changes and CL commands ask first, naming the systems.
+
+### 114. Create an IBM i Project — new in 2.5
+
+- **What:** right-click a local folder → *Create IBM i Project (iproj.json, Rules.mk)…*: `iproj.json`, `.ibmi.json` and a `Rules.mk` per folder with one target per source (Bob naming: `name.pgm.rpgle` → `NAME.PGM`) and its `/COPY` dependencies, ready for *Build Project on IBM i* (`makei build`).
+
+### 115. Document a library — new in 2.5
+
+- **What:** right-click a library → *Document This Library (Markdown)*: objects, programs with the files they use (C/R/UD) and what they call, files with their columns and users, the CRUD matrix and a Mermaid diagram.
+
+### 116. CRUD matrix — new in 2.5
+
+- **What:** right-click a library → *CRUD Matrix*: programs × files with C (creates), R (reads), UD (updates / deletes), from DSPPGMREF; *Save as CSV*.
+
+### 117. RPG program for a display file — new in 2.5
+
+- **What:** right-click a `.dspf` source → *Generate RPG Program for This Display File*: the WORKSTN file with SFILE and INDDS, the EXFMT loop with every function key, and for each subfile the clear / load / display / READC procedures with the indicators read from the DDS.
+
+### 118. Problem characters — new in 2.5
+
+- **What:** tabs, control characters, no-break and zero-width spaces, curly quotes, characters lost in a CCSID conversion are underlined in sources; the light bulb fixes them all (`vanthrex.editor.checkCharacters`).
+
+### 119. TODO notes — new in 2.5
+
+- **What:** *TODO and FIXME Notes in Open Sources…* lists TODO / FIXME / HACK / XXX / BUG comments of the open RPG, CL, DDS, SQL and COBOL sources.
+
+### 120. Report to CSV — new in 2.5
+
+- **What:** right-click a spooled file → *Report to CSV (Excel)…*: the report's columns found automatically, page headers left out, IBM i number formats turned into plain numbers.
+
+### 121. Job run history — new in 2.5
+
+- **What:** *Job Run History…*: each run of a job name from the history log — start, end, elapsed, CPU, end code — with the average, the longest, failures in red and unusually slow runs marked.
+
+### 122. Find a message in job logs — new in 2.5
+
+- **What:** *Find a Message in Job Logs…*: a message ID or words of a message across the job logs of a user's recent jobs, with the sending program.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

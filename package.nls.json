@@ -530,5 +530,21 @@
   "config.ai.audit": "Keep an audit trail of what is sent to the AI (time, system, feature, size, number of hidden values — never the content) in the *Vanthrex AI Audit* output and a file in the extension's storage.",
   "config.ai.showPrivacyNote": "After an answer, say how many values were hidden from the AI.",
   "config.ai.codeLens": "Show ✨ **Explain · Document · Tests** above each RPG procedure and subroutine.",
-  "config.ai.modelFamily": "Language model family for **AI: Change the Selected Code** (for example `gpt-4o` or `claude-sonnet-4`); empty = the first available model. The chat uses the model chosen in the chat window."
+  "config.ai.modelFamily": "Language model family for **AI: Change the Selected Code** (for example `gpt-4o` or `claude-sonnet-4`); empty = the first available model. The chat uses the model chosen in the chat window.",
+  "command.sqlOnSystems": "Run SQL on Several Systems…",
+  "command.clOnSystems": "Run CL Command on Several Systems…",
+  "command.createProject": "Create IBM i Project (iproj.json, Rules.mk)…",
+  "command.documentLibrary": "Document This Library (Markdown)",
+  "command.crudMatrix": "CRUD Matrix (Which Program Uses Which File)",
+  "command.crudMatrix.csv": "Save CRUD Matrix as CSV",
+  "command.rpgFromDspf": "Generate RPG Program for This Display File",
+  "command.checkCharacters": "Check for Problem Characters",
+  "command.fixCharacters": "Fix Problem Characters",
+  "command.sourceNotes": "TODO and FIXME Notes in Open Sources…",
+  "command.reportToCsv": "Report to CSV (Excel)…",
+  "command.jobRunHistory": "Job Run History (How Long Each Run Took)…",
+  "command.findMessageInJobLogs": "Find a Message in Job Logs…",
+  "config.editor.checkCharacters": "Underline characters that break a compile or a CCSID conversion (tabs, control characters, no-break spaces, curly quotes, characters lost in a conversion) when a source is opened or saved.",
+  "config.csvSeparator": "Separator of CSV files written by **Report to CSV** (`;` for spreadsheets set up for a comma as decimal separator).",
+  "config.jobHistoryDays": "Days of history log read by **Job Run History**."
 }

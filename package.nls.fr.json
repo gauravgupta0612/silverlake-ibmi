@@ -530,5 +530,21 @@
   "config.ai.audit": "Conserver une piste d'audit de ce qui est envoyé à l'IA (heure, système, fonction, taille, nombre de valeurs masquées — jamais le contenu) dans la sortie *Vanthrex AI Audit* et dans un fichier du stockage de l'extension.",
   "config.ai.showPrivacyNote": "Après une réponse, indiquer combien de valeurs ont été masquées à l'IA.",
   "config.ai.codeLens": "Afficher ✨ **Expliquer · Documenter · Tests** au-dessus de chaque procédure et sous-routine RPG.",
-  "config.ai.modelFamily": "Famille de modèles de langage pour **IA : modifier le code sélectionné** (par exemple `gpt-4o` ou `claude-sonnet-4`) ; vide = le premier modèle disponible. Le chat utilise le modèle choisi dans la fenêtre de chat."
+  "config.ai.modelFamily": "Famille de modèles de langage pour **IA : modifier le code sélectionné** (par exemple `gpt-4o` ou `claude-sonnet-4`) ; vide = le premier modèle disponible. Le chat utilise le modèle choisi dans la fenêtre de chat.",
+  "command.sqlOnSystems": "Exécuter du SQL sur plusieurs systèmes…",
+  "command.clOnSystems": "Exécuter une commande CL sur plusieurs systèmes…",
+  "command.createProject": "Créer un projet IBM i (iproj.json, Rules.mk)…",
+  "command.documentLibrary": "Documenter cette bibliothèque (Markdown)",
+  "command.crudMatrix": "Matrice CRUD (quel programme utilise quel fichier)",
+  "command.crudMatrix.csv": "Enregistrer la matrice CRUD en CSV",
+  "command.rpgFromDspf": "Générer un programme RPG pour ce fichier écran",
+  "command.checkCharacters": "Rechercher les caractères problématiques",
+  "command.fixCharacters": "Corriger les caractères problématiques",
+  "command.sourceNotes": "Notes TODO et FIXME dans les sources ouvertes…",
+  "command.reportToCsv": "État vers CSV (Excel)…",
+  "command.jobRunHistory": "Historique d'exécution d'un travail (durée de chaque exécution)…",
+  "command.findMessageInJobLogs": "Rechercher un message dans les historiques des travaux…",
+  "config.editor.checkCharacters": "Souligner les caractères qui font échouer une compilation ou une conversion de CCSID (tabulations, caractères de contrôle, espaces insécables, guillemets typographiques, caractères perdus lors d'une conversion) à l'ouverture ou à l'enregistrement d'une source.",
+  "config.csvSeparator": "Séparateur des fichiers CSV écrits par **État vers CSV** (`;` pour les tableurs configurés avec la virgule comme séparateur décimal).",
+  "config.jobHistoryDays": "Nombre de jours d'historique (QHST) lus par **Historique d'exécution d'un travail**."
 }
