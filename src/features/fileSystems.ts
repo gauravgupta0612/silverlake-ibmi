@@ -5,6 +5,7 @@ import { saveOrKeep } from './pendingSaves';
 import { parseMemberPath, clString, memberPath } from '../core/util';
 import { SourceRecord, mergeRecords, tooLongLines } from '../core/sourceDates';
 import type { MemberLock } from '../core/connection';
+import { cacheEnabled, cacheGet, cachePut } from './memberCache';
 
 export const MEMBER_SCHEME = 'vanthrex-member';
 export const IFS_SCHEME = 'vanthrex-ifs';
@@ -107,10 +108,16 @@ export class MemberFileSystem extends BaseFs {
     const checking = vscode.workspace.getConfiguration('vanthrex').get<boolean>('conflictCheck', true);
     try {
       // Take the change time *before* reading, so a change made while we read is still detected on save.
-      const state = checking ? await conn.memberState(library, file, member).catch(() => undefined) : undefined;
-      let text: string;
+      const state = checking || cacheEnabled() ? await conn.memberState(library, file, member).catch(() => undefined) : undefined;
+      let text = '';
       let records: SourceRecord[] | undefined;
-      if (await conn.canKeepSourceDates()) {
+      // Unchanged since it was last opened: open it from the member cache (no copy of the member).
+      const cached = await cacheGet(conn.profile.id, uri.path, state?.changed);
+      if (cached?.records) { records = cached.records; }
+      if (cached && !cached.records && cached.text !== undefined) {
+        sourceRecords.delete(uri.toString());
+        text = cached.text;
+      } else if (!records && await conn.canKeepSourceDates()) {
         try {
           records = await conn.readMemberRecords(library, file, member);
         } catch (e) {
@@ -124,9 +131,11 @@ export class MemberFileSystem extends BaseFs {
         sourceRecordsChanged.fire(uri);
         text = records.map(r => r.text).join('\n');
         if (records.length) { text += '\n'; }
-      } else {
+        if (!cached) { void cachePut(conn.profile.id, uri.path, state?.changed, { records }); }
+      } else if (!(cached && cached.text !== undefined)) {
         sourceRecords.delete(uri.toString());
         text = await conn.readMember(library, file, member);
+        void cachePut(conn.profile.id, uri.path, state?.changed, { text });
       }
       const data = Buffer.from(text, 'utf8');
       this.rememberOrigin(uri, conn);
@@ -222,7 +231,11 @@ export class MemberFileSystem extends BaseFs {
         await conn.writeMember(library, file, member, lines.join('\n'));
       }
       this.dateFallbackWarned.delete(uri.toString());
-      this.openedAt.set(uri.toString(), (await conn.memberState(library, file, member)).changed);
+      const after = (await conn.memberState(library, file, member)).changed;
+      this.openedAt.set(uri.toString(), after);
+      // What was just saved is what the IBM i has now: keep it in the member cache.
+      const saved = sourceRecords.get(uri.toString());
+      void cachePut(conn.profile.id, uri.path, after, saved ? { records: saved } : { text: lines.join('\n') + (lines.length ? '\n' : '') });
     } catch (e) {
       if (e instanceof SaveCancelled) { throw vscode.FileSystemError.NoPermissions(e.message); }
       throw e;

@@ -2469,6 +2469,59 @@
         "title": "%command.netServerShares%",
         "category": "Vanthrex",
         "icon": "$(folder-opened)"
+      },
+      {
+        "command": "vanthrex.goToAnything",
+        "title": "%command.goToAnything%",
+        "category": "Vanthrex",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "vanthrex.index.build",
+        "title": "%command.index.build%",
+        "category": "Vanthrex",
+        "icon": "$(database)"
+      },
+      {
+        "command": "vanthrex.index.search",
+        "title": "%command.index.search%",
+        "category": "Vanthrex",
+        "icon": "$(search-fuzzy)"
+      },
+      {
+        "command": "vanthrex.index.clear",
+        "title": "%command.index.clear%",
+        "category": "Vanthrex",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "vanthrex.warmUp",
+        "title": "%command.warmUp%",
+        "category": "Vanthrex",
+        "icon": "$(flame)"
+      },
+      {
+        "command": "vanthrex.speedTest",
+        "title": "%command.speedTest%",
+        "category": "Vanthrex",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "vanthrex.memberCache.clear",
+        "title": "%command.memberCache.clear%",
+        "category": "Vanthrex",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "vanthrex.openRef",
+        "title": "%command.openRef%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.rebuildImpacted",
+        "title": "%command.rebuildImpacted%",
+        "category": "Vanthrex",
+        "icon": "$(sync)"
       }
     ],
     "menus": {
@@ -3524,6 +3577,16 @@
           "command": "vanthrex.capacityCheck",
           "when": "view == vanthrex.libraries && viewItem == object.file",
           "group": "2@25"
+        },
+        {
+          "command": "vanthrex.index.build",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@19"
+        },
+        {
+          "command": "vanthrex.rebuildImpacted",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "0_info@12"
         }
       ],
       "editor/title": [
@@ -4726,6 +4789,38 @@
         {
           "command": "vanthrex.sqlBenchmark",
           "when": "vanthrex.connected && editorLangId == sql"
+        },
+        {
+          "command": "vanthrex.openRef",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.goToAnything",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.index.build",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.index.search",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.index.clear",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.warmUp",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.speedTest",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.rebuildImpacted",
+          "when": "vanthrex.connected"
         }
       ],
       "vanthrex.ai": [
@@ -5072,6 +5167,18 @@
         "key": "ctrl+shift+\\",
         "mac": "cmd+shift+\\",
         "when": "editorTextFocus && editorLangId =~ /^(rpgle|cl)$/"
+      },
+      {
+        "command": "vanthrex.goToAnything",
+        "key": "ctrl+alt+j",
+        "mac": "cmd+alt+j",
+        "when": "vanthrex.connected"
+      },
+      {
+        "command": "vanthrex.index.search",
+        "key": "ctrl+alt+shift+f",
+        "mac": "cmd+alt+shift+f",
+        "when": "vanthrex.connected"
       }
     ],
     "languages": [
@@ -6060,6 +6167,75 @@
           "minimum": 1,
           "maximum": 62,
           "markdownDescription": "%config.scheduleDays%"
+        },
+        "vanthrex.memberCache.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.memberCache.enabled%"
+        },
+        "vanthrex.memberCache.maxMembers": {
+          "type": "number",
+          "default": 500,
+          "minimum": 20,
+          "maximum": 20000,
+          "markdownDescription": "%config.memberCache.maxMembers%"
+        },
+        "vanthrex.index.membersPerTrip": {
+          "type": "number",
+          "default": 150,
+          "minimum": 10,
+          "maximum": 1000,
+          "markdownDescription": "%config.index.membersPerTrip%"
+        },
+        "vanthrex.index.parallel": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "maximum": 8,
+          "markdownDescription": "%config.index.parallel%"
+        },
+        "vanthrex.index.refreshOnConnect": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.index.refreshOnConnect%"
+        },
+        "vanthrex.goTo.maxItems": {
+          "type": "number",
+          "default": 40000,
+          "minimum": 1000,
+          "maximum": 200000,
+          "markdownDescription": "%config.goTo.maxItems%"
+        },
+        "vanthrex.goTo.refreshMinutes": {
+          "type": "number",
+          "default": 30,
+          "minimum": 1,
+          "maximum": 1440,
+          "markdownDescription": "%config.goTo.refreshMinutes%"
+        },
+        "vanthrex.warmUp.enabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.warmUp.enabled%"
+        },
+        "vanthrex.warmUp.members": {
+          "type": "number",
+          "default": 5,
+          "minimum": 0,
+          "maximum": 50,
+          "markdownDescription": "%config.warmUp.members%"
+        },
+        "vanthrex.compile.parallel": {
+          "type": "number",
+          "default": 4,
+          "minimum": 1,
+          "maximum": 8,
+          "markdownDescription": "%config.compile.parallel%"
+        },
+        "vanthrex.editor.referenceLinks": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.editor.referenceLinks%"
         }
       }
     },

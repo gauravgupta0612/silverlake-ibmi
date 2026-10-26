@@ -114,6 +114,17 @@ Open **File → Preferences → Settings** and search for *Vanthrex*, or edit `s
 | `vanthrex.unusedObjectDays` | number | `365` | Days without use before **Unused Objects** lists an object. |
 | `vanthrex.benchmarkRows` | number | `1000` | Rows fetched on each run by **Time This SQL Statement**. |
 | `vanthrex.scheduleDays` | number | `7` | Days shown by **Job Schedule for the Next Days**. |
+| `vanthrex.memberCache.enabled` | boolean | `true` | Keep members you open on this computer: a member that did not change on the IBM i opens again instantly (one small query instead of a copy). |
+| `vanthrex.memberCache.maxMembers` | number | `500` | Members kept by the member cache (the least recently used are removed). |
+| `vanthrex.index.membersPerTrip` | number | `150` | Members read in one round trip when indexing sources. |
+| `vanthrex.index.parallel` | number | `3` | Source files read at the same time when indexing sources. |
+| `vanthrex.index.refreshOnConnect` | boolean | `true` | After connecting, read again the indexed members that changed (in the background). |
+| `vanthrex.goTo.maxItems` | number | `40000` | Most members and objects listed by **Go to Anything**. |
+| `vanthrex.goTo.refreshMinutes` | number | `30` | Minutes before **Go to Anything** reloads its list in the background. |
+| `vanthrex.warmUp.enabled` | boolean | `true` | After connecting, prepare in the background: the SQL job, the Go to Anything list, the source index and the most recent members. |
+| `vanthrex.warmUp.members` | number | `5` | Recently opened members loaded into the member cache by the warm-up. |
+| `vanthrex.compile.parallel` | number | `4` | Members compiled at the same time by Batch Compile and Recompile the Programs That Use This File (1 = one after the other). |
+| `vanthrex.editor.referenceLinks` | boolean | `true` | Make IBM i references clickable in sources, spooled files and logs: LIB/FILE(MBR), PGM(LIB/OBJ), IFS paths, message IDs and job names. |
 
 ## RPG check rules
 

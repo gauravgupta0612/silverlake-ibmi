@@ -10,7 +10,7 @@ import { reportProgress, showReport } from './reportPanel';
 
 type Row = Record<string, unknown>;
 const ALLOWED = new Set(['vanthrex.unusedIndexes', 'vanthrex.dropIndex', 'vanthrex.journalCoverage', 'vanthrex.journalCoverage.start', 'vanthrex.levelCheck',
-  'vanthrex.librarySnapshot', 'vanthrex.compareSnapshot', 'vanthrex.objectInfo']);
+  'vanthrex.librarySnapshot', 'vanthrex.compareSnapshot', 'vanthrex.objectInfo', 'vanthrex.rebuildImpacted']);
 const s = (r: Row, k: string) => String(r[k] ?? '').trim();
 
 async function libraryArg(manager: ConnectionManager, a: unknown, title: string): Promise<string | undefined> {
@@ -137,7 +137,8 @@ async function levelCheck(manager: ConnectionManager, a?: unknown): Promise<void
     subtitle: out.bad.length ? vscode.l10n.t('{0} of {1} program(s) were compiled against another format level: they end with CPF4131 when they open the file. Recompile them.', out.bad.length, out.uses.length)
       : vscode.l10n.t('All {0} program(s) that use {1} match its current format level.', out.uses.length, file),
     facts: [...out.cur.entries()].map(([f, l]) => [vscode.l10n.t('Format {0}', f), l] as [string, string]),
-    actions: [{ label: vscode.l10n.t('Another file…'), command: 'vanthrex.levelCheck' }],
+    actions: [...(out.bad.length ? [{ label: vscode.l10n.t('Recompile the {0} program(s) now', new Set(out.bad.map(b => `${b.lib}/${b.pgm}`)).size), command: 'vanthrex.rebuildImpacted', args: [{ library: lib, name: file, only: [...new Set(out.bad.map(b => `${b.lib}/${b.pgm}`))] }] }] : []),
+      { label: vscode.l10n.t('Another file…'), command: 'vanthrex.levelCheck' }],
     tables: [{ title: vscode.l10n.t('Programs using {0}', file), filter: true, columns: ['Library', 'Program', 'Format', 'Compiled with', 'File now', ''],
       rows: out.uses.map(u => { const now = out.cur.get(u.format) ?? ''; return [u.lib, u.pgm, u.format, u.level, now, now && now !== u.level ? vscode.l10n.t('recompile') : '✓']; }),
       rowClass: out.uses.map(u => (out.cur.get(u.format) && out.cur.get(u.format) !== u.level ? 'bad' : undefined)), empty: vscode.l10n.t('No program in {0} uses {1}.', scope.label, file) }],

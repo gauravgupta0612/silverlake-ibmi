@@ -1014,6 +1014,46 @@ Also in the right-click menus: *AI: Generate Test Data for This Table* and *AI: 
 
 - **What:** *NetServer File Shares*: paths, permissions and users; risky write shares marked.
 
+### 151. Instant reopen — new in 2.5
+
+- **What:** Members that did not change on the IBM i open from a local cache: one small query instead of a copy (`vanthrex.memberCache.enabled`).
+
+### 152. Source index — new in 2.5
+
+- **What:** *Index Source Libraries for Instant Search…*: sources copied with 150 members per round trip, then only changed members read again.
+
+### 153. Instant search — new in 2.5
+
+- **What:** *Instant Search in Indexed Sources…* (Ctrl+Alt+Shift+F): results as you type, in milliseconds; `re:` and `w:`.
+
+### 154. Go to Anything — new in 2.5
+
+- **What:** Ctrl+Alt+J: members, objects and recent items of the library list, filtered as you type; objects open with their main actions.
+
+### 155. Warm-up — new in 2.5
+
+- **What:** After connecting: SQL job started, Go to Anything list loaded, index refreshed, recent members cached — in the background.
+
+### 156. Parallel compile — new in 2.5
+
+- **What:** Batch compile runs several compiles at a time (`vanthrex.compile.parallel`).
+
+### 157. Recompile what uses a file — new in 2.5
+
+- **What:** *Recompile the Programs That Use This File…*: every program using the file recompiled in parallel, with a report.
+
+### 158. Definition across members — new in 2.5
+
+- **What:** F12 on a procedure defined in another member or service program opens its `dcl-proc`.
+
+### 159. Clickable references — new in 2.5
+
+- **What:** LIB/FILE(MBR), PGM(LIB/OBJ), IFS paths, message IDs and job names are links in sources, spooled files and logs.
+
+### 160. Speed test — new in 2.5
+
+- **What:** *Speed Test of This Connection*: SSH, QSH, SQL and transfer speed graded, with advice.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
@@ -1030,6 +1070,8 @@ Also in the right-click menus: *AI: Generate Test Data for This Table* and *AI: 
 | Ctrl+Shift+\\ | Go to the matching IF / ELSE / END (RPG, CL) |
 | Ctrl+Alt+] / Ctrl+Alt+[ | Next / previous fixed-format field (RPG, DDS) |
 | Shift+Enter | Run a notebook cell |
+| Ctrl+Alt+J | Go to anything (members, objects, recent) |
+| Ctrl+Alt+Shift+F | Instant search in indexed sources |
 | Ctrl+Alt+O | Search objects |
 | Ctrl+Alt+F | Search source code |
 | F12 / Shift+F12 / F2 | Go to definition / Find references / Rename |

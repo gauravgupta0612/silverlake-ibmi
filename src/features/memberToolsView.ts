@@ -1,6 +1,7 @@
 // Member tools: batch compile, objects out of sync, change reports, member templates, Find Member Anywhere, objects
 // built from a source, compile on save, the member status bar, compile history and changes since the last compile.
 import * as vscode from 'vscode';
+import { compileInParallel } from './speedView';
 import { ChangeItem, changeReportMarkdown, syncStatus } from '../core/changeTracking';
 import { addCompile, CompileRecord, compileSummary, lastCompileDay, latestPerSource } from '../core/compileHistory';
 import { IbmiConnection } from '../core/connection';
@@ -48,22 +49,10 @@ async function batchCompile(manager: ConnectionManager, n?: { library?: string; 
     members = p.map(x => x.r);
   }
   if (!members.length) { vscode.window.showInformationMessage(vscode.l10n.t('No member changed in that period.')); return; }
-  const actions = vscode.workspace.getConfiguration('vanthrex').get<{ name: string; extensions: string[]; source?: string; command: string }[]>('compileActions', []);
-  const results: { m: Row; ok: boolean | undefined; cmd: string; msgs: string }[] = [];
-  await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Compiling {0} member(s)…', members.length), cancellable: true }, async (p, token) => {
-    for (const m of members) {
-      if (token.isCancellationRequested) { break; }
-      p.report({ message: s(m, 'M'), increment: 100 / members.length });
-      const ext = s(m, 'T').toLowerCase();
-      const action = actions.find(a => a.extensions.map(x => x.toLowerCase()).includes(ext) && (a.source ?? 'member') !== 'ifs');
-      if (!action) { results.push({ m, ok: undefined, cmd: '', msgs: vscode.l10n.t('No compile action for .{0}', ext) }); continue; }
-      const cmd = substituteVariables(action.command, { LIB: lib, SRCFILE: file, NAME: s(m, 'M'), EXT: ext, OBJLIB: conn.profile.objectLibrary || lib, CURLIB: conn.profile.currentLibrary || 'QGPL', USER: conn.user });
-      try {
-        const r = await conn.runCL(cmd);
-        results.push({ m, ok: r.ok, cmd, msgs: r.messages.filter(x => !/^CPC/.test(x)).join(' ') || (r.ok ? '' : (r.stderr || r.stdout).trim().split('\n').pop() ?? '') });
-      } catch (e) { results.push({ m, ok: false, cmd, msgs: errorMessage(e).split('\n')[0] }); }
-    }
-  });
+  // Several members at a time (vanthrex.compile.parallel): the IBM i compiles them in separate jobs.
+  const done = await compileInParallel(conn, members.map(m => ({ library: lib, file, member: s(m, 'M'), type: s(m, 'T'), objlib: conn.profile.objectLibrary || lib })), vscode.l10n.t('Compiling {0} member(s)…', members.length));
+  const byName = new Map(members.map(m => [s(m, 'M'), m]));
+  const results = done.map(r => ({ m: byName.get(r.item.member)!, ok: r.ok, cmd: r.command, msgs: r.messages }));
   const failed = results.filter(r => r.ok === false).length;
   showReport('batchCompile', {
     title: vscode.l10n.t('Compile {0}/{1}', lib, file), subtitle: vscode.l10n.t('{0} compiled, {1} failed, {2} skipped. Click a member to open it; compile it there (Ctrl+Alt+C) to see the errors inline.', results.filter(r => r.ok).length, failed, results.filter(r => r.ok === undefined).length),
@@ -72,7 +61,7 @@ async function batchCompile(manager: ConnectionManager, n?: { library?: string; 
       rows: results.sort((a, b) => Number(a.ok ?? 2) - Number(b.ok ?? 2)).map(r => [s(r.m, 'M'), s(r.m, 'T'), s(r.m, 'C'), r.ok === undefined ? 'skipped' : r.ok ? '✔ compiled' : '✘ failed', r.msgs, r.cmd]),
       rowActions: results.map(r => ({ label: vscode.l10n.t('Open'), command: 'vanthrex.codeMetrics.open', args: [lib, file, s(r.m, 'M'), s(r.m, 'T')] })),
       rowClass: results.map(r => (r.ok === false ? 'bad' : r.ok === undefined ? 'dim' : undefined)) }],
-    note: vscode.l10n.t('Members are compiled one after the other with the first compile action that matches their type (setting vanthrex.compileActions). Build order matters: compile modules and service programs before the programs that use them.'),
+    note: vscode.l10n.t('Members are compiled several at a time (vanthrex.compile.parallel) with the first compile action that matches their type (vanthrex.compileActions). Build order matters: set vanthrex.compile.parallel to 1 when modules and service programs must be built before the programs that use them.'),
   }, ALLOWED);
 }
 

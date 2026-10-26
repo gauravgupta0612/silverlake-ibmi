@@ -100,6 +100,19 @@ Everything sent to the AI now goes through one guard, and nothing the AI does ca
 - **Objects Hidden in the Library List**: programs, files, commands and data areas that exist in two libraries of the library list — which one is used and which ones are never reached.
 - **NetServer File Shares**: every share with its path, permissions and users; write access to the root or QSYS.LIB is marked.
 
+**Speed**
+
+- **Instant reopen (member cache)**: members you open are kept on this computer with their change time; when a member did not change on the IBM i it opens again from the cache — one small query instead of copying the member (`vanthrex.memberCache.enabled`, `vanthrex.memberCache.maxMembers`, **Clear the Member Cache**). What you save is cached too.
+- **Index Source Libraries for Instant Search…** (right-click a library): the sources of the chosen libraries are copied to this computer with 150 members per round trip and several source files at a time (`vanthrex.index.membersPerTrip`, `vanthrex.index.parallel`); afterwards only new and changed members are read again.
+- **Instant Search in Indexed Sources…** (Ctrl+Alt+Shift+F): results appear as you type, in milliseconds, with `re:` for regular expressions and `w:` for whole words; pick a line to open the member there.
+- **Go to Anything** (Ctrl+Alt+J): every member of the library list's source files, every program, file, command, data area and more, and your recently opened members and IFS files, filtered as you type from a list kept in memory; objects open with their most useful actions (information, source, call graph, data, where used, locks) (`vanthrex.goTo.maxItems`, `vanthrex.goTo.refreshMinutes`).
+- **Warm-up after connecting**: in the background, the SQL job is started, the Go to Anything list loaded, the source index refreshed and the most recent members put in the cache, so the first actions are instant (`vanthrex.warmUp.enabled`, `vanthrex.warmUp.members`, **Get This Connection Ready**).
+- **Batch compile in parallel**: several members compiled at the same time in separate jobs (`vanthrex.compile.parallel`, default 4).
+- **Recompile the Programs That Use This File…** (right-click a file, or **Recompile the programs now** in the level check report): finds every program that uses the file, its source, and recompiles them all in parallel, with a report.
+- **Go to Definition across members**: F12 on a procedure call that is not defined in the source jumps to its `dcl-proc` in another member — found instantly in the source index, or through the service program that exports it and its bound modules.
+- **Clickable IBM i references** in sources, spooled files and logs: `LIB/FILE(MBR)` opens the member, `PGM(LIB/OBJ)` and `LIB/OBJ *TYPE` the object information, `/home/…` the IFS file, `CPF4131` the message help, `123456/USER/JOB` the job log (`vanthrex.editor.referenceLinks`).
+- **Speed Test of This Connection**: SSH round trip, QSH start, SQL statement, download and upload speed, graded, with what to change to make Vanthrex faster.
+
 ## 2.4.0
 
 **Local development (like Code for IBM i, with less setup)**

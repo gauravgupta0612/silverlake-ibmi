@@ -93,6 +93,10 @@ import { registerDevTools } from './features/devToolsView';
 import { registerModernize } from './features/modernizeView';
 import { registerDataQuality } from './features/dataQualityView';
 import { registerSystemAudit } from './features/systemAuditView';
+import { initMemberCache } from './features/memberCache';
+import { registerSourceIndex } from './features/sourceIndexView';
+import { registerQuickOpen } from './features/quickOpenView';
+import { registerSpeed } from './features/speedView';
 
 let manager: ConnectionManager | undefined;
 
@@ -129,6 +133,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.createTreeView('vanthrex.ifs', { treeDataProvider: ifs, showCollapseAll: true, dragAndDropController: ifsDropController(m, ifs), canSelectMany: false }),
     vscode.window.registerTreeDataProvider('vanthrex.spool', spool),
   ));
+  step('member cache', () => initMemberCache(context));
   step('file systems', () => context.subscriptions.push(
     vscode.workspace.registerFileSystemProvider(MEMBER_SCHEME, new MemberFileSystem(m), { isCaseSensitive: false }),
     vscode.workspace.registerFileSystemProvider(MEMBER_VIEW_SCHEME, new MemberFileSystem(m), { isCaseSensitive: false,
@@ -225,6 +230,9 @@ export function activate(context: vscode.ExtensionContext): void {
   step('modernize', () => registerModernize(context, m));
   step('data quality', () => registerDataQuality(context, m));
   step('system audit', () => registerSystemAudit(context, m));
+  step('source index', () => registerSourceIndex(context, m));
+  step('go to anything', () => registerQuickOpen(context, m));
+  step('speed', () => registerSpeed(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

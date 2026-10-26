@@ -7,7 +7,7 @@ parent: "Reference"
 
 # Commands
 
-All 401 commands contributed by Vanthrex for IBM i 2.5.0. Run any of them from the
+All 410 commands contributed by Vanthrex for IBM i 2.5.0. Run any of them from the
 Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-click menus and view toolbars.
 
 | Command | ID | Keys |
@@ -77,6 +77,7 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Clear Compile History | `vanthrex.compileHistory.clear` |  |
 | Clear Data Queue… | `vanthrex.clearDataQueue` |  |
 | Clear SQL History | `vanthrex.clearSqlHistory` |  |
+| Clear the Member Cache | `vanthrex.memberCache.clear` |  |
 | Code Metrics | `vanthrex.codeMetrics` |  |
 | Columns Close to Their Limit… | `vanthrex.capacityCheck` |  |
 | Command Line (5250 Style) | `vanthrex.commandLine` | Ctrl+Alt+K |
@@ -193,12 +194,14 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Generate SQL (DDL) | `vanthrex.generateDdl` |  |
 | Generate SQL Statements (SELECT, INSERT, UPDATE, DELETE, MERGE)… | `vanthrex.crudSql` |  |
 | Generate Test Data… | `vanthrex.generateTestData` |  |
+| Get This Connection Ready (Warm-up) | `vanthrex.warmUp` |  |
 | Getting Started | `vanthrex.openWalkthrough` |  |
 | Git: Commit & Push IBM i Source… | `vanthrex.git.commitPush` |  |
 | Git: Export Source to a Git Repository… | `vanthrex.git.export` |  |
 | Git: Get Changes from IBM i | `vanthrex.git.download` |  |
 | Git: History of This Member… | `vanthrex.git.memberHistory` |  |
 | Git: Upload Changed Files to IBM i | `vanthrex.git.upload` |  |
+| Go to Anything (Members, Objects, Recent)… | `vanthrex.goToAnything` | Ctrl+Alt+J |
 | Go to IFS Directory… | `vanthrex.ifsChangeRoot` |  |
 | Go to Line | `vanthrex.gotoLine` |  |
 | Go to Matching IF / ELSE / END | `vanthrex.gotoMatchingBlock` | Ctrl+Shift+\ |
@@ -212,9 +215,11 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Impact Analysis (Who Uses This?)… | `vanthrex.impactAnalysis` |  |
 | Import CSV or Excel into Table… | `vanthrex.importData` |  |
 | Index Advisor | `vanthrex.indexAdvisor` |  |
+| Index Source Libraries for Instant Search… | `vanthrex.index.build` |  |
 | Indicator Usage | `vanthrex.indicatorUsage` |  |
 | Insert Test Data | `vanthrex.generateTestData.run` |  |
 | Installed Software and License Keys | `vanthrex.installedSoftware` |  |
+| Instant Search in Indexed Sources… | `vanthrex.index.search` | Ctrl+Alt+Shift+F |
 | IP Interfaces and Routes | `vanthrex.wrkInterfaces` |  |
 | Is This PTF Installed?… | `vanthrex.ptfLookup` |  |
 | Job Description Options | `vanthrex.jobd.row` |  |
@@ -260,6 +265,7 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Open 5250 Session | `vanthrex.open5250` |  |
 | Open ALTER Script | `vanthrex.compareStructure.script` |  |
 | Open Documentation | `vanthrex.openDocs` |  |
+| Open IBM i Reference | `vanthrex.openRef` |  |
 | Open Local History Folder | `vanthrex.openHistoryFolder` |  |
 | Open Member | `vanthrex.codeMetrics.open` |  |
 | Open PASE Terminal (IBM i Shell) | `vanthrex.paseTerminal` | Ctrl+Alt+P |
@@ -292,6 +298,7 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Re-bind All Failing Objects | `vanthrex.signatureCheck.rebindAll` |  |
 | Re-bind to the Current Signature | `vanthrex.signatureCheck.rebind` |  |
 | Recompile Broken Sources | `vanthrex.compileHistory.recompileBroken` |  |
+| Recompile the Programs That Use This File… | `vanthrex.rebuildImpacted` |  |
 | Reconnect Now | `vanthrex.connection.reconnectNow` |  |
 | Refresh | `vanthrex.refreshLibraries` |  |
 | Refresh | `vanthrex.refreshIfs` |  |
@@ -304,6 +311,7 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Remove Connection | `vanthrex.deleteConnection` |  |
 | Remove Library from List | `vanthrex.removeLibrary` |  |
 | Remove Message | `vanthrex.removeMessage` |  |
+| Remove the Local Source Index | `vanthrex.index.clear` |  |
 | Rename or Move… | `vanthrex.moveRenameObject` |  |
 | Reply to Inquiry Message | `vanthrex.alerts.reply` |  |
 | Reply… | `vanthrex.replyMessage` |  |
@@ -358,6 +366,7 @@ Command Palette (**Ctrl+Shift+P**, type *Vanthrex*). Most are also on right-clic
 | Show Source with /COPY Expanded | `vanthrex.expandCopies` |  |
 | Sort Members by Name / Date | `vanthrex.sortMembers` |  |
 | Source Quality Report | `vanthrex.sourceQuality` |  |
+| Speed Test of This Connection | `vanthrex.speedTest` |  |
 | Spooled Files on Output Queue | `vanthrex.wrkOutputQueue` |  |
 | SQL Error Log (Who Gets Which SQL Error?) | `vanthrex.sqlErrorLog` |  |
 | SQL History… | `vanthrex.sqlHistory` |  |
