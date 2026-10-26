@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.4.0 (not released yet)
+## 2.4.0
 
 **Local development (like Code for IBM i, with less setup)**
 
