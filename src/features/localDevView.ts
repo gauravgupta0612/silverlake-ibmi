@@ -16,7 +16,7 @@ const cfg = () => vscode.workspace.getConfiguration('vanthrex.deploy');
 let output: vscode.OutputChannel | undefined;
 const out = () => (output ??= vscode.window.createOutputChannel('Vanthrex Build'));
 
-async function pickFolder(uri?: vscode.Uri): Promise<vscode.WorkspaceFolder | undefined> {
+export async function pickFolder(uri?: vscode.Uri): Promise<vscode.WorkspaceFolder | undefined> {
   const f = uri ? vscode.workspace.getWorkspaceFolder(uri) : undefined;
   if (f) { return f; }
   const active = vscode.window.activeTextEditor?.document.uri;
@@ -34,16 +34,16 @@ async function pickFolder(uri?: vscode.Uri): Promise<vscode.WorkspaceFolder | un
   return vscode.window.showWorkspaceFolderPick({ placeHolder: vscode.l10n.t('Which folder?') });
 }
 
-function directoryFor(conn: IbmiConnection, folder: vscode.WorkspaceFolder): string {
+export function directoryFor(conn: IbmiConnection, folder: vscode.WorkspaceFolder): string {
   return deployDirectory(vscode.workspace.getConfiguration('vanthrex.deploy', folder.uri).get<string>('directory', ''),
     { home: conn.homeDirectory, user: conn.user, folder: folder.name });
 }
 
-function ignoreList(folder: vscode.WorkspaceFolder): string[] {
+export function ignoreList(folder: vscode.WorkspaceFolder): string[] {
   return vscode.workspace.getConfiguration('vanthrex.deploy', folder.uri).get<string[]>('ignore', DEFAULT_IGNORE);
 }
 
-async function listFiles(root: vscode.Uri, ignore: string[]): Promise<LocalFile[]> {
+export async function listFiles(root: vscode.Uri, ignore: string[]): Promise<LocalFile[]> {
   const files: LocalFile[] = [];
   const walk = async (dir: vscode.Uri, rel: string, depth: number): Promise<void> => {
     if (depth > 30 || files.length > 50000) { return; }

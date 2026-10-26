@@ -2022,6 +2022,104 @@
         "title": "%command.ifsDownload%",
         "category": "Vanthrex",
         "icon": "$(cloud-download)"
+      },
+      {
+        "command": "vanthrex.jsonToRpg",
+        "title": "%command.jsonToRpg%",
+        "category": "Vanthrex",
+        "icon": "$(json)"
+      },
+      {
+        "command": "vanthrex.queryToRpg",
+        "title": "%command.queryToRpg%",
+        "category": "Vanthrex",
+        "icon": "$(code)"
+      },
+      {
+        "command": "vanthrex.sqlLens",
+        "title": "%command.sqlLens%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.findInTable",
+        "title": "%command.findInTable%",
+        "category": "Vanthrex",
+        "icon": "$(search)"
+      },
+      {
+        "command": "vanthrex.exportInserts",
+        "title": "%command.exportInserts%",
+        "category": "Vanthrex",
+        "icon": "$(database)"
+      },
+      {
+        "command": "vanthrex.previewCommandSource",
+        "title": "%command.previewCommandSource%",
+        "category": "Vanthrex",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "vanthrex.compareWithIfs",
+        "title": "%command.compareWithIfs%",
+        "category": "Vanthrex",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "vanthrex.ifsSync.row",
+        "title": "%command.ifsSync.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.ifsExtract",
+        "title": "%command.ifsExtract%",
+        "category": "Vanthrex",
+        "icon": "$(file-zip)"
+      },
+      {
+        "command": "vanthrex.ifsCompress",
+        "title": "%command.ifsCompress%",
+        "category": "Vanthrex",
+        "icon": "$(file-zip)"
+      },
+      {
+        "command": "vanthrex.ifsCopyTo",
+        "title": "%command.ifsCopyTo%",
+        "category": "Vanthrex",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "vanthrex.ifsMoveTo",
+        "title": "%command.ifsMoveTo%",
+        "category": "Vanthrex",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "vanthrex.wrkJobDescriptions",
+        "title": "%command.wrkJobDescriptions%",
+        "category": "Vanthrex",
+        "icon": "$(briefcase)"
+      },
+      {
+        "command": "vanthrex.jobd.row",
+        "title": "%command.jobd.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.mySqlJob",
+        "title": "%command.mySqlJob%",
+        "category": "Vanthrex",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "vanthrex.retrieveClSource",
+        "title": "%command.retrieveClSource%",
+        "category": "Vanthrex",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "vanthrex.fix.declare",
+        "title": "%command.fix.declare%",
+        "category": "Vanthrex"
       }
     ],
     "menus": {
@@ -2927,6 +3025,51 @@
           "command": "vanthrex.schemaBrowser",
           "when": "view == vanthrex.libraries && viewItem == library",
           "group": "2@9"
+        },
+        {
+          "command": "vanthrex.findInTable",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "2@20"
+        },
+        {
+          "command": "vanthrex.exportInserts",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "2@21"
+        },
+        {
+          "command": "vanthrex.retrieveClSource",
+          "when": "view == vanthrex.libraries && viewItem == object.pgm",
+          "group": "2@20"
+        },
+        {
+          "command": "vanthrex.wrkJobDescriptions",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@10"
+        },
+        {
+          "command": "vanthrex.mySqlJob",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "0_5250@3"
+        },
+        {
+          "command": "vanthrex.ifsExtract",
+          "when": "view == vanthrex.ifs && viewItem == ifs.file",
+          "group": "3@1"
+        },
+        {
+          "command": "vanthrex.ifsCompress",
+          "when": "view == vanthrex.ifs && viewItem =~ /^ifs\\.(dir|file)$/",
+          "group": "3@2"
+        },
+        {
+          "command": "vanthrex.ifsCopyTo",
+          "when": "view == vanthrex.ifs && viewItem =~ /^ifs\\.(dir|file)$/",
+          "group": "3@3"
+        },
+        {
+          "command": "vanthrex.ifsMoveTo",
+          "when": "view == vanthrex.ifs && viewItem =~ /^ifs\\.(dir|file)$/",
+          "group": "3@4"
         }
       ],
       "editor/title": [
@@ -2983,6 +3126,11 @@
         {
           "command": "vanthrex.compileLocal",
           "when": "vanthrex.connected && resourceScheme == file && editorLangId =~ /^(rpgle|cl|dds|sql)$/",
+          "group": "navigation"
+        },
+        {
+          "command": "vanthrex.previewCommandSource",
+          "when": "editorLangId == cl && resourcePath =~ /\\.cmd$/i",
           "group": "navigation"
         }
       ],
@@ -3171,6 +3319,21 @@
           "command": "vanthrex.fixedFields",
           "when": "vanthrex.fixedLine",
           "group": "vanthrex@9"
+        },
+        {
+          "command": "vanthrex.jsonToRpg",
+          "when": "editorLangId == json",
+          "group": "vanthrex@5"
+        },
+        {
+          "command": "vanthrex.queryToRpg",
+          "when": "vanthrex.connected && editorLangId == sql",
+          "group": "vanthrex@6"
+        },
+        {
+          "command": "vanthrex.previewCommandSource",
+          "when": "editorLangId == cl && resourcePath =~ /\\.cmd$/i",
+          "group": "vanthrex@7"
         }
       ],
       "commandPalette": [
@@ -3832,6 +3995,66 @@
         {
           "command": "vanthrex.fixedFields",
           "when": "editorLangId =~ /^(rpgle|dds)$/"
+        },
+        {
+          "command": "vanthrex.sqlLens",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ifsSync.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.jobd.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.fix.declare",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ifsExtract",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ifsCompress",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ifsCopyTo",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.ifsMoveTo",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.queryToRpg",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.findInTable",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.exportInserts",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.compareWithIfs",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.wrkJobDescriptions",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.mySqlJob",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.retrieveClSource",
+          "when": "vanthrex.connected"
         }
       ],
       "vanthrex.ai": [
@@ -3891,6 +4114,16 @@
           "command": "vanthrex.build",
           "when": "vanthrex.connected && explorerResourceIsRoot",
           "group": "7_vanthrex@3"
+        },
+        {
+          "command": "vanthrex.jsonToRpg",
+          "when": "resourceExtname == .json",
+          "group": "7_vanthrex@5"
+        },
+        {
+          "command": "vanthrex.compareWithIfs",
+          "when": "vanthrex.connected && explorerResourceIsRoot",
+          "group": "7_vanthrex@4"
         }
       ],
       "notebook/toolbar": [
@@ -4870,6 +5103,30 @@
           "minimum": 1,
           "maximum": 8,
           "markdownDescription": "%config.editor.rpgIndent%"
+        },
+        "vanthrex.editor.clCommandHelp": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.editor.clCommandHelp%"
+        },
+        "vanthrex.editor.sqlCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.editor.sqlCodeLens%"
+        },
+        "vanthrex.codeGen.arraySize": {
+          "type": "number",
+          "default": 100,
+          "minimum": 1,
+          "maximum": 32767,
+          "markdownDescription": "%config.codeGen.arraySize%"
+        },
+        "vanthrex.codeGen.insertRows": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 1,
+          "maximum": 100000,
+          "markdownDescription": "%config.codeGen.insertRows%"
         }
       }
     },

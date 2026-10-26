@@ -185,15 +185,16 @@ async function runOk(conn: IbmiConnection, cmd: string): Promise<void> {
   if (!r.ok) { throw new Error((r.stderr || r.stdout).trim().split('\n').filter(l => /[A-Z]{3}[0-9A-F]{4}/.test(l)).pop() || (r.stderr || r.stdout).trim().split('\n').pop() || cmd); }
 }
 
-async function libraryListFromJobd(manager: ConnectionManager): Promise<void> {
+async function libraryListFromJobd(manager: ConnectionManager, preset?: string): Promise<void> {
   const conn = manager.require();
-  const how = await vscode.window.showQuickPick([
+  const given = typeof preset === 'string' && /^[^/]+\/[^/]+$/.test(preset) ? preset.toUpperCase().split('/') : undefined;
+  const how = given ? { k: 'given' } : await vscode.window.showQuickPick([
     { label: vscode.l10n.t('$(person) From a user profile'), detail: vscode.l10n.t('Uses the job description of the profile (yours by default)'), k: 'user' },
     { label: vscode.l10n.t('$(briefcase) From a job description'), detail: 'LIBRARY/JOBD', k: 'jobd' },
   ], { title: vscode.l10n.t('Library list from…') });
   if (!how) { return; }
   let jl = ''; let jn = '';
-  if (how.k === 'user') {
+  if (given) { [jl, jn] = given; } else if (how.k === 'user') {
     const u = (await vscode.window.showInputBox({ title: vscode.l10n.t('User profile'), value: conn.user, validateInput: nameCheck, ignoreFocusOut: true }))?.trim().toUpperCase();
     if (!u) { return; }
     const r = (await conn.rows<Row>(`SELECT JOB_DESCRIPTION_LIBRARY_NAME AS L, JOB_DESCRIPTION_NAME AS N FROM QSYS2.USER_INFO WHERE AUTHORIZATION_NAME = ${sqlString(u)}`, 1))[0];
@@ -329,7 +330,7 @@ export function registerSystemTools(context: vscode.ExtensionContext, manager: C
     vscode.commands.registerCommand('vanthrex.journals.row', guard((l: string, j: string) => journalRow(manager, l, j))),
     vscode.commands.registerCommand('vanthrex.networkTest', guard(() => networkTest(manager))),
     vscode.commands.registerCommand('vanthrex.callWebApi', guard(() => callWebApi(manager, context.globalState))),
-    vscode.commands.registerCommand('vanthrex.libraryListFromJobd', guard(() => libraryListFromJobd(manager))),
+    vscode.commands.registerCommand('vanthrex.libraryListFromJobd', guard((preset?: string) => libraryListFromJobd(manager, preset))),
     vscode.commands.registerCommand('vanthrex.compareSystemValues', guard(() => compareSystemValues(manager))),
     vscode.commands.registerCommand('vanthrex.createLibrary', guard((a?: unknown) => createLibrary(manager, a))),
     vscode.commands.registerCommand('vanthrex.librarySets', guard(() => librarySets(manager, context.globalState))),

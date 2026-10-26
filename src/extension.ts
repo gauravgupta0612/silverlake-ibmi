@@ -75,6 +75,14 @@ import { registerSchema } from './features/schemaView';
 import { registerEditorAssist } from './features/editorAssistView';
 import { ifsDropController, registerIfsTransfer } from './features/ifsTransferView';
 import type { Compiler } from './features/compile';
+import { registerClAssist } from './features/clAssistView';
+import { registerCompileFixes } from './features/compileFixesView';
+import { registerSqlLens } from './features/sqlLensView';
+import { registerCodeGen } from './features/codeGenView';
+import { registerTableTools } from './features/tableToolsView';
+import { registerCmdPreview } from './features/cmdPreviewView';
+import { registerIfsSync } from './features/ifsSyncView';
+import { registerWorkExtras } from './features/workExtrasView';
 
 let manager: ConnectionManager | undefined;
 
@@ -189,6 +197,14 @@ export function activate(context: vscode.ExtensionContext): void {
   step('schema browser', () => registerSchema(context, m));
   step('editor assist', () => registerEditorAssist(context, m));
   step('IFS transfer', () => registerIfsTransfer(context, m, ifs));
+  step('CL command help', () => registerClAssist(context, m));
+  step('compile quick fixes', () => registerCompileFixes(context, m));
+  step('SQL code lens', () => registerSqlLens(context, m));
+  step('code generators', () => registerCodeGen(context, m));
+  step('table tools', () => registerTableTools(context, m));
+  step('command source preview', () => registerCmdPreview(context, m));
+  step('IFS sync', () => registerIfsSync(context, m));
+  step('work extras', () => registerWorkExtras(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

@@ -156,7 +156,9 @@ export class Compiler {
     };
 
     for (const e of errors) {
-      if (e.severity === 0 && /^RNF7031|^RNF7066|^RNF7086/.test(e.messageId)) { continue; } // "not referenced" noise
+      if (e.severity === 0 && /^RNF7066|^RNF7086/.test(e.messageId)) { continue; } // "not referenced" noise
+      // Unused declarations (RNF7031) are shown faded, with a quick fix to remove them.
+      const unused = e.severity === 0 && e.messageId === 'RNF7031';
       let uri = sourceUri;
       let line = Math.max(0, e.line - 1);
       let message = e.message;
@@ -175,6 +177,7 @@ export class Compiler {
       const endCol = e.endColumn > 0 && e.endLine === e.line ? Math.max(startCol + 1, e.endColumn) : startCol + 1;
       const range = new vscode.Range(line, startCol, Math.max(line, e.generated ? 0 : e.endLine - 1), endCol);
       const d = new vscode.Diagnostic(range, message, toSeverity(e.severity));
+      if (unused) { d.severity = vscode.DiagnosticSeverity.Hint; d.tags = [vscode.DiagnosticTag.Unnecessary]; }
       d.code = e.messageId;
       d.source = `IBM i (sev ${e.severity})`;
       add(uri, d);

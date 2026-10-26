@@ -769,6 +769,66 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 - **What:** right-click an IFS folder → *Upload Files or a Folder Here…*, or drag files and folders from the Explorer or the desktop onto the IFS view; right-click an IFS file or folder → *Download to This PC…*.
 - **How:** whole folder trees go in one step with one progress bar; missing folders are created, `.git` is skipped, and you are asked once before files with the same names are replaced.
 
+### 94. CL command help in the editor — new in 2.4
+
+- **What:** hover a command in a CL source to see what it does and its parameters (keyword, prompt, default, allowed values, required ones marked). While typing, the keywords not used yet are offered with their default, and inside `KWD(` the allowed values.
+- **Why:** no need to press F4 or look up a command you use once a year; your own commands work too, because the definitions come from the connected system.
+- **How:** connected, open a CL source and hover or type. Turn off with `vanthrex.editor.clCommandHelp`.
+
+### 95. Quick fixes for compile errors — new in 2.4
+
+- **What:** after a compile, *RNF7030 (name not defined)* gets **Declare it here** (in the procedure, after its interface) and **Declare it globally**; unused declarations (*RNF7031*) are faded with **Remove unused declaration**.
+- **How:** put the cursor on the underlined name and press **Ctrl+.** (the light bulb). Choose the type; fixed-format sources get a D-spec in the right columns.
+
+### 96. Command definition sources — new in 2.4
+
+- **What:** in a `.cmd` source, what CRTCMD would reject is underlined as you type, and **Preview Command Prompt (F4) from Source** (editor title) shows the prompt screen with every parameter, its default and its values.
+- **How:** type values in the preview and *Show the command* / *Copy* to see the command they build.
+
+### 97. Retrieve CL Source — new in 2.4
+
+- **What:** right-click a CL program → *Retrieve CL Source (RTVCLSRC)*: the source opens in an editor. Works for programs created with `ALWRTVSRC(*YES)` (the default).
+
+### 98. Run / Explain / RPG links in SQL files — new in 2.4
+
+- **What:** above every statement of a `.sql` file: **▶ Run**, and for queries **Explain** and **RPG code**. Turn off with `vanthrex.editor.sqlCodeLens`.
+
+### 99. Generate RPG for a query — new in 2.4
+
+- **What:** *Generate RPG for This Query* (SQL editor right-click, or *RPG code* above a query): a data structure with the real column types, a cursor and a multi-row FETCH loop, null indicators when needed. `vanthrex.codeGen.arraySize` sets the rows per FETCH.
+
+### 100. Generate RPG from a JSON sample — new in 2.4
+
+- **What:** select JSON in an editor, copy it, or right-click a `.json` file → *Generate RPG from a JSON Sample…*: templates for nested objects, `dim()` arrays with count fields (`countprefix=num_`), names made RPG-valid, and the DATA-INTO / DATA-GEN statements (YAJLINTO / YAJLDTAGEN).
+
+### 101. Find a value in table data — new in 2.4
+
+- **What:** right-click a file → *Find a Value in Table Data…*: every row (up to 500) where any column holds the value, with the column it was found in and the RRN. Text is found anywhere in text columns, in any case; numbers in number columns; dates by their start (`2026-10`).
+
+### 102. Rows as an SQL INSERT script — new in 2.4
+
+- **What:** right-click a file → *Copy Rows as SQL INSERT Script…*, give a WHERE condition (or none): the rows become `INSERT … WITH NC` statements in a new SQL editor, ready to run on another system. `vanthrex.codeGen.insertRows` limits the rows.
+
+### 103. My SQL job — new in 2.4
+
+- **What:** right-click the connection → *My SQL Job (Library List and Job Log)*: the job that runs Vanthrex's SQL, F4 prompts and command line, its library list and its job log (newest first) — the place to look when a statement behaves differently than in STRSQL.
+
+### 104. Compare a folder with the IFS — new in 2.4
+
+- **What:** right-click a folder in the Explorer → *Compare Folder with IFS…*: every file newer on the PC, newer in the IFS, different or only on one side; click one to see the differences, upload it or download it.
+
+### 105. Archives on the IFS — new in 2.4
+
+- **What:** right-click a `.zip`, `.jar`, `.tar`, `.tar.gz` or `.gz` → *Extract Here…*; right-click files or folders → *Compress (zip / tar)…*. Uses `unzip` / `zip` from the open-source packages when installed, otherwise `jar`.
+
+### 106. Copy and move in the IFS — new in 2.4
+
+- **What:** right-click a file or folder → *Copy To…* or *Move or Rename…*. End the target with `/` to keep the name in another folder. Whole folders are copied with their CCSID tags and permissions; you are asked before anything is replaced.
+
+### 107. Work with Job Descriptions — new in 2.4
+
+- **What:** right-click a library (or the quick menu) → *Work with Job Descriptions*: user, job queue, output queue, initial library list and logging of each job description. Click one to change its initial library list or job queue (CHGJOBD, after a confirmation) or to use its library list for your connection.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

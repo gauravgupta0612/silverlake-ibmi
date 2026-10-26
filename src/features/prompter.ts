@@ -126,7 +126,7 @@ async function promptSpec(editor: vscode.TextEditor): Promise<void> {
 
 const definitions = new Map<string, ClCommandDef>();
 
-async function commandDefinition(manager: ConnectionManager, command: string): Promise<ClCommandDef> {
+export async function commandDefinition(manager: ConnectionManager, command: string): Promise<ClCommandDef> {
   const [lib, name] = command.includes('/') ? command.split('/') : ['*LIBL', command];
   if (!isValidSystemName(name) || (lib !== '*LIBL' && !isValidSystemName(lib))) { throw new Error(vscode.l10n.t('"{0}" is not a valid command name.', command)); }
   const key = `${lib}/${name}`.toUpperCase();
