@@ -89,6 +89,10 @@ import { registerSourceHelpers } from './features/sourceHelpersView';
 import { registerJobHistory } from './features/jobHistoryView';
 import { registerDbCare } from './features/dbCareView';
 import { registerSqlGen } from './features/sqlGenView';
+import { registerDevTools } from './features/devToolsView';
+import { registerModernize } from './features/modernizeView';
+import { registerDataQuality } from './features/dataQualityView';
+import { registerSystemAudit } from './features/systemAuditView';
 
 let manager: ConnectionManager | undefined;
 
@@ -217,6 +221,10 @@ export function activate(context: vscode.ExtensionContext): void {
   step('job history', () => registerJobHistory(context, m));
   step('database care', () => registerDbCare(context, m));
   step('sql generators', () => registerSqlGen(context, m));
+  step('developer converters', () => registerDevTools(context, m));
+  step('modernize', () => registerModernize(context, m));
+  step('data quality', () => registerDataQuality(context, m));
+  step('system audit', () => registerSystemAudit(context, m));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

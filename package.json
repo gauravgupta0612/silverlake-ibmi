@@ -2328,6 +2328,147 @@
         "title": "%command.searchSpooledFiles%",
         "category": "Vanthrex",
         "icon": "$(search)"
+      },
+      {
+        "command": "vanthrex.converters",
+        "title": "%command.converters%",
+        "category": "Vanthrex",
+        "icon": "$(symbol-number)"
+      },
+      {
+        "command": "vanthrex.convertNumber",
+        "title": "%command.convertNumber%",
+        "category": "Vanthrex",
+        "icon": "$(symbol-number)"
+      },
+      {
+        "command": "vanthrex.convertDate",
+        "title": "%command.convertDate%",
+        "category": "Vanthrex",
+        "icon": "$(calendar)"
+      },
+      {
+        "command": "vanthrex.convertEbcdic",
+        "title": "%command.convertEbcdic%",
+        "category": "Vanthrex",
+        "icon": "$(symbol-string)"
+      },
+      {
+        "command": "vanthrex.explainCode",
+        "title": "%command.explainCode%",
+        "category": "Vanthrex",
+        "icon": "$(question)"
+      },
+      {
+        "command": "vanthrex.sqlWrapper",
+        "title": "%command.sqlWrapper%",
+        "category": "Vanthrex",
+        "icon": "$(database)"
+      },
+      {
+        "command": "vanthrex.ddsToSql",
+        "title": "%command.ddsToSql%",
+        "category": "Vanthrex",
+        "icon": "$(database)"
+      },
+      {
+        "command": "vanthrex.crudSql",
+        "title": "%command.crudSql%",
+        "category": "Vanthrex",
+        "icon": "$(code)"
+      },
+      {
+        "command": "vanthrex.expandStar",
+        "title": "%command.expandStar%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.extractConstant",
+        "title": "%command.extractConstant%",
+        "category": "Vanthrex",
+        "icon": "$(symbol-constant)"
+      },
+      {
+        "command": "vanthrex.changeLogEntry",
+        "title": "%command.changeLogEntry%",
+        "category": "Vanthrex",
+        "icon": "$(history)"
+      },
+      {
+        "command": "vanthrex.flowchart",
+        "title": "%command.flowchart%",
+        "category": "Vanthrex",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "vanthrex.gotoMatchingBlock",
+        "title": "%command.gotoMatchingBlock%",
+        "category": "Vanthrex",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "vanthrex.profileTable",
+        "title": "%command.profileTable%",
+        "category": "Vanthrex",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "vanthrex.profileTable.top",
+        "title": "%command.profileTable.top%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.orphanRows",
+        "title": "%command.orphanRows%",
+        "category": "Vanthrex",
+        "icon": "$(link)"
+      },
+      {
+        "command": "vanthrex.capacityCheck",
+        "title": "%command.capacityCheck%",
+        "category": "Vanthrex",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "vanthrex.unusedObjects",
+        "title": "%command.unusedObjects%",
+        "category": "Vanthrex",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "vanthrex.unusedObjects.commands",
+        "title": "%command.unusedObjects.commands%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.sqlBenchmark",
+        "title": "%command.sqlBenchmark%",
+        "category": "Vanthrex",
+        "icon": "$(watch)"
+      },
+      {
+        "command": "vanthrex.programAudit",
+        "title": "%command.programAudit%",
+        "category": "Vanthrex",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "vanthrex.scheduleCalendar",
+        "title": "%command.scheduleCalendar%",
+        "category": "Vanthrex",
+        "icon": "$(calendar)"
+      },
+      {
+        "command": "vanthrex.shadowedObjects",
+        "title": "%command.shadowedObjects%",
+        "category": "Vanthrex",
+        "icon": "$(layers)"
+      },
+      {
+        "command": "vanthrex.netServerShares",
+        "title": "%command.netServerShares%",
+        "category": "Vanthrex",
+        "icon": "$(folder-opened)"
       }
     ],
     "menus": {
@@ -3353,6 +3494,36 @@
           "command": "vanthrex.levelCheck",
           "when": "view == vanthrex.libraries && viewItem == object.file",
           "group": "0_info@11"
+        },
+        {
+          "command": "vanthrex.unusedObjects",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@17"
+        },
+        {
+          "command": "vanthrex.programAudit",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@18"
+        },
+        {
+          "command": "vanthrex.profileTable",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "2@22"
+        },
+        {
+          "command": "vanthrex.crudSql",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "2@23"
+        },
+        {
+          "command": "vanthrex.orphanRows",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "2@24"
+        },
+        {
+          "command": "vanthrex.capacityCheck",
+          "when": "view == vanthrex.libraries && viewItem == object.file",
+          "group": "2@25"
         }
       ],
       "editor/title": [
@@ -3632,6 +3803,36 @@
           "command": "vanthrex.checkCharacters",
           "when": "editorLangId =~ /^(rpgle|cl|dds|sql|cobol)$/",
           "group": "vanthrex@10"
+        },
+        {
+          "command": "vanthrex.flowchart",
+          "when": "editorLangId =~ /^(rpgle|cl)$/",
+          "group": "vanthrex@11"
+        },
+        {
+          "command": "vanthrex.sqlWrapper",
+          "when": "editorLangId =~ /^(rpgle|cl)$/",
+          "group": "vanthrex@12"
+        },
+        {
+          "command": "vanthrex.ddsToSql",
+          "when": "editorLangId == dds",
+          "group": "vanthrex@13"
+        },
+        {
+          "command": "vanthrex.changeLogEntry",
+          "when": "editorLangId =~ /^(rpgle|cl|dds|sql|cobol)$/",
+          "group": "vanthrex@14"
+        },
+        {
+          "command": "vanthrex.sqlBenchmark",
+          "when": "vanthrex.connected && editorLangId == sql",
+          "group": "vanthrex@15"
+        },
+        {
+          "command": "vanthrex.explainCode",
+          "when": "editorLangId =~ /^(rpgle|cl|sql)$/",
+          "group": "vanthrex@16"
         }
       ],
       "commandPalette": [
@@ -4449,6 +4650,82 @@
         {
           "command": "vanthrex.searchSpooledFiles",
           "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.expandStar",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.profileTable.top",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.unusedObjects.commands",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.convertEbcdic",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.crudSql",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.profileTable",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.orphanRows",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.capacityCheck",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.unusedObjects",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.programAudit",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.scheduleCalendar",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.shadowedObjects",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.netServerShares",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.sqlWrapper",
+          "when": "editorLangId =~ /^(rpgle|cl)$/"
+        },
+        {
+          "command": "vanthrex.flowchart",
+          "when": "editorLangId =~ /^(rpgle|cl)$/"
+        },
+        {
+          "command": "vanthrex.gotoMatchingBlock",
+          "when": "editorLangId =~ /^(rpgle|cl)$/"
+        },
+        {
+          "command": "vanthrex.ddsToSql",
+          "when": "editorLangId == dds"
+        },
+        {
+          "command": "vanthrex.extractConstant",
+          "when": "editorLangId == rpgle && editorHasSelection"
+        },
+        {
+          "command": "vanthrex.sqlBenchmark",
+          "when": "vanthrex.connected && editorLangId == sql"
         }
       ],
       "vanthrex.ai": [
@@ -4789,6 +5066,12 @@
         "key": "ctrl+alt+e",
         "mac": "cmd+alt+e",
         "when": "editorTextFocus && editorLangId =~ /^(rpgle|cl|dds|sql|cobol)$/"
+      },
+      {
+        "command": "vanthrex.gotoMatchingBlock",
+        "key": "ctrl+shift+\\",
+        "mac": "cmd+shift+\\",
+        "when": "editorTextFocus && editorLangId =~ /^(rpgle|cl)$/"
       }
     ],
     "languages": [
@@ -5723,6 +6006,60 @@
           "minimum": 1,
           "maximum": 90,
           "markdownDescription": "%config.spoolSearchDays%"
+        },
+        "vanthrex.editor.matchBlocks": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.editor.matchBlocks%"
+        },
+        "vanthrex.editor.explainCodes": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.editor.explainCodes%"
+        },
+        "vanthrex.editor.changeLogTemplate": {
+          "type": "string",
+          "default": "{date} {user} {ticket} {text}",
+          "markdownDescription": "%config.editor.changeLogTemplate%"
+        },
+        "vanthrex.editor.changeLogUser": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "%config.editor.changeLogUser%"
+        },
+        "vanthrex.profileSampleRows": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "markdownDescription": "%config.profileSampleRows%"
+        },
+        "vanthrex.capacityWarnPercent": {
+          "type": "number",
+          "default": 80,
+          "minimum": 10,
+          "maximum": 100,
+          "markdownDescription": "%config.capacityWarnPercent%"
+        },
+        "vanthrex.unusedObjectDays": {
+          "type": "number",
+          "default": 365,
+          "minimum": 30,
+          "maximum": 3660,
+          "markdownDescription": "%config.unusedObjectDays%"
+        },
+        "vanthrex.benchmarkRows": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 1,
+          "maximum": 100000,
+          "markdownDescription": "%config.benchmarkRows%"
+        },
+        "vanthrex.scheduleDays": {
+          "type": "number",
+          "default": 7,
+          "minimum": 1,
+          "maximum": 62,
+          "markdownDescription": "%config.scheduleDays%"
         }
       }
     },

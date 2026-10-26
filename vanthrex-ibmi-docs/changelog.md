@@ -75,6 +75,37 @@ Everything sent to the AI now goes through one guard, and nothing the AI does ca
 
 - **Comment blocks fold** in RPG and CL: three or more comment lines in a row (`//`, `*` in column 7, `/* */`) fold like code, and *Fold All Block Comments* folds them all.
 
+**Understand and modernize code**
+
+- **Flowchart of This Procedure** (right-click an RPG or CL source): the control flow of the main line, a procedure or a subroutine drawn as boxes — runs of statements, IF / ELSEIF / ELSE and SELECT / WHEN decisions, DOW / DOU / FOR loops with their way back, MONITOR / ON-ERROR, RETURN, LEAVE and ITER — for free-form RPG, fixed C specs and CL (IF THEN(DO), ELSE, DOWHILE, SELECT…); click a box to go to its line, zoom, **Copy as Mermaid**.
+- **Matching blocks** in RPG and CL: put the cursor on IF, ELSE, DOW, WHEN, MONITOR, LEAVE or an END and the whole block is highlighted (`vanthrex.editor.matchBlocks`); **Go to Matching IF / ELSE / END** jumps between them (Ctrl+Shift+\\).
+- **Create SQL Procedure for This Program…**: `CREATE PROCEDURE … EXTERNAL NAME` over an RPG or CL program (parameters read from the dcl-pi, *ENTRY PLIST or PGM PARM; CONST / VALUE become IN, the others INOUT), or `CREATE FUNCTION` over an exported procedure that returns a value — so Java, Python, Node, ODBC and SQL can call it.
+- **Convert DDS to SQL**: a physical file becomes `CREATE TABLE … RCDFMT` (types, ALWNULL, DFT, ALIAS, the unique key as PRIMARY KEY, TEXT and COLHDG as labels); a keyed logical file becomes `CREATE INDEX … RCDFMT … ADD` (programs keep working after a recompile), select / omit a view; what needs a check is written at the top.
+- **Generate SQL Statements…** (right-click a table): SELECT INTO, INSERT, UPDATE, DELETE by key, MERGE (upsert) and a cursor, with host variables, identity columns left out and nullable columns pointed out.
+- **Expand SELECT \*** (light bulb in SQL and RPG): the `*` replaced by the column list of the table.
+- **Extract to Named Constant (DCL-C)** (light bulb on a selected literal in RPG): a name proposed from the text, every occurrence replaced if you want.
+- **Add Change Log Entry**: date, user, ticket and text at the top of the source, in its comment style (`vanthrex.editor.changeLogTemplate`).
+
+**Codes and converters**
+
+- **SQLCODE, SQLSTATE and RPG status explained** on hover in RPG, SQL and CL (`if sqlcode = -803`, `sqlstate = '02000'`, `%status = 1218`) and with **Explain SQLCODE / SQLSTATE / RPG Status…** (`-803`, `SQL0204`, `23505`, `01211`, `RNQ1218`): what it means and what to do, offline.
+- **Developer Converters**: packed, zoned and binary to and from hex (what a dump or DSPPFM shows); a date in every IBM i format (*ISO, *USA, *EUR, *MDY, *DMY, *YMD, *JUL, *LONGJUL, *CYMD, *CMDY, *CDMY, day of week, RPG and SQL literals) from any of them; timestamps and epoch; text to and from EBCDIC hex for any CCSID, converted by the system itself. Pick a result to copy it.
+
+**Data quality**
+
+- **Data Profile of a Table…** (right-click a table): for each column the nulls, distinct values, smallest and largest, with columns always null, holding one value, unique (key candidates), mostly null or with dummy dates pointed out; click a column for its most frequent values (`vanthrex.profileSampleRows`).
+- **Find Orphan Rows…** (right-click a table): rows whose parent is missing, for a declared foreign key or any relation you give, grouped by key with counts.
+- **Columns Close to Their Limit…** (right-click a table): numeric columns near the largest value they can hold (a DECIMAL(5,0) counter at 99,000) and text columns filled to their length (values probably cut) (`vanthrex.capacityWarnPercent`).
+- **Unused Objects of a Library…** (right-click a library): objects not used for a year (or never), largest first, with the commands to save them to a save file and delete them, opened for review (`vanthrex.unusedObjectDays`).
+- **Time This SQL Statement**: run a SELECT 2 to 50 times and see the first run, the average after it, median, 90th percentile and each run (`vanthrex.benchmarkRows`).
+
+**System audits**
+
+- **Program Attributes Audit…** (right-click a library): programs that adopt the authority of QSECOFR or an *ALLOBJ owner, adopt their owner, run dynamic SQL as the owner, use adopted authority, or target an old release — with what to do.
+- **Job Schedule for the Next Days**: every scheduled entry laid out day by day with its time, command and user (weekly days, month start / end, "first Monday"…), held entries apart (`vanthrex.scheduleDays`).
+- **Objects Hidden in the Library List**: programs, files, commands and data areas that exist in two libraries of the library list — which one is used and which ones are never reached.
+- **NetServer File Shares**: every share with its path, permissions and users; write access to the root or QSYS.LIB is marked.
+
 ## 2.4.0
 
 **Local development (like Code for IBM i, with less setup)**

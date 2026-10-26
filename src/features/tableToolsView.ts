@@ -12,7 +12,7 @@ type Row = Record<string, unknown>;
 const ALLOWED = new Set(['vanthrex.findInTable', 'vanthrex.editData', 'vanthrex.exportInserts']);
 const show = (v: unknown) => (v === null || v === undefined ? null : typeof v === 'object' ? JSON.stringify(v) : (v as string | number));
 
-async function pickTable(o?: { library?: string; name?: string }, title?: string): Promise<{ library: string; name: string } | undefined> {
+export async function pickTable(o?: { library?: string; name?: string }, title?: string): Promise<{ library: string; name: string } | undefined> {
   let lib = o?.library; let name = o?.name;
   if (!lib || !name) {
     const v = await vscode.window.showInputBox({ title, prompt: 'LIBRARY/TABLE', ignoreFocusOut: true, validateInput: x => (/^[^/\s]+\/[^/\s]+$/.test(x.trim()) ? undefined : 'LIBRARY/TABLE') });
@@ -22,7 +22,7 @@ async function pickTable(o?: { library?: string; name?: string }, title?: string
   return { library: assertSystemName(lib, 'library'), name: assertSystemName(name, 'table') };
 }
 
-async function columnsOf(manager: ConnectionManager, lib: string, name: string): Promise<ColumnInfo[]> {
+export async function columnsOf(manager: ConnectionManager, lib: string, name: string): Promise<ColumnInfo[]> {
   const rows = await manager.require().cachedRows<Row>(`SELECT COLUMN_NAME AS N, DATA_TYPE AS T, LENGTH AS L, COALESCE(NUMERIC_SCALE, 0) AS S, IS_NULLABLE AS NL ` +
     `FROM QSYS2.SYSCOLUMNS WHERE SYSTEM_TABLE_SCHEMA = ${sqlString(lib)} AND SYSTEM_TABLE_NAME = ${sqlString(name)} ORDER BY ORDINAL_POSITION`, 5000, 60_000);
   if (!rows.length) { throw new Error(vscode.l10n.t('{0}/{1} was not found.', lib, name)); }

@@ -938,6 +938,82 @@ Also in the right-click menus: *AI: Generate Test Data for This Table* and *AI: 
 
 - **What:** Blocks of three or more comment lines fold in RPG and CL.
 
+### 132. Flowchart — new in 2.5
+
+- **What:** *Flowchart of This Procedure*: the main line, a procedure or a subroutine of RPG (free or fixed) or CL drawn as boxes, decisions and loops; click a box to go to its line; *Copy as Mermaid*.
+
+### 133. Matching blocks — new in 2.5
+
+- **What:** The cursor on IF, ELSE, DOW, WHEN, MONITOR or END highlights the whole block in RPG and CL; *Go to Matching IF / ELSE / END* (Ctrl+Shift+\\).
+
+### 134. SQL procedure over a program — new in 2.5
+
+- **What:** *Create SQL Procedure for This Program…*: CREATE PROCEDURE / FUNCTION … EXTERNAL NAME with the parameters of the program or exported procedure.
+
+### 135. DDS to SQL — new in 2.5
+
+- **What:** *Convert DDS to SQL*: CREATE TABLE … RCDFMT with keys, nulls, defaults, aliases and labels; logical files to CREATE INDEX … RCDFMT … ADD or a view.
+
+### 136. CRUD statements — new in 2.5
+
+- **What:** *Generate SQL Statements…*: SELECT INTO, INSERT, UPDATE, DELETE, MERGE and a cursor for a table, by its key.
+
+### 137. Expand SELECT * — new in 2.5
+
+- **What:** Light bulb on `SELECT *`: replaced by the column list of the table.
+
+### 138. Extract to constant — new in 2.5
+
+- **What:** Light bulb on a selected literal in RPG: a DCL-C with a proposed name, every occurrence replaced if wanted.
+
+### 139. Change log entry — new in 2.5
+
+- **What:** *Add Change Log Entry*: date, user, ticket and text at the top of the source (`vanthrex.editor.changeLogTemplate`).
+
+### 140. Codes explained — new in 2.5
+
+- **What:** SQLCODE, SQLSTATE and RPG status codes explained on hover and with *Explain SQLCODE / SQLSTATE / RPG Status…*, offline, with what to do.
+
+### 141. Developer converters — new in 2.5
+
+- **What:** Packed / zoned / binary ↔ hex, a date in every IBM i format, timestamps and epoch, text ↔ EBCDIC hex for any CCSID.
+
+### 142. Data profile — new in 2.5
+
+- **What:** *Data Profile of a Table…*: nulls, distinct values, smallest and largest of each column, with notes; the most frequent values of a column.
+
+### 143. Orphan rows — new in 2.5
+
+- **What:** *Find Orphan Rows…*: child rows whose parent is missing, for a declared foreign key or any relation.
+
+### 144. Capacity check — new in 2.5
+
+- **What:** *Columns Close to Their Limit…*: numbers near the largest value of their type, texts filled to their length.
+
+### 145. Unused objects — new in 2.5
+
+- **What:** *Unused Objects of a Library…*: not used for a year or never, largest first, with save-and-delete commands to review.
+
+### 146. SQL timing — new in 2.5
+
+- **What:** *Time This SQL Statement*: first run, average, median and 90th percentile over several runs.
+
+### 147. Program attributes audit — new in 2.5
+
+- **What:** *Program Attributes Audit…*: adopted authority of QSECOFR or *ALLOBJ owners, dynamic SQL as the owner, old target releases.
+
+### 148. Job schedule calendar — new in 2.5
+
+- **What:** *Job Schedule for the Next Days*: each scheduled entry by day and time.
+
+### 149. Hidden objects — new in 2.5
+
+- **What:** *Objects Hidden in the Library List*: same name in two libraries — which one is used.
+
+### 150. NetServer shares — new in 2.5
+
+- **What:** *NetServer File Shares*: paths, permissions and users; risky write shares marked.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
@@ -951,6 +1027,7 @@ Also in the right-click menus: *AI: Generate Test Data for This Table* and *AI: 
 | Ctrl+Alt+K | Command line (5250 style) |
 | Ctrl+Alt+P | PASE terminal |
 | Ctrl+Alt+E | AI: change the selected code (shown as a diff first) |
+| Ctrl+Shift+\\ | Go to the matching IF / ELSE / END (RPG, CL) |
 | Ctrl+Alt+] / Ctrl+Alt+[ | Next / previous fixed-format field (RPG, DDS) |
 | Shift+Enter | Run a notebook cell |
 | Ctrl+Alt+O | Search objects |

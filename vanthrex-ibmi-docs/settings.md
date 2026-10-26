@@ -105,6 +105,15 @@ Open **File → Preferences → Settings** and search for *Vanthrex*, or edit `s
 | `vanthrex.jobHistoryDays` | number | `30` | Days of history log read by **Job Run History**. |
 | `vanthrex.unusedIndexDays` | number | `180` | Days without query use or open before **Unused Indexes** proposes an index. |
 | `vanthrex.spoolSearchDays` | number | `7` | Days of spooled files searched by **Find a Text in Spooled Files**. |
+| `vanthrex.editor.matchBlocks` | boolean | `true` | Highlight the matching IF / ELSE / ENDIF, DO / ENDDO, SELECT / WHEN / ENDSL keywords in RPG and CL when the cursor is on one. |
+| `vanthrex.editor.explainCodes` | boolean | `true` | Explain SQLCODE, SQLSTATE and RPG status codes (01218, -803, '23505') when hovering them in RPG, SQL and CL. |
+| `vanthrex.editor.changeLogTemplate` | string | `"{date} {user} {ticket} {text}"` | Text of **Add Change Log Entry**: `{date}`, `{user}`, `{ticket}`, `{text}`. Use `\n` for more lines. |
+| `vanthrex.editor.changeLogUser` | string | `""` | Name written by **Add Change Log Entry** (empty: the IBM i user of the connection). |
+| `vanthrex.profileSampleRows` | number | `0` | **Data Profile**: read only the first N rows (0 = the whole table). |
+| `vanthrex.capacityWarnPercent` | number | `80` | **Columns Close to Their Limit** marks columns that use this percentage of what they can hold. |
+| `vanthrex.unusedObjectDays` | number | `365` | Days without use before **Unused Objects** lists an object. |
+| `vanthrex.benchmarkRows` | number | `1000` | Rows fetched on each run by **Time This SQL Statement**. |
+| `vanthrex.scheduleDays` | number | `7` | Days shown by **Job Schedule for the Next Days**. |
 
 ## RPG check rules
 
