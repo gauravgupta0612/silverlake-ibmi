@@ -67,6 +67,14 @@ import { registerProgramCall } from './features/programCallView';
 import { registerMemberNotes } from './features/memberNotesView';
 import { registerOperations } from './features/operationsView';
 import { registerSqlFormat } from './features/sqlFormatView';
+import { registerLocalDev } from './features/localDevView';
+import { registerTerminal } from './features/terminalView';
+import { registerNotebooks } from './features/notebookView';
+import { registerSqlErrorLog } from './features/sqlErrorLogView';
+import { registerSchema } from './features/schemaView';
+import { registerEditorAssist } from './features/editorAssistView';
+import { ifsDropController, registerIfsTransfer } from './features/ifsTransferView';
+import type { Compiler } from './features/compile';
 
 let manager: ConnectionManager | undefined;
 
@@ -100,7 +108,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('views', () => context.subscriptions.push(
     vscode.window.registerTreeDataProvider('vanthrex.connections', new ConnectionTreeProvider(m)),
     vscode.window.createTreeView('vanthrex.libraries', { treeDataProvider: libraries, showCollapseAll: true }),
-    vscode.window.createTreeView('vanthrex.ifs', { treeDataProvider: ifs, showCollapseAll: true }),
+    vscode.window.createTreeView('vanthrex.ifs', { treeDataProvider: ifs, showCollapseAll: true, dragAndDropController: ifsDropController(m, ifs), canSelectMany: false }),
     vscode.window.registerTreeDataProvider('vanthrex.spool', spool),
   ));
   step('file systems', () => context.subscriptions.push(
@@ -114,7 +122,8 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.workspace.registerFileSystemProvider(IFS_SCHEME, new IfsFileSystem(m), { isCaseSensitive: true }),
   ));
-  step('compile', () => registerCompile(context, m));
+  let compiler: Compiler | undefined;
+  step('compile', () => { compiler = registerCompile(context, m); });
   step('sql', () => registerSql(context, m));
   step('spool', () => registerSpool(context, m, spool));
   step('rpg', () => registerRpgFeatures(context));
@@ -173,6 +182,13 @@ export function activate(context: vscode.ExtensionContext): void {
   step('member notes', () => registerMemberNotes(context, m));
   step('operations', () => registerOperations(context, m));
   step('SQL formatter', () => registerSqlFormat(context, m));
+  step('local development', () => { if (compiler) { registerLocalDev(context, m, compiler); } });
+  step('PASE terminal', () => registerTerminal(context, m));
+  step('notebooks', () => registerNotebooks(context, m));
+  step('SQL error log', () => registerSqlErrorLog(context, m));
+  step('schema browser', () => registerSchema(context, m));
+  step('editor assist', () => registerEditorAssist(context, m));
+  step('IFS transfer', () => registerIfsTransfer(context, m, ifs));
 
   if (failures.length) {
     vscode.window.showErrorMessage(vscode.l10n.t('Vanthrex started with problems: {0}', failures.join(' | ')), vscode.l10n.t('Show Log'))

@@ -58,7 +58,7 @@ async function open5250(manager: ConnectionManager): Promise<void> {
 
 // ================================================================ command line
 
-interface RunResult { ok: boolean; messages: CmdMessage[]; spool?: { name: string; text: string }; opened?: string; error?: string; ran?: string; display?: boolean }
+export interface RunResult { ok: boolean; messages: CmdMessage[]; spool?: { name: string; text: string }; opened?: string; error?: string; ran?: string; display?: boolean }
 
 async function runOnSqlJob(conn: IbmiConnection, cmd: string, printed: boolean): Promise<RunResult> {
   const mark = (await conn.rows<Row>(`SELECT COALESCE((SELECT MAX(ORDINAL_POSITION) FROM TABLE(QSYS2.JOBLOG_INFO('*')) X), 0) AS N, ` +
@@ -89,7 +89,7 @@ async function runOnSqlJob(conn: IbmiConnection, cmd: string, printed: boolean):
   return { ok, messages: msgs, spool, error: ok ? undefined : msgs.find(m => /ESCAPE/i.test(m.type))?.text ?? error, ran: cmd };
 }
 
-async function runCommand(manager: ConnectionManager, text: string): Promise<RunResult> {
+export async function runCommand(manager: ConnectionManager, text: string): Promise<RunResult> {
   const conn = manager.require();
   const eq = interactiveEquivalent(text, conn.user);
   if (eq) { await vscode.commands.executeCommand(eq.command, ...eq.args); return { ok: true, messages: [], opened: eq.screen }; }

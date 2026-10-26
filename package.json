@@ -2,7 +2,7 @@
   "name": "vanthrex-ibmi",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "publisher": "gauravgupta0612",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -1915,6 +1915,113 @@
         "command": "vanthrex.wrkactjob.key",
         "title": "%command.wrkactjob.key%",
         "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.paseTerminal",
+        "title": "%command.paseTerminal%",
+        "category": "Vanthrex",
+        "icon": "$(terminal-linux)"
+      },
+      {
+        "command": "vanthrex.paseTerminalHere",
+        "title": "%command.paseTerminalHere%",
+        "category": "Vanthrex",
+        "icon": "$(terminal-linux)"
+      },
+      {
+        "command": "vanthrex.deploy",
+        "title": "%command.deploy%",
+        "category": "Vanthrex",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "vanthrex.deployAll",
+        "title": "%command.deployAll%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.compileLocal",
+        "title": "%command.compileLocal%",
+        "category": "Vanthrex",
+        "icon": "$(run)"
+      },
+      {
+        "command": "vanthrex.build",
+        "title": "%command.build%",
+        "category": "Vanthrex",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "vanthrex.deployFolder",
+        "title": "%command.deployFolder%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.newNotebook",
+        "title": "%command.newNotebook%",
+        "category": "Vanthrex",
+        "icon": "$(notebook)"
+      },
+      {
+        "command": "vanthrex.notebook.exportMarkdown",
+        "title": "%command.notebook.exportMarkdown%",
+        "category": "Vanthrex",
+        "icon": "$(markdown)"
+      },
+      {
+        "command": "vanthrex.sqlErrorLog",
+        "title": "%command.sqlErrorLog%",
+        "category": "Vanthrex",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "vanthrex.sqlErrorLog.settings",
+        "title": "%command.sqlErrorLog.settings%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.schemaBrowser",
+        "title": "%command.schemaBrowser%",
+        "category": "Vanthrex",
+        "icon": "$(database)"
+      },
+      {
+        "command": "vanthrex.schema.row",
+        "title": "%command.schema.row%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.callProcedure",
+        "title": "%command.callProcedure%",
+        "category": "Vanthrex",
+        "icon": "$(play)"
+      },
+      {
+        "command": "vanthrex.nextField",
+        "title": "%command.nextField%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.previousField",
+        "title": "%command.previousField%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.fixedFields",
+        "title": "%command.fixedFields%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.ifsUpload",
+        "title": "%command.ifsUpload%",
+        "category": "Vanthrex",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "vanthrex.ifsDownload",
+        "title": "%command.ifsDownload%",
+        "category": "Vanthrex",
+        "icon": "$(cloud-download)"
       }
     ],
     "menus": {
@@ -2108,6 +2215,16 @@
           "command": "vanthrex.open5250",
           "when": "view == vanthrex.connections && vanthrex.connected",
           "group": "navigation@2"
+        },
+        {
+          "command": "vanthrex.paseTerminal",
+          "when": "view == vanthrex.connections && vanthrex.connected",
+          "group": "1_connections@6"
+        },
+        {
+          "command": "vanthrex.ifsUpload",
+          "when": "view == vanthrex.ifs && vanthrex.connected",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [
@@ -2785,6 +2902,31 @@
           "command": "vanthrex.wrkactjob",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "0_5250@3"
+        },
+        {
+          "command": "vanthrex.paseTerminal",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "0_5250@2"
+        },
+        {
+          "command": "vanthrex.ifsUpload",
+          "when": "view == vanthrex.ifs && viewItem == ifs.dir",
+          "group": "1@5"
+        },
+        {
+          "command": "vanthrex.ifsDownload",
+          "when": "view == vanthrex.ifs && viewItem =~ /^ifs\\.(dir|file)$/",
+          "group": "1@6"
+        },
+        {
+          "command": "vanthrex.paseTerminalHere",
+          "when": "view == vanthrex.ifs && viewItem == ifs.dir",
+          "group": "1@7"
+        },
+        {
+          "command": "vanthrex.schemaBrowser",
+          "when": "view == vanthrex.libraries && viewItem == library",
+          "group": "2@9"
         }
       ],
       "editor/title": [
@@ -2837,6 +2979,11 @@
           "command": "vanthrex.previewPrtf",
           "when": "editorLangId == dds && resourceExtname =~ /prtf/i",
           "group": "navigation@5"
+        },
+        {
+          "command": "vanthrex.compileLocal",
+          "when": "vanthrex.connected && resourceScheme == file && editorLangId =~ /^(rpgle|cl|dds|sql)$/",
+          "group": "navigation"
         }
       ],
       "editor/context": [
@@ -3014,6 +3161,16 @@
           "command": "vanthrex.expandCopies",
           "when": "vanthrex.connected && editorLangId == rpgle",
           "group": "vanthrex@7"
+        },
+        {
+          "command": "vanthrex.compileLocal",
+          "when": "vanthrex.connected && resourceScheme == file && editorLangId =~ /^(rpgle|cl|dds|sql)$/",
+          "group": "vanthrex@0"
+        },
+        {
+          "command": "vanthrex.fixedFields",
+          "when": "vanthrex.fixedLine",
+          "group": "vanthrex@9"
         }
       ],
       "commandPalette": [
@@ -3607,6 +3764,74 @@
         {
           "command": "vanthrex.wrkactjob",
           "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.schema.row",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.paseTerminalHere",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.notebook.exportMarkdown",
+          "when": "notebookType == vanthrex-notebook"
+        },
+        {
+          "command": "vanthrex.ifsDownload",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.paseTerminal",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.deploy",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.deployAll",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.compileLocal",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.build",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.sqlErrorLog",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.sqlErrorLog.settings",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.schemaBrowser",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.callProcedure",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.ifsUpload",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.nextField",
+          "when": "editorLangId =~ /^(rpgle|dds)$/"
+        },
+        {
+          "command": "vanthrex.previousField",
+          "when": "editorLangId =~ /^(rpgle|dds)$/"
+        },
+        {
+          "command": "vanthrex.fixedFields",
+          "when": "editorLangId =~ /^(rpgle|dds)$/"
         }
       ],
       "vanthrex.ai": [
@@ -3649,6 +3874,30 @@
           "command": "vanthrex.ai.dependencies",
           "when": "vanthrex.connected && resourceScheme == vanthrex-member",
           "group": "3@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "vanthrex.deploy",
+          "when": "vanthrex.connected",
+          "group": "7_vanthrex@1"
+        },
+        {
+          "command": "vanthrex.compileLocal",
+          "when": "vanthrex.connected && !explorerResourceIsFolder && resourceExtname =~ /^\\.(rpgle|sqlrpgle|clle|clp|cmd|sql|pf|lf|dspf|prtf)$/i",
+          "group": "7_vanthrex@2"
+        },
+        {
+          "command": "vanthrex.build",
+          "when": "vanthrex.connected && explorerResourceIsRoot",
+          "group": "7_vanthrex@3"
+        }
+      ],
+      "notebook/toolbar": [
+        {
+          "command": "vanthrex.notebook.exportMarkdown",
+          "when": "notebookType == vanthrex-notebook",
+          "group": "navigation/execute@9"
         }
       ]
     },
@@ -3847,6 +4096,24 @@
         "command": "vanthrex.commandLine",
         "key": "ctrl+alt+k",
         "mac": "cmd+alt+k",
+        "when": "vanthrex.connected"
+      },
+      {
+        "command": "vanthrex.nextField",
+        "key": "ctrl+alt+]",
+        "mac": "cmd+alt+]",
+        "when": "editorTextFocus && vanthrex.fixedLine"
+      },
+      {
+        "command": "vanthrex.previousField",
+        "key": "ctrl+alt+[",
+        "mac": "cmd+alt+[",
+        "when": "editorTextFocus && vanthrex.fixedLine"
+      },
+      {
+        "command": "vanthrex.paseTerminal",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p",
         "when": "vanthrex.connected"
       }
     ],
@@ -4535,6 +4802,74 @@
           "type": "number",
           "default": 0,
           "description": "%config.5250.port%"
+        },
+        "vanthrex.deploy.directory": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "markdownDescription": "%config.deploy.directory%"
+        },
+        "vanthrex.deploy.ignore": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "node_modules/",
+            ".vscode/",
+            "*.vsix",
+            "*.log",
+            ".env",
+            ".env.*",
+            "*.pem",
+            "*.key"
+          ],
+          "scope": "resource",
+          "markdownDescription": "%config.deploy.ignore%"
+        },
+        "vanthrex.deploy.buildCommand": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "markdownDescription": "%config.deploy.buildCommand%"
+        },
+        "vanthrex.deploy.ccsid": {
+          "type": "number",
+          "default": 1208,
+          "markdownDescription": "%config.deploy.ccsid%"
+        },
+        "vanthrex.deploy.onSave": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "%config.deploy.onSave%"
+        },
+        "vanthrex.deploy.compileDeploysChanges": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.deploy.compileDeploysChanges%"
+        },
+        "vanthrex.terminal.openSourcePath": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.terminal.openSourcePath%"
+        },
+        "vanthrex.notebook.maxRows": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 1,
+          "markdownDescription": "%config.notebook.maxRows%"
+        },
+        "vanthrex.editor.columnHints": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "%config.editor.columnHints%"
+        },
+        "vanthrex.editor.rpgIndent": {
+          "type": "number",
+          "default": 2,
+          "minimum": 1,
+          "maximum": 8,
+          "markdownDescription": "%config.editor.rpgIndent%"
         }
       }
     },
@@ -4733,7 +5068,27 @@
           "properties": {}
         }
       }
-    ]
+    ],
+    "notebooks": [
+      {
+        "type": "vanthrex-notebook",
+        "displayName": "%notebook.displayName%",
+        "selector": [
+          {
+            "filenamePattern": "*.vxnb"
+          }
+        ]
+      }
+    ],
+    "terminal": {
+      "profiles": [
+        {
+          "id": "vanthrex.paseTerminal",
+          "title": "%terminal.paseTitle%",
+          "icon": "terminal-linux"
+        }
+      ]
+    }
   },
   "scripts": {
     "build": "node esbuild.js",

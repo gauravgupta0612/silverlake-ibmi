@@ -4,6 +4,7 @@ import { errorMessage, log, logError, showLog } from '../core/log';
 import { parseEvfEvent, parseQsysPath, EvfError } from '../core/evfevent';
 import { objectNameFromFile, parseMemberPath, substituteVariables, CompileVariables } from '../core/util';
 import { IFS_SCHEME, MEMBER_SCHEME, ifsUri, memberUri } from './fileSystems';
+import { localRelFor } from '../core/localDev';
 
 export interface CompileAction {
   name: string;
@@ -14,15 +15,23 @@ export interface CompileAction {
 
 const LAST_ACTION_KEY = 'vanthrex.lastCompileAction';
 
+/** A local file compiled from its copy in the IFS deploy folder: errors are shown on the local files. */
+export interface LocalTarget { uri: vscode.Uri; root: vscode.Uri; dir: string }
+
 export class Compiler {
   readonly diagnostics = vscode.languages.createDiagnosticCollection('IBM i');
 
   constructor(private readonly manager: ConnectionManager, private readonly state: vscode.Memento) {}
 
-  async compile(target?: vscode.Uri | { resourceUri?: vscode.Uri; path?: string; kind?: string }, alwaysAsk = false): Promise<void> {
+  async compile(target?: vscode.Uri | { resourceUri?: vscode.Uri; path?: string; kind?: string }, alwaysAsk = false, local?: LocalTarget): Promise<void> {
     const uri = this.resolveUri(target);
     if (!uri) {
       vscode.window.showWarningMessage(vscode.l10n.t('Open a source member or IFS source file to compile.'));
+      return;
+    }
+    if (uri.scheme === 'file' && !local) {
+      // A local (Git) file: deploy it to the IFS and compile it there.
+      await vscode.commands.executeCommand('vanthrex.compileLocal', uri, alwaysAsk);
       return;
     }
     if (uri.scheme !== MEMBER_SCHEME && uri.scheme !== IFS_SCHEME) {
@@ -72,12 +81,12 @@ export class Compiler {
         log(`No events file found for ${vars.OBJLIB}/${vars.NAME}: ${errorMessage(e)}`);
       }
     }
-    this.publish(uri, ext, errors);
+    this.publish(local?.uri ?? uri, ext, errors, local);
 
     const errorCount = errors.filter(e => e.severity >= 30).length;
     const warnCount = errors.filter(e => e.severity >= 20 && e.severity < 30).length;
     compileFinished.fire({
-      uri, name: isMember ? `${vars.LIB}/${vars.SRCFILE}(${vars.NAME})` : uri.path, object: `${vars.OBJLIB}/${vars.NAME}`, ok: result.ok,
+      uri: local?.uri ?? uri, name: isMember ? `${vars.LIB}/${vars.SRCFILE}(${vars.NAME})` : (local ? vscode.workspace.asRelativePath(local.uri) : uri.path), object: `${vars.OBJLIB}/${vars.NAME}`, ok: result.ok,
       errors: errorCount, warnings: warnCount, command, message: result.ok ? undefined : (result.messages.slice(-1)[0] ?? ''), system: conn.profile.name,
     });
     if (result.ok) {
@@ -92,7 +101,7 @@ export class Compiler {
       void vscode.window.showErrorMessage(vscode.l10n.t('✖ {0} failed to compile: {1}.', String(vars.NAME), summary),
         vscode.l10n.t('Show Problems'), ...(ai ? [vscode.l10n.t('Explain with AI')] : []), vscode.l10n.t('Show Log')).then(choice => {
         if (choice === vscode.l10n.t('Show Problems')) { vscode.commands.executeCommand('workbench.actions.view.problems'); }
-        if (choice === vscode.l10n.t('Explain with AI')) { vscode.commands.executeCommand('vanthrex.ai.errors', uri); }
+        if (choice === vscode.l10n.t('Explain with AI')) { vscode.commands.executeCommand('vanthrex.ai.errors', local?.uri ?? uri); }
         if (choice === vscode.l10n.t('Show Log')) { showLog(); }
       });
     }
@@ -137,7 +146,7 @@ export class Compiler {
     return pick.action;
   }
 
-  private publish(sourceUri: vscode.Uri, ext: string, errors: EvfError[]): void {
+  private publish(sourceUri: vscode.Uri, ext: string, errors: EvfError[], local?: LocalTarget): void {
     this.diagnostics.delete(sourceUri);
     const byUri = new Map<string, { uri: vscode.Uri; list: vscode.Diagnostic[] }>();
     const add = (uri: vscode.Uri, d: vscode.Diagnostic) => {
@@ -157,7 +166,10 @@ export class Compiler {
       } else if (!e.isMainFile && e.file) {
         const m = parseQsysPath(e.file);
         if (m) { uri = memberUri(m.library, m.file, m.member, ext === 'sqlrpgle' ? 'rpgleinc' : ext); }
-        else if (e.file.startsWith('/')) { uri = ifsUri(e.file); }
+        else if (e.file.startsWith('/')) {
+          const rel = local ? localRelFor(local.dir, e.file) : undefined;
+          uri = rel ? vscode.Uri.joinPath(local!.root, ...rel.split('/')) : ifsUri(e.file);
+        }
       }
       const startCol = Math.max(0, e.column - 1);
       const endCol = e.endColumn > 0 && e.endLine === e.line ? Math.max(startCol + 1, e.endColumn) : startCol + 1;

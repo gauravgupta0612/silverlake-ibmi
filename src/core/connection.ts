@@ -75,6 +75,14 @@ export class IbmiConnection implements vscode.Disposable {
     if (pick !== once) { throw new Error(vscode.l10n.t('Change cancelled on protected system {0}.', this.profile.name)); }
   }
 
+  /** Ask once for a batch of changes (deploy, folder upload): the writes inside `fn` do not ask again. */
+  async withChangesAllowed<T>(what: string, fn: () => Promise<T>): Promise<T> {
+    await this.guardChange(what);
+    const before = this.allowChangesUntil;
+    this.allowChangesUntil = Math.max(before, Date.now() + 30 * 60 * 1000);
+    try { return await fn(); } finally { this.allowChangesUntil = before; }
+  }
+
   get user(): string { return this.profile.user.toUpperCase(); }
 
   get sqlEngineName(): string { return this.sqlEngine?.name ?? 'not started'; }

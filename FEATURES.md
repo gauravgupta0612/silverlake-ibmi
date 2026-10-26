@@ -695,6 +695,80 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 
 - **Open 5250 Session** (ACS, tn5250 or your own emulator), a **5250-style command line** (F4 / F9 / F12, full messages, printed output shown, interactive commands open the matching screen) and **Work with Active Jobs** with the 3 / 4 / 5 / 6 / 7 / 8 / 10 / 11 options and F5 / F10 / F11.
 
+### 79. Deploy a local folder to the IFS — new in 2.4
+
+- **What:** *Deploy Changes to IBM i (IFS)* uploads the new and changed files of your local (Git) folder to an IFS folder of its own; *Deploy All Files* sends everything again.
+- **Why:** work the modern way — local Git, branches, pull requests — and still build on the IBM i, without copying files by hand.
+- **How:** open the folder in VS Code, connect, right-click in the Explorer → *Deploy Changes to IBM i (IFS)*. The folder is `${home}/builds/<folder name>` unless you set `vanthrex.deploy.directory` (*Set IFS Deploy Folder…*). Files are tagged CCSID 1208; `.git`, `node_modules`, `.vscode`, `*.key`, `*.pem`, `.env` and logs are never sent (`vanthrex.deploy.ignore`). Turn on `vanthrex.deploy.onSave` to upload each file when you save it.
+
+### 80. Compile a local file — new in 2.4
+
+- **What:** compile a `.rpgle`, `.sqlrpgle`, `.clle`, `.sql`… file that lives on your PC.
+- **Why:** errors appear on the line of the local file you are editing (and on the local copybook when the error is in one), exactly like compiling a member.
+- **How:** press the Compile key (Ctrl+Alt+C) or the ▶ button in the editor title. Vanthrex deploys the changed files, compiles the stream file with your compile actions (the *IFS* ones, `&FULLPATH` is the deployed path) and maps the errors back.
+
+### 81. Build the project on IBM i — new in 2.4
+
+- **What:** *Build Project on IBM i* runs your build command in PASE in the deploy folder: `makei build` (Bob / IBM i Project Explorer), `gmake`, or your own script.
+- **How:** the first time you choose or type the command (saved as `vanthrex.deploy.buildCommand` for that folder). `/QOpenSys/pkgs/bin` is on the PATH and `CURLIB` / `LIBL` come from the connection. The output goes to the *Vanthrex Build* panel; the summary shows the exit code and the message IDs found.
+
+### 82. PASE terminal — new in 2.4
+
+- **What:** an interactive IBM i shell (bash, git, python, `system`…) in VS Code's terminal panel.
+- **Why:** no separate SSH client and no second sign-on: it uses the connection you already have.
+- **How:** **Ctrl+Alt+P**, right-click the connection → *Open PASE Terminal*, the terminal **+** menu → *IBM i (PASE)*, or right-click an IFS folder → *Open PASE Terminal Here*. `vanthrex.terminal.openSourcePath` puts the open-source tools first on the PATH.
+
+### 83. IBM i notebooks — new in 2.4
+
+- **What:** `.vxnb` files with SQL, CL and PASE shell cells and Markdown text — runbooks, health checks, investigations to keep or share.
+- **How:** *New IBM i Notebook* opens a sample. Run a cell with **Shift+Enter**. SQL results are tables (not saved in the file, so no data ends up in Git); CL cells show every message and printed output (DSPLIBL, DSPJOB…); shell cells their output. *Export Notebook to Markdown* (notebook toolbar) writes the cells and their last results as Markdown.
+
+### 84. Charts from SQL — new in 2.4
+
+- **What:** a bar, line or pie chart of a query result, right under the query.
+- **How:** in a notebook, start the SQL cell with `-- chart: bar Jobs per subsystem` (or `line`, `pie`). The first column gives the labels, up to four number columns the series. `-- rows: 5000` reads more rows than `vanthrex.notebook.maxRows`.
+
+### 85. SQL Error Log — new in 2.4
+
+- **What:** which programs and jobs get which SQL errors, how often and with which statement, from the SQL Error Logging Facility (SELF, IBM i 7.4 TR7 / 7.5 TR1 and later).
+- **Why:** find the program behind "something fails in production" without a debugger or a job log hunt.
+- **How:** *SQL Error Log (Who Gets Which SQL Error?)* — most frequent first, click a row for the meaning of the SQLCODE. *Turn SQL Error Logging On or Off…* sets it for the whole system (`*ERR`, `*ALL`, chosen codes such as `-204, -803`, or `*NONE`; needs *SECADM) or only for your Vanthrex session.
+
+### 86. Browse a schema — new in 2.4
+
+- **What:** every SQL object of a schema — tables, views, indexes, aliases, procedures, functions, triggers, sequences, global variables — with long and system names, counts by kind and a filter.
+- **How:** right-click a library → *Browse Schema (SQL Objects)…*. Click an object: *Show SQL source* (QSYS2.GENERATE_SQL), *Query the data*, *Edit the data*, *What depends on this table?*, *Call this procedure…*, *Copy name*.
+
+### 87. Call a stored procedure — new in 2.4
+
+- **What:** *Call Stored Procedure…* asks for each parameter with its SQL type and shows the OUT / INOUT values and the result set.
+- **How:** type `SCHEMA.PROC` (or only the name to search). Values are checked as you type (numbers, lengths); type `NULL` for null, leave empty to use a parameter's default. OUT values come back through global variables in QTEMP (Mapepire SQL engine). Your last values are remembered per procedure.
+
+### 88. Folding for RPG and CL — new in 2.4
+
+- **What:** fold procedures, data structures, prototypes, IF / DO / FOR / SELECT / MONITOR blocks and subroutines in RPG (free and fixed form, P-specs too), and DO / SELECT / SUBR blocks in CL — including `IF … THEN(DO)` and `ELSE CMD(DO)`.
+
+### 89. Parameter hints for RPG calls — new in 2.4
+
+- **What:** while you type `myProc(` the parameters of its prototype or procedure interface appear, the current one highlighted as you type `:`. Works for free-form and fixed D-spec prototypes in the source and for the common built-in functions (%SUBST, %SCAN, %SCANRPL, %DEC, %DATE, %DIFF, %SPLIT, %LOOKUP…).
+
+### 90. Format fully free RPG — new in 2.4
+
+- **What:** *Format Document* (Shift+Alt+F) re-indents a `**FREE` source by block: nested IF / DOW / SELECT…, ELSE / WHEN / OTHER / ON-ERROR one level back, continuation lines keep their offset, directives and compile-time data stay as they are. `vanthrex.editor.rpgIndent` sets the spaces per level.
+
+### 91. Fixed-format field help — new in 2.4
+
+- **What:** the status bar shows which field of an RPG or DDS fixed-format line the cursor is in (spec, name, columns). **Ctrl+Alt+]** / **Ctrl+Alt+[** jump to the next / previous field (blanks are added when the line is shorter); click the status bar for *Fields of This Line…*. Turn off with `vanthrex.editor.columnHints`.
+
+### 92. CL language support — new in 2.4
+
+- **What:** an outline of CL sources (PGM parameters, variables with type and length, declared files, labels, subroutines), **Go to Definition** for `&variables`, `GOTO` labels and `CALLSUBR`, **Find All References**, highlights of the same name, and a hover with the declaration.
+
+### 93. Upload and download folders — new in 2.4
+
+- **What:** right-click an IFS folder → *Upload Files or a Folder Here…*, or drag files and folders from the Explorer or the desktop onto the IFS view; right-click an IFS file or folder → *Download to This PC…*.
+- **How:** whole folder trees go in one step with one progress bar; missing folders are created, `.git` is skipped, and you are asked once before files with the same names are replaced.
+
 ## Keyboard shortcuts
 
 | Keys | Action |
@@ -706,6 +780,9 @@ Needs a Mapepire SQL engine (the cross-reference is built with DSPPGMREF in QTEM
 | Ctrl+Enter | Run SQL statement |
 | Ctrl+Alt+L | Run CL command |
 | Ctrl+Alt+K | Command line (5250 style) |
+| Ctrl+Alt+P | PASE terminal |
+| Ctrl+Alt+] / Ctrl+Alt+[ | Next / previous fixed-format field (RPG, DDS) |
+| Shift+Enter | Run a notebook cell |
 | Ctrl+Alt+O | Search objects |
 | Ctrl+Alt+F | Search source code |
 | F12 / Shift+F12 / F2 | Go to definition / Find references / Rename |
