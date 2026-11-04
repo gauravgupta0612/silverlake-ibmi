@@ -11,8 +11,8 @@ import { IbmiConnection } from '../core/connection';
 import { errorMessage, log, logError } from '../core/log';
 import { sqlString } from '../core/util';
 import {
-  Client5250, CmdMessage, commandMessages, GO_MENUS, goMenu, GREEN_SCREEN_COMMANDS, interactiveEquivalent, launchPlan, Menu, MENU_ICONS, MenuChoice, menuSelection,
-  MenuOption, needsDisplay, withPrintOutput, worstSeverity,
+  Client5250, CmdMessage, commandMessages, GO_MENUS, goMenu, editorProblem, GREEN_SCREEN_COMMANDS, interactiveEquivalent, launchPlan, Menu, MENU_ICONS, MenuChoice, MenuLink, menuSelection,
+  MenuOption, needsDisplay, needsOf, pushRecent, withPrintOutput, worstSeverity,
 } from '../core/greenScreen';
 import { promptCommandText } from './prompter';
 import { escapeHtml, page } from './ui/kit';
@@ -242,6 +242,13 @@ inp.focus();
 
 /** Run one menu option: a Vanthrex screen, the screen that replaces a 5250 command, or the command line with it typed in. */
 async function runMenuCommand(manager: ConnectionManager, state: vscode.Memento, run: string): Promise<void> {
+  // Editor tools need the source open: say so (and offer to open one) instead of silently doing nothing.
+  const problem = editorProblem(needsOf(run), vscode.window.activeTextEditor?.document.languageId);
+  if (problem) {
+    const find = vscode.l10n.t('Find a Member…');
+    if (await vscode.window.showWarningMessage(vscode.l10n.t(problem), find) === find) { await vscode.commands.executeCommand('vanthrex.findMember'); }
+    return;
+  }
   if (run.startsWith('vanthrex.')) { await vscode.commands.executeCommand(run); return; }
   const eq = interactiveEquivalent(run, manager.require().user);
   if (eq) { await vscode.commands.executeCommand(eq.command, ...eq.args); return; }
@@ -305,6 +312,7 @@ export function registerGreenScreen(context: vscode.ExtensionContext, manager: C
   const guard = <A extends unknown[]>(fn: (...a: A) => Promise<unknown> | unknown) => async (...a: A) => {
     try { await fn(...a); } catch (e) { logError(e); vscode.window.showErrorMessage(errorMessage(e)); }
   };
+  const tree = new MenusTree(context.globalState);
   context.subscriptions.push(
     vscode.commands.registerCommand('vanthrex.open5250', guard(() => open5250(manager))),
     vscode.commands.registerCommand('vanthrex.commandLine', guard((preset?: unknown) => { manager.require(); CommandLine.open(manager, context.globalState, typeof preset === 'string' ? preset : undefined); })),
@@ -314,16 +322,21 @@ export function registerGreenScreen(context: vscode.ExtensionContext, manager: C
       const conn = manager.require();
       await vscode.commands.executeCommand('vanthrex.wrkactjob', { user: conn.user.toUpperCase() });
     })),
-    vscode.window.createTreeView('vanthrex.menus', { treeDataProvider: new MenusTree(), showCollapseAll: true }),
-    vscode.commands.registerCommand('vanthrex.menus.run', guard((run?: unknown) => {
-      if (typeof run === 'string') { return runMenuCommand(manager, context.globalState, run); }
+    vscode.window.createTreeView('vanthrex.menus', { treeDataProvider: tree, showCollapseAll: true }),
+    vscode.commands.registerCommand('vanthrex.menus.run', guard(async (run?: unknown, text?: unknown) => {
+      if (typeof run !== 'string') { return; }
+      await tree.remember(run, typeof text === 'string' ? text : run);
+      await runMenuCommand(manager, context.globalState, run);
     })),
     vscode.commands.registerCommand('vanthrex.menus.prompt', guard((n?: MenuNode) => {
-      const run = n?.k === 'opt' ? n.opt.run : n?.k === 'cmd' ? n.cmd : undefined;
+      const run = n ? linkOf(n)?.run : undefined;
       if (!run || run.startsWith('vanthrex.')) { return; }
       manager.require();
       CommandLine.open(manager, context.globalState, run);
     })),
+    vscode.commands.registerCommand('vanthrex.menus.addFavorite', guard(async (n?: MenuNode) => { const l = n && linkOf(n); if (l) { await tree.favorite(l, true); } })),
+    vscode.commands.registerCommand('vanthrex.menus.removeFavorite', guard(async (n?: MenuNode) => { const l = n && linkOf(n); if (l) { await tree.favorite(l, false); } })),
+    vscode.commands.registerCommand('vanthrex.menus.clearRecent', guard(() => tree.clearRecent())),
   );
 }
 
@@ -334,45 +347,96 @@ type MenuNode =
   | { k: 'opt'; menu: Menu; opt: MenuOption }
   | { k: 'commands' }
   | { k: 'group'; group: string }
-  | { k: 'cmd'; cmd: string; text: string };
+  | { k: 'cmd'; cmd: string; text: string }
+  | { k: 'favorites' } | { k: 'recent' }
+  | { k: 'link'; link: MenuLink; in: 'favorites' | 'recent' };
 
-/** The GO menus and every 5250 command that opens a screen, as a tree: click to open, right-click to prompt (F4). */
+/** The command a node runs, with the text to show for it in Recent and Favorites. */
+function linkOf(n: MenuNode): MenuLink | undefined {
+  if (n.k === 'opt') { return { run: n.opt.run, text: n.opt.text }; }
+  if (n.k === 'cmd') { return { run: n.cmd, text: n.text }; }
+  if (n.k === 'link') { return n.link; }
+  return undefined;
+}
+
+const FAV_KEY = 'vanthrex.menus.favorites';
+const RECENT_KEY = 'vanthrex.menus.recent';
+
+/**
+ * Favorites, Recent, the GO menus and every 5250 command that opens a screen. Everything is built in memory (no call to
+ * the IBM i), so the view opens instantly; stable ids keep what is expanded when Recent changes.
+ */
 class MenusTree implements vscode.TreeDataProvider<MenuNode> {
+  private readonly emitter = new vscode.EventEmitter<void>();
+  readonly onDidChangeTreeData = this.emitter.event;
+  constructor(private readonly state: vscode.Memento) {}
+
+  private list(key: string): MenuLink[] {
+    const v = this.state.get<unknown>(key, []);
+    return Array.isArray(v) ? v.filter((l): l is MenuLink => !!l && typeof l.run === 'string' && typeof l.text === 'string') : [];
+  }
+  async remember(run: string, text: string): Promise<void> {
+    await this.state.update(RECENT_KEY, pushRecent(this.list(RECENT_KEY), { run, text }));
+    this.emitter.fire();
+  }
+  async favorite(l: MenuLink, on: boolean): Promise<void> {
+    const rest = this.list(FAV_KEY).filter(x => x.run !== l.run);
+    await this.state.update(FAV_KEY, on ? [...rest, { run: l.run, text: l.text }] : rest);
+    this.emitter.fire();
+  }
+  async clearRecent(): Promise<void> { await this.state.update(RECENT_KEY, []); this.emitter.fire(); }
+
+  private runItem(label: string, run: string, text: string, id: string, ctx: string, needs?: string): vscode.TreeItem {
+    const screen = run.startsWith('vanthrex.');
+    const i = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+    i.id = id;
+    i.description = screen ? undefined : run;
+    i.iconPath = new vscode.ThemeIcon(needs ? 'file-code' : screen ? 'window' : 'terminal-cmd');
+    const md = new vscode.MarkdownString(`**${text}**`);
+    if (!screen) { md.appendMarkdown(`  \n\`${run}\``); }
+    if (needs) { md.appendMarkdown(`  \n${needs === 'rpg' ? vscode.l10n.t('Works on the RPG source open in the editor.') : vscode.l10n.t('Works on the source open in the editor.')}`); }
+    i.tooltip = md;
+    i.contextValue = `${ctx}.${screen ? 'screen' : 'command'}`;
+    i.command = { command: 'vanthrex.menus.run', title: vscode.l10n.t('Open'), arguments: [run, text] };
+    return i;
+  }
+
   getTreeItem(n: MenuNode): vscode.TreeItem {
     const C = vscode.TreeItemCollapsibleState;
     switch (n.k) {
+      case 'favorites': case 'recent': {
+        const fav = n.k === 'favorites';
+        const i = new vscode.TreeItem(fav ? vscode.l10n.t('Favorites') : vscode.l10n.t('Recent'), C.Expanded);
+        i.id = n.k; i.iconPath = new vscode.ThemeIcon(fav ? 'star-full' : 'history');
+        i.description = String(this.list(fav ? FAV_KEY : RECENT_KEY).length);
+        i.contextValue = `menu.${n.k}`;
+        return i;
+      }
+      case 'link': return this.runItem(n.link.text, n.link.run, n.link.text, `${n.in}:${n.link.run}`, n.in === 'favorites' ? 'menu.fav' : 'menu.item', needsOf(n.link.run));
       case 'menu': {
-        const i = new vscode.TreeItem(`GO ${n.menu.id}`, C.Collapsed);
+        const i = new vscode.TreeItem(`GO ${n.menu.id}`, n.menu.id === 'RPG' ? C.Expanded : C.Collapsed);
+        i.id = `menu:${n.menu.id}`;
         i.description = n.menu.title; i.iconPath = new vscode.ThemeIcon(MENU_ICONS[n.menu.id] ?? 'list-ordered');
         i.tooltip = `GO ${n.menu.id} — ${n.menu.title}`; i.contextValue = 'menu.menu';
         return i;
       }
-      case 'opt': {
-        const screen = n.opt.run.startsWith('vanthrex.');
-        const i = new vscode.TreeItem(`${n.opt.n}. ${n.opt.text}`, C.None);
-        i.description = screen ? undefined : n.opt.run;
-        i.iconPath = new vscode.ThemeIcon(screen ? 'window' : 'terminal-cmd');
-        i.tooltip = screen ? n.opt.text : `${n.opt.text}\n${n.opt.run}`;
-        i.contextValue = screen ? 'menu.screen' : 'menu.command';
-        i.command = { command: 'vanthrex.menus.run', title: vscode.l10n.t('Open'), arguments: [n.opt.run] };
-        return i;
-      }
+      case 'opt': return this.runItem(`${n.opt.n}. ${n.opt.text}`, n.opt.run, n.opt.text, `opt:${n.menu.id}:${n.opt.n}`, 'menu.item', n.opt.needs);
       case 'commands': {
         const i = new vscode.TreeItem(vscode.l10n.t('5250 commands (A–Z)'), C.Collapsed);
+        i.id = 'commands';
         i.description = vscode.l10n.t('{0} commands', GREEN_SCREEN_COMMANDS.length); i.iconPath = new vscode.ThemeIcon('terminal-cmd');
         i.tooltip = vscode.l10n.t('Green-screen commands that open a screen here. Right-click one to prompt it (F4).');
         return i;
       }
       case 'group': {
         const i = new vscode.TreeItem(n.group, C.Collapsed);
+        i.id = `group:${n.group}`;
         i.description = String(GREEN_SCREEN_COMMANDS.filter(c => c.group === n.group).length); i.iconPath = new vscode.ThemeIcon('folder');
         return i;
       }
       case 'cmd': {
-        const i = new vscode.TreeItem(n.cmd, C.None);
-        i.description = n.text; i.iconPath = new vscode.ThemeIcon('chevron-right'); i.tooltip = `${n.cmd} — ${n.text}`;
-        i.contextValue = 'menu.command';
-        i.command = { command: 'vanthrex.menus.run', title: vscode.l10n.t('Open'), arguments: [n.cmd] };
+        const i = this.runItem(n.cmd, n.cmd, n.text, `cmd:${n.cmd}`, 'menu.item');
+        i.description = n.text; i.iconPath = new vscode.ThemeIcon('chevron-right');
         return i;
       }
     }
@@ -380,9 +444,14 @@ class MenusTree implements vscode.TreeDataProvider<MenuNode> {
 
   getChildren(n?: MenuNode): MenuNode[] {
     if (!n) {
+      const top: MenuNode[] = [];
+      if (this.list(FAV_KEY).length) { top.push({ k: 'favorites' }); }
+      if (this.list(RECENT_KEY).length) { top.push({ k: 'recent' }); }
       // MAIN only leads to the other menus, which are all listed here already.
-      return [...GO_MENUS.filter(m => m.id !== 'MAIN').map(menu => ({ k: 'menu' as const, menu })), { k: 'commands' }];
+      return [...top, ...GO_MENUS.filter(m => m.id !== 'MAIN').map(menu => ({ k: 'menu' as const, menu })), { k: 'commands' }];
     }
+    if (n.k === 'favorites') { return this.list(FAV_KEY).map(link => ({ k: 'link' as const, link, in: 'favorites' as const })); }
+    if (n.k === 'recent') { return this.list(RECENT_KEY).map(link => ({ k: 'link' as const, link, in: 'recent' as const })); }
     if (n.k === 'menu') { return n.menu.options.map(opt => ({ k: 'opt' as const, menu: n.menu, opt })); }
     if (n.k === 'commands') { return [...new Set(GREEN_SCREEN_COMMANDS.map(c => c.group))].sort().map(group => ({ k: 'group' as const, group })); }
     if (n.k === 'group') { return GREEN_SCREEN_COMMANDS.filter(c => c.group === n.group).map(c => ({ k: 'cmd' as const, cmd: c.cmd, text: c.text })); }

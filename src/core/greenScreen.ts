@@ -177,17 +177,35 @@ function explicit(v: string | undefined): { library: string; name: string } | un
  * One option of a menu: `run` is a command typed as on the menu's command line (WRKACTJOB, GO SYSTEM…) or a Vanthrex
  * command id (vanthrex.…) for the screens a green screen never had.
  */
-export interface MenuOption { n: number; text: string; run: string }
+/** needs: what must be open in the editor for the option to work (an RPG source, or any IBM i source). */
+export interface MenuOption { n: number; text: string; run: string; needs?: Needs }
+export type Needs = 'rpg' | 'source';
 export interface Menu { id: string; title: string; options: MenuOption[] }
 
-const o = (n: number, text: string, run: string): MenuOption => ({ n, text, run });
+const o = (n: number, text: string, run: string, needs?: Needs): MenuOption => (needs ? { n, text, run, needs } : { n, text, run });
 
 /** The IBM i menus people know (GO MAIN, GO PROGRAMMER…), each option opening the matching Vanthrex screen. */
 export const GO_MENUS: Menu[] = [
   { id: 'MAIN', title: 'IBM i Main Menu', options: [
-    o(1, 'User tasks', 'GO USER'), o(3, 'General system tasks', 'GO SYSTEM'), o(4, 'Files, libraries, and folders', 'GO FILE'),
+    o(1, 'User tasks', 'GO USER'), o(2, 'RPG development', 'GO RPG'), o(3, 'General system tasks', 'GO SYSTEM'), o(4, 'Files, libraries, and folders', 'GO FILE'),
     o(5, 'Programming', 'GO PROGRAMMER'), o(6, 'Communications', 'GO CMN'), o(7, 'Security', 'GO SECURITY'), o(8, 'Problem handling', 'GO PROBLEM'),
     o(9, 'Display a menu', 'GO'), o(10, 'Vanthrex quick menu (all tools)', 'vanthrex.showMenu'), o(11, 'Command line', 'vanthrex.commandLine'), o(90, 'Sign off', 'SIGNOFF'),
+  ] },
+  { id: 'RPG', title: 'RPG Development', options: [
+    o(1, 'Find and open a source member', 'vanthrex.findMember'), o(2, 'Go to anything (members, objects, recent)', 'vanthrex.goToAnything'),
+    o(3, 'Tools for this source (toolbox)', 'vanthrex.dev.toolbox', 'source'), o(4, 'Compile this source', 'vanthrex.compile', 'source'),
+    o(5, 'Compile with… (pick the command)', 'vanthrex.compileWith', 'source'), o(6, 'My changes since the last compile', 'vanthrex.changedSinceCompile', 'source'),
+    o(7, 'Copy the compile command', 'vanthrex.dev.copyCompile', 'source'), o(8, 'Compile history', 'vanthrex.compileHistory'),
+    o(9, 'Compile changed members', 'vanthrex.batchCompile'), o(10, 'Run RPG code checks', 'vanthrex.lintCurrent', 'rpg'),
+    o(11, 'Check /COPY usage', 'vanthrex.checkCopybooks', 'rpg'), o(12, 'Remove unused declarations', 'vanthrex.rpg.removeUnusedDeclarations', 'rpg'),
+    o(13, 'Convert fixed format to free', 'vanthrex.convertToFree', 'rpg'), o(14, 'Convert a subroutine to a procedure', 'vanthrex.dev.subrToProc', 'rpg'),
+    o(15, 'Convert IF / ELSEIF to SELECT', 'vanthrex.rpg.ifToSelect', 'rpg'), o(16, 'Insert a procedure skeleton', 'vanthrex.rpg.procedureHeader', 'rpg'),
+    o(17, 'Generate the prototype of this procedure', 'vanthrex.generatePrototype', 'rpg'), o(18, 'Prototype copybook from the exports', 'vanthrex.rpg.prototypeCopybook', 'rpg'),
+    o(19, 'Binder source from the exports', 'vanthrex.rpg.binderSource', 'rpg'), o(20, 'Who calls each exported procedure', 'vanthrex.procedureCallers'),
+    o(21, 'Flowchart of this procedure', 'vanthrex.flowchart', 'rpg'), o(22, 'Data structure layout (positions, lengths)', 'vanthrex.dsLayout', 'rpg'),
+    o(23, 'Generate RPG from a JSON sample', 'vanthrex.jsonToRpg'), o(24, 'Generate RPGUnit tests', 'vanthrex.rpgunit.generate', 'rpg'),
+    o(25, 'Debug a program (STRDBG)', 'STRDBG'), o(26, 'Where used', 'vanthrex.whereUsed'), o(27, 'Search source code', 'vanthrex.searchSource'),
+    o(28, 'Explain SQLCODE / SQLSTATE / RPG status', 'vanthrex.explainCode'),
   ] },
   { id: 'USER', title: 'User Tasks', options: [
     o(1, 'Display or change your job (library list, job log)', 'vanthrex.mySqlJob'), o(2, 'Display messages', 'DSPMSG'), o(3, 'Send a message', 'SNDMSG'),
@@ -233,7 +251,7 @@ export const GO_MENUS: Menu[] = [
 
 /** Codicon for each menu in the side bar. */
 export const MENU_ICONS: Record<string, string> = {
-  MAIN: 'home', USER: 'person', SYSTEM: 'server', FILE: 'library', PROGRAMMER: 'code', CMN: 'globe', SECURITY: 'shield', PROBLEM: 'warning',
+  MAIN: 'home', RPG: 'symbol-method', USER: 'person', SYSTEM: 'server', FILE: 'library', PROGRAMMER: 'code', CMN: 'globe', SECURITY: 'shield', PROBLEM: 'warning',
 };
 
 /**
@@ -298,7 +316,7 @@ export const GREEN_SCREEN_COMMANDS: { cmd: string; text: string; group: string }
 ];
 
 const MENU_ALIASES: Record<string, string> = {
-  MAJOR: 'MAIN', ASSIST: 'MAIN', USERTASK: 'USER', MANAGESYS: 'SYSTEM', RUNSYS: 'SYSTEM', SYSTEM: 'SYSTEM', FILES: 'FILE', LIBRARY: 'FILE', DATA: 'FILE',
+  MAJOR: 'MAIN', ASSIST: 'MAIN', RPGDEV: 'RPG', RPGLE: 'RPG', ILE: 'RPG', ILERPG: 'RPG', USERTASK: 'USER', MANAGESYS: 'SYSTEM', RUNSYS: 'SYSTEM', SYSTEM: 'SYSTEM', FILES: 'FILE', LIBRARY: 'FILE', DATA: 'FILE',
   PROGRAM: 'PROGRAMMER', DEVELOP: 'PROGRAMMER', PGMR: 'PROGRAMMER', CMDPGM: 'PROGRAMMER', TCPADM: 'CMN', NETWORK: 'CMN', CMNCFG: 'CMN', SECTOOLS: 'SECURITY', PROBLEM2: 'PROBLEM',
 };
 
@@ -307,6 +325,25 @@ export function goMenu(name: string): Menu | undefined {
   const n = name.trim().toUpperCase().replace(/^\*LIBL\/|^QSYS\//, '');
   const id = MENU_ALIASES[n] ?? n;
   return GO_MENUS.find(m => m.id === id);
+}
+
+/** What a menu command needs open in the editor (from the menus), if anything. */
+export function needsOf(run: string): Needs | undefined {
+  for (const m of GO_MENUS) { const x = m.options.find(opt => opt.run === run && opt.needs); if (x) { return x.needs; } }
+  return undefined;
+}
+
+/** Why the option cannot run with this editor (languageId of the active editor, if any), or undefined when it can. */
+export function editorProblem(needs: Needs | undefined, languageId: string | undefined): string | undefined {
+  if (!needs) { return undefined; }
+  if (needs === 'rpg') { return languageId === 'rpgle' ? undefined : 'Open an RPG source first (RPGLE, SQLRPGLE…), then pick this again.'; }
+  return languageId && ['rpgle', 'cl', 'dds'].includes(languageId) ? undefined : 'Open an IBM i source first (RPG, CL or DDS), then pick this again.';
+}
+
+export interface MenuLink { run: string; text: string }
+/** The recent list with this one first, without duplicates, at most max long. */
+export function pushRecent(list: MenuLink[], link: MenuLink, max = 8): MenuLink[] {
+  return [link, ...list.filter(l => l.run !== link.run)].slice(0, max);
 }
 
 export type MenuChoice = { kind: 'option'; option: MenuOption } | { kind: 'menu'; id?: string } | { kind: 'command'; text: string };

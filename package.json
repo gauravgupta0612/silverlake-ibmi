@@ -1950,6 +1950,24 @@
         "icon": "$(terminal-cmd)"
       },
       {
+        "command": "vanthrex.menus.addFavorite",
+        "title": "%command.menus.addFavorite%",
+        "category": "Vanthrex",
+        "icon": "$(star-empty)"
+      },
+      {
+        "command": "vanthrex.menus.removeFavorite",
+        "title": "%command.menus.removeFavorite%",
+        "category": "Vanthrex",
+        "icon": "$(star-full)"
+      },
+      {
+        "command": "vanthrex.menus.clearRecent",
+        "title": "%command.menus.clearRecent%",
+        "category": "Vanthrex",
+        "icon": "$(clear-all)"
+      },
+      {
         "command": "vanthrex.commandLine.key",
         "title": "%command.commandLine.key%",
         "category": "Vanthrex"
@@ -3223,13 +3241,38 @@
       "view/item/context": [
         {
           "command": "vanthrex.menus.prompt",
-          "when": "view == vanthrex.menus && viewItem == menu.command",
+          "when": "view == vanthrex.menus && viewItem =~ /^menu\\.(item|fav)\\.command$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "vanthrex.menus.addFavorite",
+          "when": "view == vanthrex.menus && viewItem =~ /^menu\\.item\\./",
+          "group": "inline@2"
+        },
+        {
+          "command": "vanthrex.menus.removeFavorite",
+          "when": "view == vanthrex.menus && viewItem =~ /^menu\\.fav\\./",
+          "group": "inline@2"
+        },
+        {
+          "command": "vanthrex.menus.clearRecent",
+          "when": "view == vanthrex.menus && viewItem == menu.recent",
           "group": "inline"
         },
         {
           "command": "vanthrex.menus.prompt",
-          "when": "view == vanthrex.menus && viewItem == menu.command",
+          "when": "view == vanthrex.menus && viewItem =~ /^menu\\.(item|fav)\\.command$/",
           "group": "0_menu@1"
+        },
+        {
+          "command": "vanthrex.menus.addFavorite",
+          "when": "view == vanthrex.menus && viewItem =~ /^menu\\.item\\./",
+          "group": "0_menu@2"
+        },
+        {
+          "command": "vanthrex.menus.removeFavorite",
+          "when": "view == vanthrex.menus && viewItem =~ /^menu\\.fav\\./",
+          "group": "0_menu@2"
         },
         {
           "command": "vanthrex.connect",
@@ -4453,6 +4496,18 @@
         },
         {
           "command": "vanthrex.menus.prompt",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.menus.addFavorite",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.menus.removeFavorite",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.menus.clearRecent",
           "when": "false"
         },
         {

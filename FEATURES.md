@@ -1207,6 +1207,8 @@ Also in the right-click menus: *AI: Generate Test Data for This Table* and *AI: 
 - **What:** the IBM i menus (`GO MAIN`, `GO PROGRAMMER`, `GO SYSTEM`, `GO FILE`, `GO USER`, `GO CMN`, `GO SECURITY`, `GO PROBLEM`) with their option numbers, **Work with My Jobs**, and about 30 more 5250 commands on the command line (`DSPPFM`, `UPDDTA`, `WRKDTAQ`, `WRKMSGF`, `STRDBG`, `WRKJRN`, `WRKLNK`, `WRKPGM`, `SIGNOFF`…) that open the matching screen.
 - **Why:** after years on a green screen, you type what you already know and land on the right tool — no new command names to learn.
 - **AS/400 Menus view:** the same menus in the side bar, plus every supported 5250 command A to Z by area. Click to open, right-click → *Prompt on Command Line (F4)* to add parameters.
+- **GO RPG:** 28 RPG tools in one menu — compile, code checks, fixed → free, subroutine → procedure, prototypes and binder source, flowchart, DS layout, RPGUnit, debug. Tools that work on the open source tell you when no RPG source is open.
+- **Favorites and Recent:** star what you use most (☆ button or right-click); the last 8 used are at the top of the view.
 - **How:** Ctrl+Alt+Shift+M (or `GO` on the command line, Ctrl+Alt+K). Type an option number, any command, or `GO <menu>` on the *Selection or command* line; Back works like F12, Esc like F3.
 
 ## Keyboard shortcuts

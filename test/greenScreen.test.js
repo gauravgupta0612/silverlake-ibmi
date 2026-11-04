@@ -95,3 +95,27 @@ test('2.6.1: the 5250 command list in the side bar', () => {
   for (const c of cmds) { assert.ok(g.interactiveEquivalent(c, 'BOB') || !g.needsDisplay(c) || c === 'STRSEU', c); }
   for (const m of g.GO_MENUS) { assert.ok(g.MENU_ICONS[m.id], `${m.id} has an icon`); }
 });
+
+
+test('2.6.1: GO RPG menu, editor checks and the Recent list', () => {
+  const rpg = g.goMenu('RPGLE');
+  assert.strictEqual(rpg.id, 'RPG');
+  assert.ok(g.goMenu('MAIN').options.some(x => x.run === 'GO RPG'), 'MAIN leads to GO RPG');
+  // Every Vanthrex command on any menu is declared in package.json, so a click never hits "command not found".
+  const declared = new Set(require('../package.json').contributes.commands.map(c => c.command));
+  for (const m of g.GO_MENUS) { for (const x of m.options) { if (x.run.startsWith('vanthrex.')) { assert.ok(declared.has(x.run), `${m.id} ${x.n}: ${x.run}`); } } }
+  assert.strictEqual(g.needsOf('vanthrex.convertToFree'), 'rpg');
+  assert.strictEqual(g.needsOf('vanthrex.compile'), 'source');
+  assert.strictEqual(g.needsOf('WRKACTJOB'), undefined);
+  assert.strictEqual(g.editorProblem('rpg', 'rpgle'), undefined);
+  assert.match(g.editorProblem('rpg', 'cl'), /RPG source/);
+  assert.match(g.editorProblem('rpg', undefined), /RPG source/);
+  assert.strictEqual(g.editorProblem('source', 'dds'), undefined);
+  assert.match(g.editorProblem('source', 'markdown'), /IBM i source/);
+  assert.strictEqual(g.editorProblem(undefined, undefined), undefined);
+  let r = [];
+  for (const c of ['A', 'B', 'C', 'B']) { r = g.pushRecent(r, { run: c, text: c }, 3); }
+  assert.deepStrictEqual(r.map(x => x.run), ['B', 'C', 'A']);
+  r = g.pushRecent(r, { run: 'D', text: 'D' }, 3);
+  assert.deepStrictEqual(r.map(x => x.run), ['D', 'B', 'C']);
+});
