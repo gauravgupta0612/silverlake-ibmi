@@ -10,7 +10,7 @@ import { ConnectionManager } from '../core/manager';
 import { IbmiConnection } from '../core/connection';
 import { errorMessage, log, logError } from '../core/log';
 import { sqlString } from '../core/util';
-import { Client5250, CmdMessage, commandMessages, interactiveEquivalent, launchPlan, needsDisplay, withPrintOutput, worstSeverity } from '../core/greenScreen';
+import { Client5250, CmdMessage, commandMessages, GO_MENUS, goMenu, interactiveEquivalent, launchPlan, MenuChoice, menuSelection, MenuOption, needsDisplay, withPrintOutput, worstSeverity } from '../core/greenScreen';
 import { promptCommandText } from './prompter';
 import { escapeHtml, page } from './ui/kit';
 
@@ -235,6 +235,69 @@ inp.focus();
   }
 }
 
+// ================================================================ GO menus
+
+/** Run one menu option: a Vanthrex screen, the screen that replaces a 5250 command, or the command line with it typed in. */
+async function runMenuCommand(manager: ConnectionManager, state: vscode.Memento, run: string): Promise<void> {
+  if (run.startsWith('vanthrex.')) { await vscode.commands.executeCommand(run); return; }
+  const eq = interactiveEquivalent(run, manager.require().user);
+  if (eq) { await vscode.commands.executeCommand(eq.command, ...eq.args); return; }
+  // Commands that need parameters (SNDMSG, SBMJOB, CALL…) open on the command line, ready for F4 or Enter.
+  CommandLine.open(manager, state, run);
+}
+
+/** An IBM i menu as a list: type the option number (or any command, or GO <menu>) on the "Selection or command" line. */
+async function showGoMenu(manager: ConnectionManager, state: vscode.Memento, start?: string): Promise<void> {
+  manager.require();
+  const stack: string[] = [];
+  let id: string | undefined = start ? goMenu(start)?.id : undefined;
+  if (start && !id) { throw new Error(vscode.l10n.t('There is no menu {0} here. Try GO MAIN.', start.toUpperCase())); }
+  for (;;) {
+    if (!id) {
+      const pick = await vscode.window.showQuickPick(GO_MENUS.map(m => ({ label: m.id, description: m.title, id: m.id })),
+        { title: vscode.l10n.t('Display a menu (GO)'), placeHolder: vscode.l10n.t('Pick a menu') });
+      if (!pick) { return; }
+      id = pick.id;
+    }
+    const menu = goMenu(id)!;
+    type Item = vscode.QuickPickItem & { opt: MenuOption };
+    const qp = vscode.window.createQuickPick<Item>();
+    qp.title = `${menu.id}    ${menu.title}`;
+    qp.placeholder = vscode.l10n.t('Selection or command: type a number, a command or GO <menu> — Esc = F3 Exit');
+    qp.items = menu.options.map(x => ({
+      label: `${String(x.n).padStart(2, ' ')}. ${x.text}`,
+      description: x.run.startsWith('vanthrex.') ? undefined : x.run, opt: x,
+    }));
+    qp.matchOnDescription = true;
+    qp.ignoreFocusOut = true;
+    qp.buttons = stack.length ? [vscode.QuickInputButtons.Back] : [];
+    const choice = await new Promise<MenuChoice | 'back' | undefined>(resolve => {
+      let done = false;
+      const end = (v: MenuChoice | 'back' | undefined) => { if (!done) { done = true; resolve(v); qp.hide(); } };
+      qp.onDidTriggerButton(() => end('back'));
+      qp.onDidAccept(() => {
+        const typed = qp.value.trim();
+        // An option number or a command typed on the line wins over the highlighted row, as on a green screen.
+        const sel = typed ? menuSelection(menu, typed) : undefined;
+        if (sel && !(sel.kind === 'command' && qp.activeItems.length)) { end(sel); return; }
+        const a = qp.activeItems[0];
+        if (a) { end({ kind: 'option', option: a.opt }); return; }
+        if (typed) { vscode.window.showWarningMessage(vscode.l10n.t('Selection {0} is not valid on menu {1}.', typed, menu.id)); }
+      });
+      qp.onDidHide(() => end(undefined));
+      qp.show();
+    });
+    qp.dispose();
+    if (!choice) { return; }
+    if (choice === 'back') { id = stack.pop(); continue; }
+    const next = choice.kind === 'option' ? menuSelection(menu, choice.option.run) : choice;
+    if (!next) { return; }
+    if (next.kind === 'menu') { stack.push(menu.id); id = next.id; continue; }
+    await runMenuCommand(manager, state, next.kind === 'option' ? next.option.run : next.text);
+    return;
+  }
+}
+
 export function registerGreenScreen(context: vscode.ExtensionContext, manager: ConnectionManager): void {
   const guard = <A extends unknown[]>(fn: (...a: A) => Promise<unknown> | unknown) => async (...a: A) => {
     try { await fn(...a); } catch (e) { logError(e); vscode.window.showErrorMessage(errorMessage(e)); }
@@ -243,5 +306,10 @@ export function registerGreenScreen(context: vscode.ExtensionContext, manager: C
     vscode.commands.registerCommand('vanthrex.open5250', guard(() => open5250(manager))),
     vscode.commands.registerCommand('vanthrex.commandLine', guard((preset?: unknown) => { manager.require(); CommandLine.open(manager, context.globalState, typeof preset === 'string' ? preset : undefined); })),
     vscode.commands.registerCommand('vanthrex.commandLine.key', guard((key?: string) => { if (key) { CommandLine.current?.key(key); } })),
+    vscode.commands.registerCommand('vanthrex.goMenu', guard((name?: unknown) => showGoMenu(manager, context.globalState, typeof name === 'string' && name.trim() ? name : 'MAIN'))),
+    vscode.commands.registerCommand('vanthrex.myJobs', guard(async () => {
+      const conn = manager.require();
+      await vscode.commands.executeCommand('vanthrex.wrkactjob', { user: conn.user.toUpperCase() });
+    })),
   );
 }

@@ -425,6 +425,8 @@
   "chat.vanthrex.joblog": "Averiguar por qué ha fallado un trabajo y cómo solucionarlo: número/usuario/nombre",
   "command.open5250": "Abrir sesión 5250",
   "command.commandLine": "Línea de mandatos (estilo 5250)",
+  "command.goMenu": "Menús GO (estilo AS/400)…",
+  "command.myJobs": "Trabajar con mis trabajos",
   "command.commandLine.key": "Tecla de función de la línea de mandatos",
   "command.wrkactjob": "Trabajar con trabajos activos",
   "command.wrkactjob.key": "Tecla de función de Trabajar con trabajos activos",

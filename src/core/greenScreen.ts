@@ -128,8 +128,131 @@ export function interactiveEquivalent(text: string, user = ''): Equivalent | und
     }
     case 'WRKSAVF': { const o = qualified(kw('FILE', 0), '*ALL'); return { command: 'vanthrex.wrkSaveFiles', args: [o?.library ?? undefined], screen: 'Save files' }; }
     case 'WRKMBRPDM': case 'WRKOBJPDM': case 'WRKLIBPDM': case 'STRPDM': return { command: 'vanthrex.pdm', args: [text.trim()], screen: 'PDM' };
+    // ---- 2.6.1: more of the commands people type every day on a green screen
+    case 'GO': {
+      const m = (kw('MENU', 0) ?? '').trim().toUpperCase();
+      if (!m || m.startsWith('*')) { return { command: 'vanthrex.goMenu', args: [], screen: 'Menus' }; }
+      const menu = goMenu(m);
+      return menu ? { command: 'vanthrex.goMenu', args: [menu.id], screen: `Menu ${menu.id}` } : undefined;
+    }
+    case 'SIGNOFF': return { command: 'vanthrex.disconnect', args: [], screen: 'Sign off' };
+    case 'DSPPFM': { const o = explicit(kw('FILE', 0)); return o ? { command: 'vanthrex.objectQuery', args: [o], screen: 'Data' } : { command: 'vanthrex.editData', args: [], screen: 'Table data' }; }
+    case 'UPDDTA': case 'STRDFU': { const o = explicit(kw('FILE', 0)); return { command: 'vanthrex.editData', args: o ? [o] : [], screen: 'Table data' }; }
+    case 'STRQRY': case 'WRKQRY': return { command: 'vanthrex.newSqlScratchpad', args: [], screen: 'SQL scratchpad' };
+    case 'WRKDTAQ': case 'DSPDTAQ': { const o = explicit(kw('DTAQ', 0)); return { command: 'vanthrex.dataQueue', args: o ? [{ ...o, type: '*DTAQ' }] : [], screen: 'Data queue' }; }
+    case 'WRKDTAARA': { const o = explicit(kw('DTAARA', 0)); return { command: 'vanthrex.dataArea', args: o ? [{ ...o, type: '*DTAARA' }] : [], screen: 'Data area' }; }
+    case 'EDTDTAARA': { const o = explicit(kw('DTAARA', 0)); return { command: 'vanthrex.editDataArea', args: o ? [{ ...o, type: '*DTAARA' }] : [], screen: 'Data area' }; }
+    case 'WRKMSGF': case 'WRKMSGD': { const o = explicit(kw('MSGF', cmd === 'WRKMSGF' ? 0 : 1)); return { command: 'vanthrex.messageFile', args: o ? [{ ...o, type: '*MSGF' }] : [], screen: 'Message file' }; }
+    case 'WRKBNDDIR': case 'WRKBNDDIRE': { const o = explicit(kw('BNDDIR', 0)); return { command: 'vanthrex.bindingDirectory', args: o ? [{ ...o, type: '*BNDDIR' }] : [], screen: 'Binding directory' }; }
+    case 'STRDBG': { const o = explicit(kw('PGM', 0)); return { command: 'vanthrex.debugProgram', args: o ? [{ ...o, type: '*PGM' }] : [], screen: 'Debugger' }; }
+    case 'WRKJRN': { const o = explicit(kw('JRN', 0)); return { command: 'vanthrex.journals', args: o ? [o.library] : [], screen: 'Journals' }; }
+    case 'DSPJRN': { const o = explicit(kw('FILE')); return o ? { command: 'vanthrex.journalExplorer', args: [{ ...o, type: '*FILE' }], screen: 'Journal explorer' } : { command: 'vanthrex.journals', args: [], screen: 'Journals' }; }
+    case 'WRKAUTL': return { command: 'vanthrex.secadm.autl', args: [], screen: 'Authorization lists' };
+    case 'EDTOBJAUT': case 'WRKAUT': { const o = explicit(kw('OBJ', 0)); const t = kw('OBJTYPE', 1)?.trim().toUpperCase(); return { command: 'vanthrex.checkAuthority', args: o ? [{ ...o, type: t }] : [], screen: 'Authority' }; }
+    case 'DSPLOG': return { command: 'vanthrex.historyLog', args: [], screen: 'History log' };
+    case 'WRKPTF': case 'WRKPTFGRP': return { command: 'vanthrex.systemHealth', args: [], screen: 'PTF & system health' };
+    case 'WRKSYSACT': return { command: 'vanthrex.performanceMonitor', args: [], screen: 'Performance monitor' };
+    case 'EDTLIBL': return { command: 'vanthrex.librarySets', args: [], screen: 'Library list' };
+    case 'WRKLNK': case 'DSPLNK': return { command: 'vanthrex.ifs.focus', args: [], screen: 'IFS' };
+    case 'WRKLIB': { const l = kw('LIB', 0)?.trim().toUpperCase(); return { command: 'vanthrex.pdm', args: [l && !/^\*(LIBL|USRLIBL|ALL)$/.test(l) ? `WRKLIBPDM LIB(${l})` : 'WRKLIBPDM'], screen: 'PDM' }; }
+    case 'WRKF': case 'WRKPGM': case 'WRKSRVPGM': case 'WRKMOD': case 'WRKCMD': case 'WRKMNU': {
+      const keys: Record<string, [string, string]> = { WRKF: ['FILE', '*FILE'], WRKPGM: ['PGM', '*PGM'], WRKSRVPGM: ['SRVPGM', '*SRVPGM'], WRKMOD: ['MODULE', '*MODULE'], WRKCMD: ['CMD', '*CMD'], WRKMNU: ['MENU', '*MENU'] };
+      const [key, type] = keys[cmd];
+      const o = explicit(kw(key, 0));
+      return o ? { command: 'vanthrex.pdm', args: [`WRKOBJPDM LIB(${o.library}) OBJ(${o.name}) OBJTYPE(${type})`], screen: 'PDM' } : { command: 'vanthrex.searchObjects', args: [], screen: 'Search objects' };
+    }
   }
   return undefined;
+}
+
+/** LIB/NAME only when the library is named (not *LIBL / *CURLIB): the screens read the object by library. */
+function explicit(v: string | undefined): { library: string; name: string } | undefined {
+  const o = qualified(v);
+  return o && !o.library.startsWith('*') && !o.name.startsWith('*') ? o : undefined;
+}
+
+// ================================================================ GO menus
+
+/**
+ * One option of a menu: `run` is a command typed as on the menu's command line (WRKACTJOB, GO SYSTEM…) or a Vanthrex
+ * command id (vanthrex.…) for the screens a green screen never had.
+ */
+export interface MenuOption { n: number; text: string; run: string }
+export interface Menu { id: string; title: string; options: MenuOption[] }
+
+const o = (n: number, text: string, run: string): MenuOption => ({ n, text, run });
+
+/** The IBM i menus people know (GO MAIN, GO PROGRAMMER…), each option opening the matching Vanthrex screen. */
+export const GO_MENUS: Menu[] = [
+  { id: 'MAIN', title: 'IBM i Main Menu', options: [
+    o(1, 'User tasks', 'GO USER'), o(3, 'General system tasks', 'GO SYSTEM'), o(4, 'Files, libraries, and folders', 'GO FILE'),
+    o(5, 'Programming', 'GO PROGRAMMER'), o(6, 'Communications', 'GO CMN'), o(7, 'Security', 'GO SECURITY'), o(8, 'Problem handling', 'GO PROBLEM'),
+    o(9, 'Display a menu', 'GO'), o(10, 'Vanthrex quick menu (all tools)', 'vanthrex.showMenu'), o(11, 'Command line', 'vanthrex.commandLine'), o(90, 'Sign off', 'SIGNOFF'),
+  ] },
+  { id: 'USER', title: 'User Tasks', options: [
+    o(1, 'Display or change your job (library list, job log)', 'vanthrex.mySqlJob'), o(2, 'Display messages', 'DSPMSG'), o(3, 'Send a message', 'SNDMSG'),
+    o(4, 'Submit a job', 'SBMJOB'), o(5, 'Work with your spooled output files', 'WRKSPLF'), o(6, 'Work with your jobs', 'vanthrex.myJobs'),
+    o(7, 'Change your library list', 'EDTLIBL'), o(8, 'Job run history', 'vanthrex.jobRunHistory'), o(9, 'Who is signed on', 'vanthrex.signedOn'),
+  ] },
+  { id: 'SYSTEM', title: 'General System Tasks', options: [
+    o(1, 'Work with active jobs', 'WRKACTJOB'), o(2, 'Work with system status', 'WRKSYSSTS'), o(3, 'Work with subsystems', 'WRKSBS'),
+    o(4, 'Work with job queues', 'WRKJOBQ'), o(5, 'Work with output queues', 'WRKOUTQ'), o(6, 'Work with job schedule entries', 'WRKJOBSCDE'),
+    o(7, 'Work with system values', 'WRKSYSVAL'), o(8, 'Display QSYSOPR messages', 'DSPMSG QSYSOPR'), o(9, 'Work with job descriptions', 'vanthrex.wrkJobDescriptions'),
+    o(10, 'Work with system activity (performance)', 'WRKSYSACT'), o(11, 'System dashboard', 'vanthrex.openDashboard'), o(12, 'Work with PTFs', 'WRKPTF'),
+    o(13, 'Storage and cleanup advisor', 'vanthrex.storageAdvisor'), o(14, 'System Tracker (everything in one place)', 'vanthrex.systemTracker'),
+  ] },
+  { id: 'FILE', title: 'Files, Libraries, and Folders', options: [
+    o(1, 'Work with libraries (PDM)', 'WRKLIBPDM'), o(2, 'Work with objects (PDM)', 'vanthrex.pdm'), o(3, 'Work with members (PDM)', 'vanthrex.pdm'),
+    o(4, 'Display physical file member', 'DSPPFM'), o(5, 'Update data (DFU)', 'UPDDTA'), o(6, 'Find an object', 'vanthrex.searchObjects'),
+    o(7, 'Find and open a source member', 'vanthrex.findMember'), o(8, 'Work with save files', 'WRKSAVF'), o(9, 'Work with data queues', 'WRKDTAQ'),
+    o(10, 'Work with data areas', 'WRKDTAARA'), o(11, 'Work with journals', 'WRKJRN'), o(12, 'Work with object links (IFS)', 'WRKLNK'),
+    o(13, 'Find a value in table data', 'vanthrex.findInTable'), o(14, 'Compare two libraries', 'vanthrex.compareLibraries'),
+  ] },
+  { id: 'PROGRAMMER', title: 'Programming', options: [
+    o(1, 'Start PDM', 'STRPDM'), o(2, 'Edit a source member (SEU)', 'vanthrex.findMember'), o(3, 'Compile the current source', 'vanthrex.compile'),
+    o(4, 'Compile changed members', 'vanthrex.batchCompile'), o(5, 'Start SQL (STRSQL)', 'STRSQL'), o(6, 'Start debug (STRDBG)', 'STRDBG'),
+    o(7, 'Call graph (DSPPGMREF)', 'vanthrex.callGraph'), o(8, 'Where used', 'vanthrex.whereUsed'), o(9, 'Search source code', 'vanthrex.searchSource'),
+    o(10, 'Work with message files', 'WRKMSGF'), o(11, 'Work with binding directories', 'WRKBNDDIR'), o(12, 'Compile history', 'vanthrex.compileHistory'),
+    o(13, 'Promote objects (DEV → TEST → PROD)', 'vanthrex.promoteObjects'), o(14, 'Call a program', 'CALL'), o(15, 'Tools for this source (toolbox)', 'vanthrex.dev.toolbox'),
+  ] },
+  { id: 'CMN', title: 'Communications', options: [
+    o(1, 'Work with TCP/IP connections (NETSTAT)', 'NETSTAT'), o(2, 'Work with TCP/IP servers', 'vanthrex.wrkTcpServers'), o(3, 'IP interfaces and routes', 'vanthrex.wrkInterfaces'),
+    o(4, 'NetServer shares', 'vanthrex.netServerShares'), o(5, 'Open a 5250 session', 'vanthrex.open5250'), o(6, 'PASE terminal (IBM i shell)', 'vanthrex.paseTerminal'),
+  ] },
+  { id: 'SECURITY', title: 'Security', options: [
+    o(1, 'Work with user profiles', 'WRKUSRPRF'), o(2, 'Work with authorization lists', 'WRKAUTL'), o(3, 'Edit object authority', 'EDTOBJAUT'),
+    o(4, '*PUBLIC authority scan', 'vanthrex.publicAuthorityScan'), o(5, 'Security audit journal (QAUDJRN)', 'vanthrex.auditJournal'),
+    o(6, 'Security admin center (*SECADM)', 'vanthrex.securityCenter'), o(7, 'Work with system values', 'WRKSYSVAL'),
+  ] },
+  { id: 'PROBLEM', title: 'Problem Handling', options: [
+    o(1, 'Display QSYSOPR messages', 'DSPMSG QSYSOPR'), o(2, 'Explain a message ID', 'vanthrex.explainMessage'), o(3, 'Analyze a job log', 'vanthrex.analyzeJobLog'),
+    o(4, 'Failed jobs', 'vanthrex.failedJobs'), o(5, 'Display history log (QHST)', 'DSPLOG'), o(6, 'Who has an object locked', 'vanthrex.objectLocks'),
+    o(7, 'Who is locking rows', 'vanthrex.rowLocks'), o(8, 'SQL error log', 'vanthrex.sqlErrorLog'), o(9, 'Self-check of this connection', 'vanthrex.selfCheck'),
+  ] },
+];
+
+const MENU_ALIASES: Record<string, string> = {
+  MAJOR: 'MAIN', ASSIST: 'MAIN', USERTASK: 'USER', MANAGESYS: 'SYSTEM', RUNSYS: 'SYSTEM', SYSTEM: 'SYSTEM', FILES: 'FILE', LIBRARY: 'FILE', DATA: 'FILE',
+  PROGRAM: 'PROGRAMMER', DEVELOP: 'PROGRAMMER', PGMR: 'PROGRAMMER', CMDPGM: 'PROGRAMMER', TCPADM: 'CMN', NETWORK: 'CMN', CMNCFG: 'CMN', SECTOOLS: 'SECURITY', PROBLEM2: 'PROBLEM',
+};
+
+/** The menu named on GO (aliases like GO TCPADM or GO MANAGESYS included), or undefined. */
+export function goMenu(name: string): Menu | undefined {
+  const n = name.trim().toUpperCase().replace(/^\*LIBL\/|^QSYS\//, '');
+  const id = MENU_ALIASES[n] ?? n;
+  return GO_MENUS.find(m => m.id === id);
+}
+
+export type MenuChoice = { kind: 'option'; option: MenuOption } | { kind: 'menu'; id?: string } | { kind: 'command'; text: string };
+
+/** What the "Selection or command" line asks for: an option number, GO <menu>, or any command. */
+export function menuSelection(menu: Menu, input: string): MenuChoice | undefined {
+  const v = input.trim();
+  if (!v) { return undefined; }
+  if (/^\d{1,3}$/.test(v)) { const opt = menu.options.find(x => x.n === Number(v)); return opt ? { kind: 'option', option: opt } : undefined; }
+  const go = /^GO(?:\s+(?:MENU\()?\s*([A-Z0-9$#@_/*]+)\s*\)?)?\s*$/i.exec(v);
+  if (go) { const m = go[1] ? goMenu(go[1]) : undefined; return go[1] && !m ? undefined : { kind: 'menu', id: m?.id }; }
+  return { kind: 'command', text: v };
 }
 
 /** Display commands that can print their output: run with OUTPUT(*PRINT) and the output is shown. */

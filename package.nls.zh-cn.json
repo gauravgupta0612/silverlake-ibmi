@@ -425,6 +425,8 @@
   "chat.vanthrex.joblog": "查找作业失败的原因及修复方法：编号/用户/名称",
   "command.open5250": "打开 5250 会话",
   "command.commandLine": "命令行（5250 样式）",
+  "command.goMenu": "GO 菜单（AS/400 样式）…",
+  "command.myJobs": "处理我的作业",
   "command.commandLine.key": "命令行功能键",
   "command.wrkactjob": "处理活动作业",
   "command.wrkactjob.key": "处理活动作业功能键",

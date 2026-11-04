@@ -425,6 +425,8 @@
   "chat.vanthrex.joblog": "Trouver pourquoi un travail a échoué et comment le corriger : numéro/utilisateur/nom",
   "command.open5250": "Ouvrir une session 5250",
   "command.commandLine": "Ligne de commande (style 5250)",
+  "command.goMenu": "Menus GO (style AS/400)…",
+  "command.myJobs": "Gérer mes travaux",
   "command.commandLine.key": "Touche de fonction de la ligne de commande",
   "command.wrkactjob": "Gérer les travaux actifs",
   "command.wrkactjob.key": "Touche de fonction de Gérer les travaux actifs",

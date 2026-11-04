@@ -425,6 +425,8 @@
   "chat.vanthrex.joblog": "Herausfinden, warum ein Job fehlgeschlagen ist und wie er behoben wird: Nummer/Benutzer/Name",
   "command.open5250": "5250-Sitzung öffnen",
   "command.commandLine": "Befehlszeile (5250-Stil)",
+  "command.goMenu": "GO-Menüs (AS/400-Stil)…",
+  "command.myJobs": "Mit meinen Jobs arbeiten",
   "command.commandLine.key": "Funktionstaste für Befehlszeile",
   "command.wrkactjob": "Mit aktiven Jobs arbeiten",
   "command.wrkactjob.key": "Funktionstaste für „Mit aktiven Jobs arbeiten“",

@@ -167,6 +167,8 @@ export function registerBrowseCommands(
       { label: vscode.l10n.t('$(new-file) Create IFS folder or file…'), cmd: 'vanthrex.createIfs' },
       { label: vscode.l10n.t('$(terminal) Open 5250 session'), cmd: 'vanthrex.open5250' },
       { label: vscode.l10n.t('$(terminal-cmd) Command line (5250 style)'), cmd: 'vanthrex.commandLine' },
+      { label: vscode.l10n.t('$(list-ordered) GO menus (MAIN, PROGRAMMER, SYSTEM…)'), cmd: 'vanthrex.goMenu' },
+      { label: vscode.l10n.t('$(person) Work with my jobs'), cmd: 'vanthrex.myJobs' },
       { label: vscode.l10n.t('$(list-flat) Work with active jobs'), cmd: 'vanthrex.wrkactjob' },
       { label: vscode.l10n.t('$(terminal-linux) PASE terminal (IBM i shell)'), cmd: 'vanthrex.paseTerminal' },
       { label: vscode.l10n.t('$(notebook) New IBM i notebook (SQL, CL, shell)'), cmd: 'vanthrex.newNotebook' },

@@ -1202,6 +1202,12 @@ Also in the right-click menus: *AI: Generate Test Data for This Table* and *AI: 
 - **Why:** nobody has to remember command names: open the menu and type a word.
 - **How:** Ctrl+Alt+A, the IBM i button in the status bar, or right-click.
 
+### 188. GO menus and more green-screen commands — new in 2.6.1
+
+- **What:** the IBM i menus (`GO MAIN`, `GO PROGRAMMER`, `GO SYSTEM`, `GO FILE`, `GO USER`, `GO CMN`, `GO SECURITY`, `GO PROBLEM`) with their option numbers, **Work with My Jobs**, and about 30 more 5250 commands on the command line (`DSPPFM`, `UPDDTA`, `WRKDTAQ`, `WRKMSGF`, `STRDBG`, `WRKJRN`, `WRKLNK`, `WRKPGM`, `SIGNOFF`…) that open the matching screen.
+- **Why:** after years on a green screen, you type what you already know and land on the right tool — no new command names to learn.
+- **How:** Ctrl+Alt+Shift+M (or `GO` on the command line, Ctrl+Alt+K). Type an option number, any command, or `GO <menu>` on the *Selection or command* line; Back works like F12, Esc like F3.
+
 ## Keyboard shortcuts
 
 | Keys | Action |

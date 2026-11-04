@@ -1922,6 +1922,18 @@
         "icon": "$(terminal-cmd)"
       },
       {
+        "command": "vanthrex.goMenu",
+        "title": "%command.goMenu%",
+        "category": "Vanthrex",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "vanthrex.myJobs",
+        "title": "%command.myJobs%",
+        "category": "Vanthrex",
+        "icon": "$(person)"
+      },
+      {
         "command": "vanthrex.commandLine.key",
         "title": "%command.commandLine.key%",
         "category": "Vanthrex"
@@ -3854,6 +3866,11 @@
           "group": "0_5250@2"
         },
         {
+          "command": "vanthrex.goMenu",
+          "when": "view == vanthrex.connections && viewItem == connection.active",
+          "group": "0_5250@2"
+        },
+        {
           "command": "vanthrex.wrkactjob",
           "when": "view == vanthrex.connections && viewItem == connection.active",
           "group": "0_5250@3"
@@ -4982,6 +4999,14 @@
           "when": "vanthrex.connected"
         },
         {
+          "command": "vanthrex.goMenu",
+          "when": "vanthrex.connected"
+        },
+        {
+          "command": "vanthrex.myJobs",
+          "when": "vanthrex.connected"
+        },
+        {
           "command": "vanthrex.wrkactjob",
           "when": "vanthrex.connected"
         },
@@ -5911,6 +5936,12 @@
         "command": "vanthrex.commandLine",
         "key": "ctrl+alt+k",
         "mac": "cmd+alt+k",
+        "when": "vanthrex.connected"
+      },
+      {
+        "command": "vanthrex.goMenu",
+        "key": "ctrl+alt+shift+m",
+        "mac": "cmd+alt+shift+m",
         "when": "vanthrex.connected"
       },
       {

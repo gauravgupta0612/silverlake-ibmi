@@ -425,6 +425,8 @@
   "chat.vanthrex.joblog": "ジョブが失敗した理由と修正方法を調べます: 番号/ユーザー/名前",
   "command.open5250": "5250 セッションを開く",
   "command.commandLine": "コマンド行 (5250 スタイル)",
+  "command.goMenu": "GO メニュー (AS/400 スタイル)…",
+  "command.myJobs": "自分のジョブの処理",
   "command.commandLine.key": "コマンド行のファンクション・キー",
   "command.wrkactjob": "活動ジョブの処理",
   "command.wrkactjob.key": "活動ジョブの処理のファンクション・キー",

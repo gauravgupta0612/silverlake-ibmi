@@ -43,3 +43,46 @@ test('display commands print, display-only commands are recognised', () => {
   assert.deepStrictEqual(m.map(x => x.id), ['CPF2110']);
   assert.strictEqual(g.worstSeverity(m), 40);
 });
+
+test('2.6.1: more green-screen commands open the matching screen', () => {
+  const e = (c, u) => { const r = g.interactiveEquivalent(c, u); return r && [r.command, r.args]; };
+  assert.deepStrictEqual(e('DSPPFM FILE(APP/CUSTMAST)'), ['vanthrex.objectQuery', [{ library: 'APP', name: 'CUSTMAST' }]]);
+  assert.deepStrictEqual(e('DSPPFM CUSTMAST'), ['vanthrex.editData', []]);
+  assert.deepStrictEqual(e('UPDDTA APP/CUSTMAST'), ['vanthrex.editData', [{ library: 'APP', name: 'CUSTMAST' }]]);
+  assert.deepStrictEqual(e('wrkdtaq dtaq(app/orders)'), ['vanthrex.dataQueue', [{ library: 'APP', name: 'ORDERS', type: '*DTAQ' }]]);
+  assert.deepStrictEqual(e('WRKMSGF MSGF(APP/APPMSGF)'), ['vanthrex.messageFile', [{ library: 'APP', name: 'APPMSGF', type: '*MSGF' }]]);
+  assert.deepStrictEqual(e('STRDBG PGM(APP/ORD01)'), ['vanthrex.debugProgram', [{ library: 'APP', name: 'ORD01', type: '*PGM' }]]);
+  assert.deepStrictEqual(e('STRDBG ORD01'), ['vanthrex.debugProgram', []]);
+  assert.deepStrictEqual(e('WRKJRN JRN(APP/QSQJRN)'), ['vanthrex.journals', ['APP']]);
+  assert.deepStrictEqual(e('WRKLIB APP*'), ['vanthrex.pdm', ['WRKLIBPDM LIB(APP*)']]);
+  assert.deepStrictEqual(e('WRKPGM PGM(APP/ORD*)'), ['vanthrex.pdm', ['WRKOBJPDM LIB(APP) OBJ(ORD*) OBJTYPE(*PGM)']]);
+  assert.deepStrictEqual(e('WRKF CUST*'), ['vanthrex.searchObjects', []]);
+  assert.deepStrictEqual(e('WRKLNK'), ['vanthrex.ifs.focus', []]);
+  assert.deepStrictEqual(e('SIGNOFF'), ['vanthrex.disconnect', []]);
+  assert.deepStrictEqual(e('GO PROGRAMMER'), ['vanthrex.goMenu', ['PROGRAMMER']]);
+  assert.deepStrictEqual(e('GO MENU(TCPADM)'), ['vanthrex.goMenu', ['CMN']]);
+  assert.strictEqual(e('GO MYOWNMNU'), undefined, 'a menu we do not have still needs a 5250 session');
+  assert.strictEqual(g.needsDisplay('GO MYOWNMNU'), true);
+});
+
+test('2.6.1: GO menus and the selection line', () => {
+  for (const m of g.GO_MENUS) {
+    const ns = m.options.map(x => x.n);
+    assert.strictEqual(new Set(ns).size, ns.length, `${m.id}: option numbers are unique`);
+    for (const x of m.options) {
+      const goes = /^GO\s+(\S+)/.exec(x.run);
+      if (goes) { assert.ok(g.goMenu(goes[1]), `${m.id} option ${x.n} goes to a menu that exists`); }
+      // Every 5250 command on a menu opens a screen, or is one the command line can run or prompt.
+      if (!x.run.startsWith('vanthrex.') && !goes && x.run !== 'GO') { assert.ok(!g.needsDisplay(x.run) || g.interactiveEquivalent(x.run), `${m.id} option ${x.n}: ${x.run}`); }
+    }
+  }
+  const main = g.goMenu('main');
+  assert.strictEqual(main.id, 'MAIN');
+  assert.strictEqual(g.goMenu('MANAGESYS').id, 'SYSTEM');
+  assert.deepStrictEqual(g.menuSelection(main, '5'), { kind: 'option', option: main.options.find(x => x.n === 5) });
+  assert.strictEqual(g.menuSelection(main, '55'), undefined);
+  assert.deepStrictEqual(g.menuSelection(main, 'go security'), { kind: 'menu', id: 'SECURITY' });
+  assert.deepStrictEqual(g.menuSelection(main, 'GO'), { kind: 'menu', id: undefined });
+  assert.strictEqual(g.menuSelection(main, 'GO NOPE'), undefined);
+  assert.deepStrictEqual(g.menuSelection(main, 'wrkactjob sbs(qbatch)'), { kind: 'command', text: 'wrkactjob sbs(qbatch)' });
+});
