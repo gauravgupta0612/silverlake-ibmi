@@ -86,3 +86,12 @@ test('2.6.1: GO menus and the selection line', () => {
   assert.strictEqual(g.menuSelection(main, 'GO NOPE'), undefined);
   assert.deepStrictEqual(g.menuSelection(main, 'wrkactjob sbs(qbatch)'), { kind: 'command', text: 'wrkactjob sbs(qbatch)' });
 });
+
+test('2.6.1: the 5250 command list in the side bar', () => {
+  const cmds = g.GREEN_SCREEN_COMMANDS.map(c => c.cmd);
+  assert.strictEqual(new Set(cmds).size, cmds.length, 'no command twice');
+  assert.deepStrictEqual([...cmds].sort(), cmds, 'A to Z');
+  // With no parameters each one opens a screen, or is typed on the command line ready for F4.
+  for (const c of cmds) { assert.ok(g.interactiveEquivalent(c, 'BOB') || !g.needsDisplay(c) || c === 'STRSEU', c); }
+  for (const m of g.GO_MENUS) { assert.ok(g.MENU_ICONS[m.id], `${m.id} has an icon`); }
+});

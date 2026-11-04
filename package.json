@@ -86,6 +86,11 @@
           "when": "vanthrex.connected"
         },
         {
+          "id": "vanthrex.menus",
+          "name": "%views.vanthrex.menus.name%",
+          "when": "vanthrex.connected"
+        },
+        {
           "id": "vanthrex.ifs",
           "name": "%views.vanthrex.ifs.name%",
           "when": "vanthrex.connected"
@@ -1934,6 +1939,17 @@
         "icon": "$(person)"
       },
       {
+        "command": "vanthrex.menus.run",
+        "title": "%command.menus.run%",
+        "category": "Vanthrex"
+      },
+      {
+        "command": "vanthrex.menus.prompt",
+        "title": "%command.menus.prompt%",
+        "category": "Vanthrex",
+        "icon": "$(terminal-cmd)"
+      },
+      {
         "command": "vanthrex.commandLine.key",
         "title": "%command.commandLine.key%",
         "category": "Vanthrex"
@@ -2979,6 +2995,16 @@
     "menus": {
       "view/title": [
         {
+          "command": "vanthrex.goMenu",
+          "when": "view == vanthrex.menus",
+          "group": "navigation@0"
+        },
+        {
+          "command": "vanthrex.commandLine",
+          "when": "view == vanthrex.menus",
+          "group": "navigation@1"
+        },
+        {
           "command": "vanthrex.systemTracker",
           "when": "view == vanthrex.connections && vanthrex.connected",
           "group": "navigation@0"
@@ -3195,6 +3221,16 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "vanthrex.menus.prompt",
+          "when": "view == vanthrex.menus && viewItem == menu.command",
+          "group": "inline"
+        },
+        {
+          "command": "vanthrex.menus.prompt",
+          "when": "view == vanthrex.menus && viewItem == menu.command",
+          "group": "0_menu@1"
+        },
         {
           "command": "vanthrex.connect",
           "when": "view == vanthrex.connections && viewItem == connection",
@@ -4411,6 +4447,14 @@
         }
       ],
       "commandPalette": [
+        {
+          "command": "vanthrex.menus.run",
+          "when": "false"
+        },
+        {
+          "command": "vanthrex.menus.prompt",
+          "when": "false"
+        },
         {
           "command": "vanthrex.connect",
           "when": "false"

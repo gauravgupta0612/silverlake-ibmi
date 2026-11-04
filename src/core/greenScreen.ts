@@ -231,6 +231,72 @@ export const GO_MENUS: Menu[] = [
   ] },
 ];
 
+/** Codicon for each menu in the side bar. */
+export const MENU_ICONS: Record<string, string> = {
+  MAIN: 'home', USER: 'person', SYSTEM: 'server', FILE: 'library', PROGRAMMER: 'code', CMN: 'globe', SECURITY: 'shield', PROBLEM: 'warning',
+};
+
+/**
+ * Every 5250 command that opens a Vanthrex screen (A to Z), so they can be browsed and clicked instead of remembered.
+ * Group: the AS/400 area it belongs to.
+ */
+export const GREEN_SCREEN_COMMANDS: { cmd: string; text: string; group: string }[] = [
+  { cmd: 'DSPJOB', text: 'Display job', group: 'Jobs' },
+  { cmd: 'DSPJOBLOG', text: 'Display job log', group: 'Jobs' },
+  { cmd: 'DSPJRN', text: 'Display journal (who changed a file)', group: 'Database' },
+  { cmd: 'DSPLOG', text: 'Display history log (QHST)', group: 'System' },
+  { cmd: 'DSPMSG', text: 'Display messages', group: 'Messages' },
+  { cmd: 'DSPPFM', text: 'Display physical file member', group: 'Database' },
+  { cmd: 'EDTDTAARA', text: 'Edit data area', group: 'Objects' },
+  { cmd: 'EDTLIBL', text: 'Edit library list', group: 'Libraries' },
+  { cmd: 'EDTOBJAUT', text: 'Edit object authority', group: 'Security' },
+  { cmd: 'GO', text: 'Go to menu', group: 'Menus' },
+  { cmd: 'NETSTAT', text: 'Network status', group: 'Communications' },
+  { cmd: 'SIGNOFF', text: 'Sign off', group: 'Menus' },
+  { cmd: 'STRDBG', text: 'Start debug', group: 'Programming' },
+  { cmd: 'STRDFU', text: 'Start DFU (update data)', group: 'Database' },
+  { cmd: 'STRPDM', text: 'Start PDM', group: 'Programming' },
+  { cmd: 'STRQRY', text: 'Start Query (opens SQL)', group: 'Database' },
+  { cmd: 'STRSEU', text: 'Start SEU (edit source)', group: 'Programming' },
+  { cmd: 'STRSQL', text: 'Start SQL', group: 'Database' },
+  { cmd: 'UPDDTA', text: 'Update data', group: 'Database' },
+  { cmd: 'WRKACTJOB', text: 'Work with active jobs', group: 'Jobs' },
+  { cmd: 'WRKAUTL', text: 'Work with authorization lists', group: 'Security' },
+  { cmd: 'WRKBNDDIR', text: 'Work with binding directories', group: 'Programming' },
+  { cmd: 'WRKCMD', text: 'Work with commands', group: 'Objects' },
+  { cmd: 'WRKDTAARA', text: 'Work with data areas', group: 'Objects' },
+  { cmd: 'WRKDTAQ', text: 'Work with data queues', group: 'Objects' },
+  { cmd: 'WRKF', text: 'Work with files', group: 'Objects' },
+  { cmd: 'WRKJOB', text: 'Work with job', group: 'Jobs' },
+  { cmd: 'WRKJOBQ', text: 'Work with job queues', group: 'Jobs' },
+  { cmd: 'WRKJOBSCDE', text: 'Work with job schedule entries', group: 'Jobs' },
+  { cmd: 'WRKJRN', text: 'Work with journals', group: 'Database' },
+  { cmd: 'WRKLIB', text: 'Work with libraries', group: 'Libraries' },
+  { cmd: 'WRKLIBPDM', text: 'Work with libraries using PDM', group: 'Libraries' },
+  { cmd: 'WRKLNK', text: 'Work with object links (IFS)', group: 'IFS' },
+  { cmd: 'WRKMBRPDM', text: 'Work with members using PDM', group: 'Programming' },
+  { cmd: 'WRKMOD', text: 'Work with modules', group: 'Objects' },
+  { cmd: 'WRKMSGF', text: 'Work with message files', group: 'Messages' },
+  { cmd: 'WRKMSGQ', text: 'Work with message queues', group: 'Messages' },
+  { cmd: 'WRKOBJ', text: 'Work with objects', group: 'Objects' },
+  { cmd: 'WRKOBJLCK', text: 'Work with object locks', group: 'Objects' },
+  { cmd: 'WRKOBJPDM', text: 'Work with objects using PDM', group: 'Objects' },
+  { cmd: 'WRKOUTQ', text: 'Work with output queues', group: 'Spool' },
+  { cmd: 'WRKPGM', text: 'Work with programs', group: 'Objects' },
+  { cmd: 'WRKPTF', text: 'Work with PTFs', group: 'System' },
+  { cmd: 'WRKQRY', text: 'Work with queries (opens SQL)', group: 'Database' },
+  { cmd: 'WRKSAVF', text: 'Work with save files', group: 'Save / restore' },
+  { cmd: 'WRKSBS', text: 'Work with subsystems', group: 'System' },
+  { cmd: 'WRKSBSJOB', text: 'Work with subsystem jobs', group: 'Jobs' },
+  { cmd: 'WRKSPLF', text: 'Work with spooled files', group: 'Spool' },
+  { cmd: 'WRKSRVPGM', text: 'Work with service programs', group: 'Objects' },
+  { cmd: 'WRKSYSACT', text: 'Work with system activity', group: 'System' },
+  { cmd: 'WRKSYSSTS', text: 'Work with system status', group: 'System' },
+  { cmd: 'WRKSYSVAL', text: 'Work with system values', group: 'System' },
+  { cmd: 'WRKTCPSTS', text: 'Work with TCP/IP status', group: 'Communications' },
+  { cmd: 'WRKUSRPRF', text: 'Work with user profiles', group: 'Security' },
+];
+
 const MENU_ALIASES: Record<string, string> = {
   MAJOR: 'MAIN', ASSIST: 'MAIN', USERTASK: 'USER', MANAGESYS: 'SYSTEM', RUNSYS: 'SYSTEM', SYSTEM: 'SYSTEM', FILES: 'FILE', LIBRARY: 'FILE', DATA: 'FILE',
   PROGRAM: 'PROGRAMMER', DEVELOP: 'PROGRAMMER', PGMR: 'PROGRAMMER', CMDPGM: 'PROGRAMMER', TCPADM: 'CMN', NETWORK: 'CMN', CMNCFG: 'CMN', SECTOOLS: 'SECURITY', PROBLEM2: 'PROBLEM',

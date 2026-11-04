@@ -10,7 +10,10 @@ import { ConnectionManager } from '../core/manager';
 import { IbmiConnection } from '../core/connection';
 import { errorMessage, log, logError } from '../core/log';
 import { sqlString } from '../core/util';
-import { Client5250, CmdMessage, commandMessages, GO_MENUS, goMenu, interactiveEquivalent, launchPlan, MenuChoice, menuSelection, MenuOption, needsDisplay, withPrintOutput, worstSeverity } from '../core/greenScreen';
+import {
+  Client5250, CmdMessage, commandMessages, GO_MENUS, goMenu, GREEN_SCREEN_COMMANDS, interactiveEquivalent, launchPlan, Menu, MENU_ICONS, MenuChoice, menuSelection,
+  MenuOption, needsDisplay, withPrintOutput, worstSeverity,
+} from '../core/greenScreen';
 import { promptCommandText } from './prompter';
 import { escapeHtml, page } from './ui/kit';
 
@@ -311,5 +314,78 @@ export function registerGreenScreen(context: vscode.ExtensionContext, manager: C
       const conn = manager.require();
       await vscode.commands.executeCommand('vanthrex.wrkactjob', { user: conn.user.toUpperCase() });
     })),
+    vscode.window.createTreeView('vanthrex.menus', { treeDataProvider: new MenusTree(), showCollapseAll: true }),
+    vscode.commands.registerCommand('vanthrex.menus.run', guard((run?: unknown) => {
+      if (typeof run === 'string') { return runMenuCommand(manager, context.globalState, run); }
+    })),
+    vscode.commands.registerCommand('vanthrex.menus.prompt', guard((n?: MenuNode) => {
+      const run = n?.k === 'opt' ? n.opt.run : n?.k === 'cmd' ? n.cmd : undefined;
+      if (!run || run.startsWith('vanthrex.')) { return; }
+      manager.require();
+      CommandLine.open(manager, context.globalState, run);
+    })),
   );
+}
+
+// ================================================================ AS/400 Menus view (side bar)
+
+type MenuNode =
+  | { k: 'menu'; menu: Menu }
+  | { k: 'opt'; menu: Menu; opt: MenuOption }
+  | { k: 'commands' }
+  | { k: 'group'; group: string }
+  | { k: 'cmd'; cmd: string; text: string };
+
+/** The GO menus and every 5250 command that opens a screen, as a tree: click to open, right-click to prompt (F4). */
+class MenusTree implements vscode.TreeDataProvider<MenuNode> {
+  getTreeItem(n: MenuNode): vscode.TreeItem {
+    const C = vscode.TreeItemCollapsibleState;
+    switch (n.k) {
+      case 'menu': {
+        const i = new vscode.TreeItem(`GO ${n.menu.id}`, C.Collapsed);
+        i.description = n.menu.title; i.iconPath = new vscode.ThemeIcon(MENU_ICONS[n.menu.id] ?? 'list-ordered');
+        i.tooltip = `GO ${n.menu.id} — ${n.menu.title}`; i.contextValue = 'menu.menu';
+        return i;
+      }
+      case 'opt': {
+        const screen = n.opt.run.startsWith('vanthrex.');
+        const i = new vscode.TreeItem(`${n.opt.n}. ${n.opt.text}`, C.None);
+        i.description = screen ? undefined : n.opt.run;
+        i.iconPath = new vscode.ThemeIcon(screen ? 'window' : 'terminal-cmd');
+        i.tooltip = screen ? n.opt.text : `${n.opt.text}\n${n.opt.run}`;
+        i.contextValue = screen ? 'menu.screen' : 'menu.command';
+        i.command = { command: 'vanthrex.menus.run', title: vscode.l10n.t('Open'), arguments: [n.opt.run] };
+        return i;
+      }
+      case 'commands': {
+        const i = new vscode.TreeItem(vscode.l10n.t('5250 commands (A–Z)'), C.Collapsed);
+        i.description = vscode.l10n.t('{0} commands', GREEN_SCREEN_COMMANDS.length); i.iconPath = new vscode.ThemeIcon('terminal-cmd');
+        i.tooltip = vscode.l10n.t('Green-screen commands that open a screen here. Right-click one to prompt it (F4).');
+        return i;
+      }
+      case 'group': {
+        const i = new vscode.TreeItem(n.group, C.Collapsed);
+        i.description = String(GREEN_SCREEN_COMMANDS.filter(c => c.group === n.group).length); i.iconPath = new vscode.ThemeIcon('folder');
+        return i;
+      }
+      case 'cmd': {
+        const i = new vscode.TreeItem(n.cmd, C.None);
+        i.description = n.text; i.iconPath = new vscode.ThemeIcon('chevron-right'); i.tooltip = `${n.cmd} — ${n.text}`;
+        i.contextValue = 'menu.command';
+        i.command = { command: 'vanthrex.menus.run', title: vscode.l10n.t('Open'), arguments: [n.cmd] };
+        return i;
+      }
+    }
+  }
+
+  getChildren(n?: MenuNode): MenuNode[] {
+    if (!n) {
+      // MAIN only leads to the other menus, which are all listed here already.
+      return [...GO_MENUS.filter(m => m.id !== 'MAIN').map(menu => ({ k: 'menu' as const, menu })), { k: 'commands' }];
+    }
+    if (n.k === 'menu') { return n.menu.options.map(opt => ({ k: 'opt' as const, menu: n.menu, opt })); }
+    if (n.k === 'commands') { return [...new Set(GREEN_SCREEN_COMMANDS.map(c => c.group))].sort().map(group => ({ k: 'group' as const, group })); }
+    if (n.k === 'group') { return GREEN_SCREEN_COMMANDS.filter(c => c.group === n.group).map(c => ({ k: 'cmd' as const, cmd: c.cmd, text: c.text })); }
+    return [];
+  }
 }
