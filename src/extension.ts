@@ -155,8 +155,7 @@ export function activate(context: vscode.ExtensionContext): void {
   step('member cache', () => initMemberCache(context));
   step('file systems', () => context.subscriptions.push(
     vscode.workspace.registerFileSystemProvider(MEMBER_SCHEME, new MemberFileSystem(m), { isCaseSensitive: false }),
-    vscode.workspace.registerFileSystemProvider(MEMBER_VIEW_SCHEME, new MemberFileSystem(m), { isCaseSensitive: false,
-      isReadonly: new vscode.MarkdownString(vscode.l10n.t('Opened for display (PDM option 5). Use option 2 to edit.')) }),
+    vscode.workspace.registerFileSystemProvider(MEMBER_VIEW_SCHEME, new MemberFileSystem(m), { isCaseSensitive: false, isReadonly: true }),
     // A member opened for editing must never stay read-only: earlier builds marked members read-only for the session
     // when they were displayed with PDM option 5, which made later edits impossible to save (issue #3).
     vscode.window.onDidChangeActiveTextEditor(ed => {
